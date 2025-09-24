@@ -1,0 +1,92 @@
+[
+  {
+    "id": 201,
+    "nome": "Bruno",
+    "habilidades": [
+      "Análise", "Auditoria"
+    ],
+    "cargo": "Analista de Sistemas",
+    "ausencias": ["2025-01-16", "2025-01-17"]
+  },
+  {
+    "id": 202,
+    "nome": "Carla",
+    "habilidades": [
+      "Python", "Java"
+    ],
+    "cargo": "Dev Frontend",
+    "ausencias": []
+  },
+  {
+    "id": 203,
+    "nome": "Daniel",
+    "habilidades": [
+      "Java"
+    ],
+    "cargo": "Dev Frontend",
+    "ausencias": []
+  },
+  {
+    "id": 204,
+    "nome": "Elaine",
+    "habilidades": [
+      "Python"
+    ],
+    "cargo": "Dev Backend",
+    "ausencias": []
+  },
+  {
+    "id": 205,
+    "nome": "Fabrício",
+    "habilidades": [
+      "Java"
+    ],
+    "cargo": "Dev Backend",
+    "ausencias": []
+  },
+  {
+    "id": 206,
+    "nome": "Giulia",
+    "habilidades": [
+      "Auditoria"
+    ],
+    "cargo": "QA",
+    "ausencias": []
+  },
+  {
+    "id": 207,
+    "nome": "Hugo",
+    "habilidades": [
+      "Análise"
+    ],
+    "cargo": "Analista de Sistemas",
+    "ausencias": []
+  },
+  {
+    "id": 208,
+    "nome": "Iara",
+    "habilidades": [
+      "Python"
+    ],
+    "cargo": "Dev Backend",
+    "ausencias": []
+  },
+  {
+    "id": 209,
+    "nome": "Jonas",
+    "habilidades": [
+      "Auditoria"
+    ],
+    "cargo": "QA",
+    "ausencias": []
+  },
+  {
+    "id": 210,
+    "nome": "Pedro",
+    "habilidades": [
+      "Java", "Python"
+    ],
+    "cargo": "Dev Backend",
+    "ausencias": ["2025-01-01", "2025-01-15", "2025-01-30"]
+  }
+]

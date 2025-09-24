@@ -1,0 +1,200 @@
+[
+  {
+    "nome": "Projeto One",
+    "color": "#AA5733",
+    "etapas": [
+      {
+        "id": 1,
+        "nome": "Análise",
+        "duracao_dias": 5,
+        "habilidades_necessarias": [
+          "Análise"
+        ],
+        "cargo_necessario": "Analista de Sistemas"
+      },
+      {
+        "id": 2,
+        "nome": "Desenvolvimento",
+        "duracao_dias": 8,
+        "habilidades_necessarias": [
+          "Python"
+        ],
+        "cargo_necessario": "Dev Frontend"
+      },
+      {
+        "id": 3,
+        "nome": "Auditoria",
+        "duracao_dias": 3,
+        "habilidades_necessarias": [
+          "Auditoria"
+        ],
+        "cargo_necessario": "QA"
+      }
+    ]
+  },
+  {
+    "nome": "Projeto Two",
+    "color": "#3355AA",
+    "etapas": [
+      {
+        "id": 1,
+        "nome": "Análise",
+        "duracao_dias": 6,
+        "habilidades_necessarias": [
+          "Análise"
+        ],
+        "cargo_necessario": "Analista de Sistemas"
+      },
+      {
+        "id": 2,
+        "nome": "Desenvolvimento",
+        "duracao_dias": 10,
+        "habilidades_necessarias": [
+          "Java"
+        ],
+        "cargo_necessario": "Dev Backend"
+      },
+      {
+        "id": 3,
+        "nome": "Auditoria",
+        "duracao_dias": 4,
+        "habilidades_necessarias": [
+          "Auditoria"
+        ],
+        "cargo_necessario": "QA"
+      }
+    ]
+  },
+  {
+    "nome": "Projeto Three",
+    "color": "#33AA55",
+    "etapas": [
+      {
+        "id": 1,
+        "nome": "Análise",
+        "duracao_dias": 4,
+        "habilidades_necessarias": [
+          "Análise"
+        ],
+        "cargo_necessario": "Analista de Sistemas"
+      },
+      {
+        "id": 2,
+        "nome": "Desenvolvimento",
+        "duracao_dias": 9,
+        "habilidades_necessarias": [
+          "Python"
+        ],
+        "cargo_necessario": "Dev Backend"
+      },
+      {
+        "id": 3,
+        "nome": "Auditoria",
+        "duracao_dias": 5,
+        "habilidades_necessarias": [
+          "Auditoria"
+        ],
+        "cargo_necessario": "QA"
+      }
+    ]
+  },
+  {
+    "nome": "Projeto Four",
+    "color": "#AA00AA",
+    "etapas": [
+      {
+        "id": 1,
+        "nome": "Análise",
+        "duracao_dias": 6,
+        "habilidades_necessarias": [
+          "Análise"
+        ],
+        "cargo_necessario": "Analista de Sistemas"
+      },
+      {
+        "id": 2,
+        "nome": "Desenvolvimento",
+        "duracao_dias": 10,
+        "habilidades_necessarias": [
+          "Python"
+        ],
+        "cargo_necessario": "Dev Backend"
+      },
+      {
+        "id": 3,
+        "nome": "Auditoria",
+        "duracao_dias": 4,
+        "habilidades_necessarias": [
+          "Auditoria"
+        ],
+        "cargo_necessario": "QA"
+      }
+    ]
+  },
+  {
+    "nome": "Projeto Five",
+    "color": "#AAD700",
+    "etapas": [
+      {
+        "id": 1,
+        "nome": "Análise",
+        "duracao_dias": 5,
+        "habilidades_necessarias": [
+          "Análise"
+        ],
+        "cargo_necessario": "Analista de Sistemas"
+      },
+      {
+        "id": 2,
+        "nome": "Desenvolvimento",
+        "duracao_dias": 8,
+        "habilidades_necessarias": [
+          "Java"
+        ],
+        "cargo_necessario": "Dev Backend"
+      },
+      {
+        "id": 3,
+        "nome": "Auditoria",
+        "duracao_dias": 5,
+        "habilidades_necessarias": [
+          "Auditoria"
+        ],
+        "cargo_necessario": "QA"
+      }
+    ]
+  },
+  {
+    "nome": "Projeto Six",
+    "color": "#AA33F7",
+    "etapas": [
+      {
+        "id": 1,
+        "nome": "Análise",
+        "duracao_dias": 7,
+        "habilidades_necessarias": [
+          "Análise"
+        ],
+        "cargo_necessario": "Analista de Sistemas"
+      },
+      {
+        "id": 2,
+        "nome": "Desenvolvimento",
+        "duracao_dias": 9,
+        "habilidades_necessarias": [
+          "Python"
+        ],
+        "cargo_necessario": "Dev Backend"
+      },
+      {
+        "id": 3,
+        "nome": "Auditoria",
+        "duracao_dias": 6,
+        "habilidades_necessarias": [
+          "Auditoria"
+        ],
+        "cargo_necessario": "QA"
+      }
+    ]
+  }
+]
