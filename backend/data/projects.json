@@ -1,6 +1,6 @@
 [
   {
-    "nome": "Projeto Habilita",
+    "nome": "Plataforma Habilita",
     "color": "#AA5733",
     "etapas": [
       {
@@ -33,7 +33,7 @@
     ]
   },
   {
-    "nome": "Projeto Two",
+    "nome": "Gerador Itens SAEP",
     "color": "#3355AA",
     "etapas": [
       {
@@ -66,7 +66,7 @@
     ]
   },
   {
-    "nome": "Projeto Three",
+    "nome": "Ensalamento com IA",
     "color": "#33AA55",
     "etapas": [
       {
@@ -99,7 +99,7 @@
     ]
   },
   {
-    "nome": "Projeto Four",
+    "nome": "Laboratório Digital",
     "color": "#AA00AA",
     "etapas": [
       {
@@ -132,7 +132,7 @@
     ]
   },
   {
-    "nome": "Projeto Five",
+    "nome": "Verticaliza",
     "color": "#AAD700",
     "etapas": [
       {
@@ -165,7 +165,7 @@
     ]
   },
   {
-    "nome": "Projeto Six",
+    "nome": "Gerador de Itens do Orbie",
     "color": "#AA33F7",
     "etapas": [
       {

@@ -14,32 +14,45 @@
         </div>
       </div>
       
-      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div v-for="projeto in projetos" :key="projeto.nome" class="bg-white rounded-md shadow-sm p-3 hover:shadow-md transition-shadow">
-          <div class="flex justify-between items-center mb-3">
-            <span class="font-medium text-sm">{{ projeto.nome }}</span>
-            <span class="badge badge-info text-xs">{{ projeto.etapas.length }}</span>
-          </div>
-          
-          <div class="space-y-2">
-            <div v-for="etapa in projeto.etapas" :key="etapa.nome" class="border-b border-gray-100 pb-2 last:border-b-0">
-              <h4 class="font-medium text-text-primary text-sm mb-1">{{ etapa.nome }}</h4>
-              <div class="flex flex-wrap gap-1 mb-1">
-                <span class="px-1.5 py-0.5 bg-blue-100 text-blue-700 text-xs rounded">{{ etapa.duracao_dias }}d</span>
-                <span class="px-1.5 py-0.5 bg-orange-100 text-orange-700 text-xs rounded">{{ etapa.cargo_necessario }}</span>
-              </div>
-              <div class="flex flex-wrap gap-1">
-                <span 
-                  v-for="hab in etapa.habilidades_necessarias" 
-                  :key="hab" 
-                  class="px-1.5 py-0.5 bg-gray-100 text-gray-600 text-xs rounded"
-                >
-                  {{ hab }}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div v-else class="bg-white rounded-md shadow-sm overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Projeto</th>
+              <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Etapa</th>
+              <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Duração</th>
+              <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Cargo</th>
+              <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Habilidades</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <template v-for="projeto in projetos" :key="projeto.nome">
+              <tr v-for="(etapa, index) in projeto.etapas" :key="etapa.nome" class="hover:bg-gray-50">
+                <td v-if="index === 0" :rowspan="projeto.etapas.length" class="px-3 py-1.5 text-sm font-medium border-r border-gray-200 bg-gray-50">
+                  {{ projeto.nome }}
+                </td>
+                <td class="px-3 py-1.5 text-sm">{{ etapa.nome }}</td>
+                <td class="px-3 py-1.5 text-sm">
+                  <span class="px-2 py-1 bg-green-100 text-green-700 text-xs rounded font-medium">{{ etapa.duracao_dias }} dias</span>
+                </td>
+                <td class="px-3 py-1.5 text-sm">
+                  <span class="px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded">{{ etapa.cargo_necessario }}</span>
+                </td>
+                <td class="px-3 py-1.5 text-sm">
+                  <div class="flex flex-wrap gap-1">
+                    <span 
+                      v-for="hab in etapa.habilidades_necessarias" 
+                      :key="hab" 
+                      class="px-1.5 py-0.5 bg-gray-100 text-gray-600 text-xs rounded"
+                    >
+                      {{ hab }}
+                    </span>
+                  </div>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
       </div>
     </div>
 

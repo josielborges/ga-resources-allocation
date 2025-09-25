@@ -1,23 +1,70 @@
 <template>
   <div class="space-y-8">
     <div>
-      <h3 class="text-lg font-semibold text-text-primary mb-4">Filtros</h3>
+      <div class="bg-blue-50 border-l-4 border-blue-400 p-3 mb-4">
+        <h3 class="text-lg font-semibold text-blue-800 flex items-center gap-2">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+          </svg>
+          Filtros
+        </h3>
+      </div>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label class="caption block mb-2">Projetos</label>
-          <select v-model="filtros.projetos" multiple class="form-select h-32">
-            <option v-for="proj in projetosUnicos" :key="proj" :value="proj">
-              {{ proj }}
-            </option>
-          </select>
+        <div class="bg-white rounded-md shadow-sm p-4">
+          <h4 class="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            Projetos
+            <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">{{ filtros.projetos.length }}/{{ projetosUnicos.length }}</span>
+          </h4>
+          <div class="space-y-2 max-h-32 overflow-y-auto">
+            <label v-for="proj in projetosUnicos" :key="proj" class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
+              <input 
+                type="checkbox" 
+                :value="proj" 
+                v-model="filtros.projetos"
+                class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              />
+              <span class="text-sm text-gray-700">{{ proj }}</span>
+            </label>
+          </div>
+          <div class="mt-3 flex gap-2">
+            <button @click="selecionarTodosProjetos" class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200">
+              Todos
+            </button>
+            <button @click="limparProjetos" class="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded hover:bg-gray-200">
+              Limpar
+            </button>
+          </div>
         </div>
-        <div>
-          <label class="caption block mb-2">Colaboradores</label>
-          <select v-model="filtros.colaboradores" multiple class="form-select h-32">
-            <option v-for="colab in colaboradoresUnicos" :key="colab" :value="colab">
-              {{ colab }}
-            </option>
-          </select>
+        <div class="bg-white rounded-md shadow-sm p-4">
+          <h4 class="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+            </svg>
+            Colaboradores
+            <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">{{ filtros.colaboradores.length }}/{{ colaboradoresUnicos.length }}</span>
+          </h4>
+          <div class="space-y-2 max-h-32 overflow-y-auto">
+            <label v-for="colab in colaboradoresUnicos" :key="colab" class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
+              <input 
+                type="checkbox" 
+                :value="colab" 
+                v-model="filtros.colaboradores"
+                class="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+              />
+              <span class="text-sm text-gray-700">{{ colab }}</span>
+            </label>
+          </div>
+          <div class="mt-3 flex gap-2">
+            <button @click="selecionarTodosColaboradores" class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded hover:bg-green-200">
+              Todos
+            </button>
+            <button @click="limparColaboradores" class="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded hover:bg-gray-200">
+              Limpar
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -132,6 +179,18 @@ export default {
         date.setDate(date.getDate() + 1)
       }
       return date.toISOString().split('T')[0]
+    },
+    selecionarTodosProjetos() {
+      this.filtros.projetos = [...this.projetosUnicos]
+    },
+    limparProjetos() {
+      this.filtros.projetos = []
+    },
+    selecionarTodosColaboradores() {
+      this.filtros.colaboradores = [...this.colaboradoresUnicos]
+    },
+    limparColaboradores() {
+      this.filtros.colaboradores = []
     }
   }
 }
