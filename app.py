@@ -708,7 +708,7 @@ class App:
             st.session_state["hist_fit"] = None
 
         # Sidebar
-        st.sidebar.header("Parâmetros")
+        st.sidebar.header("Parâmetros do algoritmo")
         tam_pop = st.sidebar.slider("Tamanho da população", 10, 100, 20)
         n_gen = st.sidebar.slider("Número de gerações", 5, 1000, 100)
         pc = st.sidebar.slider("Prob. crossover", 0.0, 1.0, 0.7)

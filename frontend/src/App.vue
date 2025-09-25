@@ -4,7 +4,7 @@
       <!-- Menu Lateral -->
       <div class="w-64 bg-gradient-to-b from-cyan-600 to-green-400 text-white overflow-y-auto">
         <div class="p-4">
-          <h2 class="text-lg font-semibold mb-6">Roadmap e Estimativa</h2>
+          <h2 class="text-lg font-semibold mb-6">Roadmaps & Estimativas</h2>
           <nav class="space-y-1">
             <button 
               v-for="item in menuItems" 
@@ -25,9 +25,9 @@
       </div>
 
       <!-- Parâmetros Sidebar (apenas para algoritmo) -->
-      <div v-if="activeModule === 'algoritmo'" class="w-72 bg-background-paper border-r border-divider p-4 overflow-y-auto">
+      <div v-if="activeModule === 'roadmap'" class="w-72 bg-background-paper border-r border-divider p-4 overflow-y-auto">
         <div class="bg-white rounded-md shadow-sm p-4">
-          <h3 class="text-base font-semibold text-text-primary mb-4">Parâmetros</h3>
+          <h3 class="text-base font-semibold text-text-primary mb-4">Parâmetros do algoritmo</h3>
           
           <form class="space-y-4">
             <div>
@@ -131,7 +131,7 @@
         </div>
         
         <!-- Módulo Algoritmo -->
-        <div v-if="activeModule === 'algoritmo'">
+        <div v-if="activeModule === 'roadmap'">
           <div v-if="!resultado" class="mt-6">
             <div class="bg-semantic-info-light border border-semantic-info-main rounded-md p-3 mb-4">
               <div class="flex items-center">
@@ -222,7 +222,7 @@ export default {
   },
   data() {
     return {
-      activeModule: 'algoritmo',
+      activeModule: 'roadmap',
       params: {
         tam_pop: 20,
         n_gen: 100,
@@ -236,7 +236,8 @@ export default {
       colaboradores: [],
       projetos: [],
       menuItems: [
-        { id: 'algoritmo', label: 'Algoritmo Genético', icon: 'CpuChipIcon' },
+        { id: 'roadmap', label: 'Gerador de Roadmap', icon: 'CpuChipIcon' },
+        { id: 'estimativa', label: 'Gerador de Estimativa', icon: 'CpuChipIcon' },
         { id: 'projetos', label: 'Projetos', icon: 'FolderIcon' },
         { id: 'colaboradores', label: 'Colaboradores', icon: 'UserGroupIcon' },
         { id: 'relatorios', label: 'Relatórios', icon: 'DocumentChartBarIcon' }
@@ -286,7 +287,8 @@ export default {
     },
     getModuleTitle() {
       const titles = {
-        'algoritmo': 'Algoritmo Genético',
+        'roadmap': 'Gerador de Roadmap',
+        'estimativa': 'Gerador de Estimativa',
         'projetos': 'Gerenciamento de Projetos',
         'colaboradores': 'Gerenciamento de Colaboradores',
         'relatorios': 'Relatórios e Análises'

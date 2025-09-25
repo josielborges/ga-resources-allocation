@@ -6,8 +6,12 @@ import datetime
 from typing import List
 from models import *
 from genetic_algorithm import GeneticAlgorithm, Utils
+from utils.config import lifespan, settings
 
-app = FastAPI(title="Resource Allocation API")
+app = FastAPI(title="Resource Allocation API",
+              openapi_url=settings.OPENAPI_URL,
+              docs_url=settings.SWAGGER_URL,
+              redoc_url=settings.REDOC_URL,)
 
 app.add_middleware(
     CORSMiddleware,
