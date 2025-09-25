@@ -1,28 +1,34 @@
 <template>
-  <div class="calendar-container">
-    <div class="filters-section">
-      <h3>Filtros</h3>
-      <el-row :gutter="20">
-        <el-col :span="12">
-          <el-select v-model="filtros.projetos" multiple placeholder="Selecione projetos" style="width: 100%">
-            <el-option v-for="proj in projetosUnicos" :key="proj" :label="proj" :value="proj" />
-          </el-select>
-        </el-col>
-        <el-col :span="12">
-          <el-select v-model="filtros.colaboradores" multiple placeholder="Selecione colaboradores" style="width: 100%">
-            <el-option v-for="colab in colaboradoresUnicos" :key="colab" :label="colab" :value="colab" />
-          </el-select>
-        </el-col>
-      </el-row>
+  <div class="space-y-8">
+    <div>
+      <h3 class="text-lg font-semibold text-text-primary mb-4">Filtros</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label class="caption block mb-2">Projetos</label>
+          <select v-model="filtros.projetos" multiple class="form-select h-32">
+            <option v-for="proj in projetosUnicos" :key="proj" :value="proj">
+              {{ proj }}
+            </option>
+          </select>
+        </div>
+        <div>
+          <label class="caption block mb-2">Colaboradores</label>
+          <select v-model="filtros.colaboradores" multiple class="form-select h-32">
+            <option v-for="colab in colaboradoresUnicos" :key="colab" :value="colab">
+              {{ colab }}
+            </option>
+          </select>
+        </div>
+      </div>
     </div>
 
-    <div class="calendar-section">
-      <h3>Calendário de Alocação</h3>
-      <el-card class="calendar-card">
+    <div>
+      <h3 class="text-lg font-semibold text-text-primary mb-4">Calendário de Alocação</h3>
+      <div class="card">
         <div class="calendar-wrapper">
           <FullCalendar :options="calendarOptions" />
         </div>
-      </el-card>
+      </div>
     </div>
   </div>
 </template>
@@ -74,7 +80,7 @@ export default {
           title: `${tarefa.nome_tarefa} - ${tarefa.colaborador}`,
           start: this.convertToISODate(tarefa.data_inicio),
           end: this.convertToISODate(tarefa.data_fim, true),
-          backgroundColor: projeto?.color || '#409EFF',
+          backgroundColor: projeto?.color || '#3f6ad8',
           extendedProps: {
             projeto: tarefa.projeto,
             tarefa: tarefa.nome_tarefa,
@@ -132,35 +138,12 @@ export default {
 </script>
 
 <style scoped>
-.calendar-container {
-  padding: 20px;
-}
-
-.filters-section {
-  margin-bottom: 30px;
-}
-
-.calendar-section {
-  margin-top: 20px;
-}
-
-.calendar-card {
-  padding: 20px;
-}
-
 .calendar-wrapper {
   min-height: 600px;
 }
 
-h3 {
-  color: #303133;
-  margin-bottom: 20px;
-  font-size: 18px;
-  font-weight: 600;
-}
-
 :deep(.fc) {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 :deep(.fc-toolbar) {
@@ -170,12 +153,12 @@ h3 {
 :deep(.fc-toolbar-title) {
   font-size: 20px;
   font-weight: 600;
-  color: #303133;
+  color: #495057;
 }
 
 :deep(.fc-button) {
-  background-color: #409eff;
-  border-color: #409eff;
+  background-color: #3f6ad8;
+  border-color: #3f6ad8;
   color: white;
   border-radius: 4px;
   padding: 6px 12px;
@@ -183,16 +166,16 @@ h3 {
 }
 
 :deep(.fc-button:hover) {
-  background-color: #337ecc;
-  border-color: #337ecc;
+  background-color: #7996e3;
+  border-color: #7996e3;
 }
 
 :deep(.fc-button:focus) {
-  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
+  box-shadow: 0 0 0 2px rgba(63, 106, 216, 0.2);
 }
 
 :deep(.fc-daygrid-day-number) {
-  color: #606266;
+  color: #6c757d;
   font-weight: 500;
 }
 
@@ -214,20 +197,16 @@ h3 {
 }
 
 :deep(.fc-more-link) {
-  color: #409eff;
+  color: #3f6ad8;
   font-weight: 500;
 }
 
 :deep(.fc-popover) {
-  border: 1px solid #dcdfe6;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  border: 1px solid #e9ecef;
+  box-shadow: 0 0.46875rem 2.1875rem rgba(4, 9, 20, 0.03), 0 0.9375rem 1.40625rem rgba(4, 9, 20, 0.03), 0 0.25rem 0.53125rem rgba(4, 9, 20, 0.05), 0 0.125rem 0.1875rem rgba(4, 9, 20, 0.03);
 }
 
 @media (max-width: 768px) {
-  .calendar-container {
-    padding: 10px;
-  }
-  
   .calendar-wrapper {
     min-height: 400px;
   }

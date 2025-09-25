@@ -1,23 +1,30 @@
 <template>
-  <div class="fitness-container">
-    <h3>Evolução da Fitness</h3>
-    <el-card class="chart-card">
-      <div class="chart-wrapper">
+  <div class="space-y-4">
+    <div class="flex items-center justify-between">
+      <h3 class="text-base font-medium text-text-primary">Evolução da Fitness</h3>
+      <div class="flex items-center gap-2 bg-green-50 px-3 py-1 rounded">
+        <TrophyIcon class="w-4 h-4 text-green-600" />
+        <span class="text-lg font-semibold text-green-700">{{ melhor.toFixed(2) }}</span>
+      </div>
+    </div>
+    
+    <div class="bg-white rounded-md shadow-sm p-4">
+      <div class="h-[500px] w-full relative">
         <Line v-if="historico && historico.length > 0" :data="chartData" :options="chartOptions" />
-        <div v-else class="no-data">
-          <el-empty description="Nenhum dado de fitness disponível" />
+        <div v-else class="flex items-center justify-center h-full text-text-secondary">
+          <div class="text-center">
+            <ChartBarIcon class="w-8 h-8 mx-auto mb-2 text-text-disabled" />
+            <p class="text-sm">Nenhum dado disponível</p>
+          </div>
         </div>
       </div>
-    </el-card>
-    
-    <el-card class="fitness-info">
-      <el-statistic title="Melhor Fitness" :value="melhor" :precision="2" />
-    </el-card>
+    </div>
   </div>
 </template>
 
 <script>
 import { Line } from 'vue-chartjs'
+import { ChartBarIcon, TrophyIcon } from '@heroicons/vue/24/outline'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -41,7 +48,7 @@ ChartJS.register(
 
 export default {
   name: 'FitnessTab',
-  components: { Line },
+  components: { Line, ChartBarIcon, TrophyIcon },
   props: {
     historico: {
       type: Array,
@@ -63,8 +70,8 @@ export default {
         datasets: [{
           label: 'Fitness',
           data: this.historico,
-          borderColor: '#409EFF',
-          backgroundColor: 'rgba(64, 158, 255, 0.1)',
+          borderColor: '#3ac47d',
+          backgroundColor: 'rgba(58, 196, 125, 0.1)',
           tension: 0.1,
           fill: true
         }]
@@ -113,38 +120,3 @@ export default {
 }
 </script>
 
-<style scoped>
-.fitness-container {
-  padding: 20px;
-}
-
-.chart-card {
-  margin: 20px 0;
-  min-height: 450px;
-}
-
-.chart-wrapper {
-  height: 400px;
-  width: 100%;
-  position: relative;
-}
-
-.fitness-info {
-  margin-top: 20px;
-  text-align: center;
-}
-
-.no-data {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-}
-
-h3 {
-  color: #303133;
-  margin-bottom: 20px;
-  font-size: 18px;
-  font-weight: 600;
-}
-</style>

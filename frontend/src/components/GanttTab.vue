@@ -1,48 +1,50 @@
 <template>
-  <div class="gantt-container">
-    <h3>Cronograma Gantt</h3>
+  <div class="space-y-6">
+    <h3 class="text-lg font-semibold text-text-primary">Cronograma Gantt</h3>
     
-    <el-card class="gantt-card">
-      <el-table 
-        :data="tarefas" 
-        size="small" 
-        style="width: 100%"
-        :row-class-name="getRowClassName"
-        stripe
-      >
-        <el-table-column prop="projeto" label="Projeto" width="140" fixed>
-          <template #default="scope">
-            <el-tag :color="getProjectColor(scope.row.projeto)" size="small">
-              {{ scope.row.projeto }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        
-        <el-table-column prop="nome_tarefa" label="Tarefa" min-width="180" />
-        
-        <el-table-column prop="data_inicio" label="Início" width="100" />
-        
-        <el-table-column prop="data_fim" label="Fim" width="100" />
-        
-        <el-table-column prop="colaborador" label="Colaborador" width="140" />
-        
-        <el-table-column prop="duracao_dias" label="Dias" width="80" align="center" />
-        
-        <el-table-column label="Cronograma Visual" min-width="250">
-          <template #default="scope">
-            <div class="gantt-timeline">
-              <div 
-                class="gantt-bar" 
-                :style="getGanttStyle(scope.row)"
-                :title="`${scope.row.nome_tarefa} (${scope.row.duracao_dias} dias)`"
+    <div class="bg-white rounded-md shadow-sm overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase min-w-20">Projeto</th>
+            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase min-w-32">Tarefa</th>
+            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase w-20">Início</th>
+            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase w-20">Fim</th>
+            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase w-28">Colaborador</th>
+            <th class="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase w-16">Dias</th>
+            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase min-w-48">Timeline</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <tr v-for="(tarefa, index) in tarefas" :key="index" :class="index % 2 === 0 ? 'bg-gray-50' : 'bg-white'" class="hover:bg-blue-50">
+            <td class="px-3 py-1.5 text-sm">
+              <span 
+                class="px-2 py-0.5 text-white text-xs font-medium rounded"
+                :style="{ backgroundColor: getProjectColor(tarefa.projeto) }"
               >
-                <span class="gantt-text">{{ scope.row.duracao_dias }}d</span>
+                {{ tarefa.projeto }}
+              </span>
+            </td>
+            <td class="px-3 py-1.5 text-sm font-medium">{{ tarefa.nome_tarefa }}</td>
+            <td class="px-3 py-1.5 text-xs text-gray-600">{{ tarefa.data_inicio }}</td>
+            <td class="px-3 py-1.5 text-xs text-gray-600">{{ tarefa.data_fim }}</td>
+            <td class="px-3 py-1.5 text-sm">{{ tarefa.colaborador }}</td>
+            <td class="px-3 py-1.5 text-sm text-center font-medium">{{ tarefa.duracao_dias }}</td>
+            <td class="px-3 py-1.5">
+              <div class="gantt-timeline-compact">
+                <div 
+                  class="gantt-bar-compact" 
+                  :style="getGanttStyle(tarefa)"
+                  :title="`${tarefa.nome_tarefa} (${tarefa.duracao_dias} dias)`"
+                >
+                  <span class="gantt-text-compact">{{ tarefa.duracao_dias }}d</span>
+                </div>
               </div>
-            </div>
-          </template>
-        </el-table-column>
-      </el-table>
-    </el-card>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </template>
 
@@ -61,7 +63,7 @@ export default {
       return Math.max(...this.tarefas.map(t => t.fim_dias))
     },
     projectColors() {
-      const colors = ['#409EFF', '#67C23A', '#E6A23C', '#F56C6C', '#909399', '#9C27B0', '#FF9800']
+      const colors = ['#3f6ad8', '#3ac47d', '#f7b924', '#d92550', '#16aaff', '#9C27B0', '#FF9800']
       const projects = [...new Set(this.tarefas.map(t => t.projeto))]
       const colorMap = {}
       projects.forEach((project, index) => {
@@ -82,8 +84,8 @@ export default {
       return {
         left: `${Math.max(0, proporcaoInicio)}%`,
         width: `${Math.max(2, proporcaoDuracao)}%`,
-        backgroundColor: this.projectColors[tarefa.projeto] || '#409EFF',
-        height: '20px',
+        backgroundColor: this.projectColors[tarefa.projeto] || '#3f6ad8',
+        height: '14px',
         position: 'absolute',
         borderRadius: '4px',
         display: 'flex',
@@ -96,75 +98,44 @@ export default {
       }
     },
     getProjectColor(projeto) {
-      return this.projectColors[projeto] || '#409EFF'
+      return this.projectColors[projeto] || '#3f6ad8'
     },
-    getRowClassName({ row, rowIndex }) {
-      return rowIndex % 2 === 0 ? 'even-row' : 'odd-row'
-    }
+
   }
 }
 </script>
 
 <style scoped>
-.gantt-container {
-  padding: 20px;
-}
-
-.gantt-card {
-  margin-top: 20px;
-  overflow-x: auto;
-}
-
-.gantt-timeline {
+.gantt-timeline-compact {
   width: 100%;
-  height: 25px;
-  background: linear-gradient(to right, #f5f5f5 0%, #e8e8e8 100%);
+  height: 18px;
+  background: linear-gradient(to right, #f8f9fa 0%, #e9ecef 100%);
   position: relative;
-  border-radius: 4px;
-  border: 1px solid #ddd;
+  border-radius: 3px;
+  border: 1px solid #dee2e6;
 }
 
-.gantt-bar {
+.gantt-bar-compact {
   position: absolute;
-  top: 2px;
-  height: 20px;
-  border-radius: 4px;
+  top: 1px;
+  height: 14px;
+  border-radius: 3px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.gantt-bar:hover {
+.gantt-bar-compact:hover {
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3) !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2) !important;
 }
 
-.gantt-text {
-  font-size: 10px;
-  font-weight: bold;
-  color: white;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-}
-
-h3 {
-  color: #303133;
-  margin-bottom: 20px;
-  font-size: 18px;
+.gantt-text-compact {
+  font-size: 9px;
   font-weight: 600;
-}
-
-.el-tag {
-  font-weight: 500;
-}
-
-:deep(.even-row) {
-  background-color: #fafafa;
-}
-
-:deep(.odd-row) {
-  background-color: #ffffff;
-}
-
-:deep(.el-table__row:hover) {
-  background-color: #f0f9ff;
+  color: white;
+  text-shadow: 0 1px 1px rgba(0,0,0,0.4);
 }
 </style>

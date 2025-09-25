@@ -1,0 +1,262 @@
+{
+  "designSystem": {
+    "name": "Architect Analytics Dashboard",
+    "version": "1.0.0",
+    "description": "A clean, modern, and data-centric design system for analytics dashboards. It emphasizes clarity through a card-based layout, subtle shadows, and a controlled color palette with clear semantic colors for data representation.",
+    "style": {
+      "overallLook": "Professional, clean, and spacious with a slight corporate feel.",
+      "keyCharacteristics": [
+        "Card-based modular layout",
+        "Soft shadows for depth",
+        "Generous use of whitespace",
+        "Subtle rounded corners on elements",
+        "Clear typographic hierarchy",
+        "Data-first visualization"
+      ]
+    }
+  },
+  "palette": {
+    "primary": {
+      "main": "#3f6ad8",
+      "light": "#7996e3",
+      "contrastText": "#ffffff"
+    },
+    "secondary": {
+      "main": "#495057",
+      "light": "#6c757d",
+      "contrastText": "#ffffff"
+    },
+    "background": {
+      "default": "#f1f4f6",
+      "paper": "#ffffff",
+      "sidebar": "#343a40"
+    },
+    "text": {
+      "primary": "#495057",
+      "secondary": "#6c757d",
+      "disabled": "#adb5bd",
+      "onDark": "#dee2e6"
+    },
+    "semantic": {
+      "success": {
+        "main": "#3ac47d",
+        "light": "#e1f5ec",
+        "contrastText": "#ffffff"
+      },
+      "error": {
+        "main": "#d92550",
+        "light": "#fbe9ed",
+        "contrastText": "#ffffff"
+      },
+      "warning": {
+        "main": "#f7b924",
+        "light": "#fef8e8",
+        "contrastText": "#ffffff"
+      },
+      "info": {
+        "main": "#16aaff",
+        "light": "#e7f6ff",
+        "contrastText": "#ffffff"
+      }
+    },
+    "divider": "#e9ecef"
+  },
+  "typography": {
+    "fontFamily": "\"Inter\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+    "hierarchy": {
+      "h1": { "fontSize": "2.5rem", "fontWeight": 600 },
+      "h2": { "fontSize": "2rem", "fontWeight": 600 },
+      "h3": { "fontSize": "1.75rem", "fontWeight": 600 },
+      "cardTitle": { "fontSize": "1.1rem", "fontWeight": 600, "color": "palette.text.primary" },
+      "body1": { "fontSize": "1rem", "fontWeight": 400 },
+      "body2": { "fontSize": "0.875rem", "fontWeight": 400, "color": "palette.text.secondary" },
+      "button": { "fontSize": "0.875rem", "fontWeight": 500, "textTransform": "none" },
+      "caption": { "fontSize": "0.75rem", "fontWeight": 400, "textTransform": "uppercase", "letterSpacing": "0.5px", "color": "palette.text.secondary" },
+      "metricLarge": { "fontSize": "2.25rem", "fontWeight": 700, "color": "palette.text.primary" },
+      "metricSmall": { "fontSize": "1.5rem", "fontWeight": 600, "color": "palette.text.primary" }
+    }
+  },
+  "layout": {
+    "baseUnit": "8px",
+    "spacing": {
+      "xs": "4px",
+      "sm": "8px",
+      "md": "16px",
+      "lg": "24px",
+      "xl": "32px"
+    },
+    "structure": {
+      "sidebar": { "width": "280px" },
+      "header": { "height": "70px", "padding": "0 24px" },
+      "contentArea": { "padding": "24px" },
+      "gridGap": "24px"
+    }
+  },
+  "effects": {
+    "borderRadius": {
+      "sm": "4px",
+      "md": "8px",
+      "lg": "16px",
+      "circle": "50%"
+    },
+    "boxShadow": {
+      "level1": "0 0.46875rem 2.1875rem rgba(4, 9, 20, 0.03), 0 0.9375rem 1.40625rem rgba(4, 9, 20, 0.03), 0 0.25rem 0.53125rem rgba(4, 9, 20, 0.05), 0 0.125rem 0.1875rem rgba(4, 9, 20, 0.03)",
+      "level2": "0px 5px 15px rgba(0, 0, 0, 0.1)"
+    }
+  },
+  "components": {
+    "card": {
+      "style": "A container for content and actions.",
+      "backgroundColor": "palette.background.paper",
+      "borderRadius": "effects.borderRadius.md",
+      "boxShadow": "effects.boxShadow.level1",
+      "padding": "layout.spacing.lg",
+      "header": {
+        "display": "flex",
+        "justifyContent": "space-between",
+        "alignItems": "center",
+        "marginBottom": "layout.spacing.md",
+        "typography": "typography.cardTitle"
+      }
+    },
+    "button": {
+      "style": "Used for actions in forms, dialogs, and more.",
+      "borderRadius": "effects.borderRadius.sm",
+      "padding": "10px 20px",
+      "base": {
+        "typography": "typography.button",
+        "border": "1px solid transparent"
+      },
+      "variants": {
+        "primary": {
+          "backgroundColor": "palette.primary.main",
+          "color": "palette.primary.contrastText",
+          "hover": {
+            "backgroundColor": "palette.primary.light"
+          }
+        },
+        "secondary": {
+          "backgroundColor": "palette.secondary.main",
+          "color": "palette.secondary.contrastText"
+        },
+        "viewAll": {
+          "backgroundColor": "transparent",
+          "color": "palette.primary.main",
+          "border": "1px solid #dee2e6",
+          "padding": "5px 15px"
+        },
+        "iconButton": {
+          "backgroundColor": "transparent",
+          "color": "palette.text.secondary",
+          "borderRadius": "effects.borderRadius.circle",
+          "width": "36px",
+          "height": "36px"
+        }
+      }
+    },
+    "statWidget": {
+      "style": "A small card variant to display a key metric, its label, and a trend indicator.",
+      "layout": "Horizontally aligned icon, vertical text content.",
+      "icon": {
+        "containerSize": "54px",
+        "borderRadius": "effects.borderRadius.circle",
+        "display": "flex",
+        "alignItems": "center",
+        "justifyContent": "center",
+        "iconSize": "24px"
+      },
+      "variants": {
+        "success": {
+          "iconBackgroundColor": "palette.semantic.success.light",
+          "iconColor": "palette.semantic.success.main",
+          "trendColor": "palette.semantic.success.main"
+        },
+        "error": {
+          "iconBackgroundColor": "palette.semantic.error.light",
+          "iconColor": "palette.semantic.error.main",
+          "trendColor": "palette.semantic.error.main"
+        },
+        "warning": {
+          "iconBackgroundColor": "palette.semantic.warning.light",
+          "iconColor": "palette.semantic.warning.main",
+          "trendColor": "palette.semantic.warning.main"
+        }
+      },
+      "value": { "typography": "typography.metricLarge" },
+      "label": { "typography": "typography.caption" },
+      "trendIndicator": {
+        "typography": "typography.body2",
+        "display": "flex",
+        "alignItems": "center",
+        "icon": "Arrow (up for positive, down for negative)"
+      }
+    },
+    "chart": {
+      "style": "Data visualization elements.",
+      "lineChart": {
+        "strokeWidth": "2px",
+        "fill": "gradient",
+        "gradientStartColor": "rgba(58, 196, 125, 0.2)",
+        "gradientEndColor": "rgba(58, 196, 125, 0.0)",
+        "marker": {
+          "type": "circle",
+          "size": "6px",
+          "fill": "palette.background.paper",
+          "stroke": "palette.semantic.success.main"
+        }
+      }
+    },
+    "badge": {
+      "style": "Small status descriptors for UI elements.",
+      "padding": "4px 8px",
+      "borderRadius": "10px",
+      "typography": {
+        "fontSize": "0.7rem",
+        "fontWeight": "600"
+      },
+      "variants": {
+        "new": {
+          "backgroundColor": "palette.semantic.error.main",
+          "color": "palette.semantic.error.contrastText"
+        }
+      }
+    },
+    "sidebar": {
+      "style": "Primary navigation panel.",
+      "backgroundColor": "palette.background.sidebar",
+      "color": "palette.text.onDark",
+      "width": "layout.structure.sidebar.width",
+      "item": {
+        "padding": "12px 24px",
+        "borderRadius": "0",
+        "hover": {
+          "backgroundColor": "rgba(255, 255, 255, 0.05)"
+        }
+      },
+      "activeItem": {
+        "backgroundColor": "palette.primary.main",
+        "color": "palette.primary.contrastText"
+      }
+    },
+    "timeline": {
+      "style": "A vertical list for chronological events.",
+      "connectorLine": {
+        "color": "palette.divider",
+        "width": "2px"
+      },
+      "itemDot": {
+        "size": "12px",
+        "borderWidth": "2px",
+        "borderRadius": "effects.borderRadius.circle",
+        "default": {
+          "borderColor": "palette.primary.main",
+          "backgroundColor": "palette.background.paper"
+        },
+        "dark": {
+          "borderColor": "palette.secondary.main",
+          "backgroundColor": "palette.secondary.main"
+        }
+      }
+    }
+  }
+}

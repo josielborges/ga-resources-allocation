@@ -1,95 +1,159 @@
 <template>
-  <div id="app">
-    <el-container class="app-container">
-      <el-aside width="320px" class="sidebar">
-        <el-card class="params-card">
-          <template #header>
-            <h3>Parâmetros do Algoritmo</h3>
-          </template>
+  <div class="min-h-screen bg-background-default font-sans">
+    <div class="flex h-screen">
+      <!-- Sidebar -->
+      <div class="w-72 bg-background-paper border-r border-divider p-4 overflow-y-auto">
+        <div class="bg-white rounded-md shadow-sm p-4">
+          <h3 class="text-base font-semibold text-text-primary mb-4">Parâmetros</h3>
           
-          <el-form :model="params" label-position="top" size="small">
-            <el-form-item label="População">
-              <el-slider v-model="params.tam_pop" :min="10" :max="100" show-input />
-            </el-form-item>
+          <form class="space-y-4">
+            <div>
+              <label class="caption block mb-2">População</label>
+              <input 
+                v-model="params.tam_pop" 
+                type="range" 
+                min="10" 
+                max="100" 
+                class="form-slider"
+              />
+              <div class="flex justify-between text-sm text-text-secondary mt-1">
+                <span>10</span>
+                <span class="font-medium">{{ params.tam_pop }}</span>
+                <span>100</span>
+              </div>
+            </div>
             
-            <el-form-item label="Gerações">
-              <el-slider v-model="params.n_gen" :min="5" :max="1000" show-input />
-            </el-form-item>
+            <div>
+              <label class="caption block mb-2">Gerações</label>
+              <input 
+                v-model="params.n_gen" 
+                type="range" 
+                min="5" 
+                max="1000" 
+                class="form-slider"
+              />
+              <div class="flex justify-between text-sm text-text-secondary mt-1">
+                <span>5</span>
+                <span class="font-medium">{{ params.n_gen }}</span>
+                <span>1000</span>
+              </div>
+            </div>
             
-            <el-form-item label="Crossover">
-              <el-slider v-model="params.pc" :min="0" :max="1" :step="0.1" show-input />
-            </el-form-item>
+            <div>
+              <label class="caption block mb-2">Crossover</label>
+              <input 
+                v-model="params.pc" 
+                type="range" 
+                min="0" 
+                max="1" 
+                step="0.1" 
+                class="form-slider"
+              />
+              <div class="flex justify-between text-sm text-text-secondary mt-1">
+                <span>0</span>
+                <span class="font-medium">{{ params.pc }}</span>
+                <span>1</span>
+              </div>
+            </div>
             
-            <el-form-item label="Mutação">
-              <el-slider v-model="params.pm" :min="0" :max="1" :step="0.1" show-input />
-            </el-form-item>
+            <div>
+              <label class="caption block mb-2">Mutação</label>
+              <input 
+                v-model="params.pm" 
+                type="range" 
+                min="0" 
+                max="1" 
+                step="0.1" 
+                class="form-slider"
+              />
+              <div class="flex justify-between text-sm text-text-secondary mt-1">
+                <span>0</span>
+                <span class="font-medium">{{ params.pm }}</span>
+                <span>1</span>
+              </div>
+            </div>
             
-            <el-form-item label="Data de Referência">
-              <el-date-picker 
+            <div>
+              <label class="caption block mb-2">Data de Referência</label>
+              <input 
                 v-model="params.ref_date" 
                 type="date" 
-                format="YYYY-MM-DD"
-                style="width: 100%" 
+                class="form-input"
               />
-            </el-form-item>
+            </div>
             
-            <el-button 
-              type="primary" 
+            <button 
               @click="executarAlgoritmo" 
-              :loading="loading" 
-              size="default"
-              style="width: 100%; margin-top: 10px"
+              :disabled="loading" 
+              class="bg-primary-main text-white px-4 py-2 rounded-sm text-sm font-medium w-full mt-4 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary-light transition-colors"
+              type="button"
             >
-              {{ loading ? 'Executando...' : 'Executar Algoritmo' }}
-            </el-button>
-          </el-form>
-        </el-card>
-      </el-aside>
+              <span v-if="loading" class="flex items-center justify-center">
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Executando...
+              </span>
+              <span v-else>Executar Algoritmo</span>
+            </button>
+          </form>
+        </div>
+      </div>
 
-      <el-main class="main-content">
-        <div class="header">
-          <h1>Alocação de Recursos - Algoritmo Genético</h1>
+      <!-- Main Content -->
+      <div class="flex-1 p-4 overflow-y-auto">
+        <div class="mb-4 pb-2 border-b border-primary-main">
+          <h1 class="text-lg font-semibold text-text-primary">Alocação de Recursos</h1>
         </div>
         
-        <div v-if="!resultado" class="welcome-section">
-          <el-alert 
-            title="Configure os parâmetros e execute o algoritmo na barra lateral" 
-            type="info" 
-            show-icon 
-            :closable="false"
-          />
-          <el-card style="margin-top: 20px">
-            <h4>Dados Carregados:</h4>
-            <p>Colaboradores: {{ colaboradores.length }}</p>
-            <p>Projetos: {{ projetos.length }}</p>
-          </el-card>
+        <div v-if="!resultado" class="mt-6">
+          <div class="bg-semantic-info-light border border-semantic-info-main rounded-md p-3 mb-4">
+            <div class="flex items-center">
+              <svg class="w-4 h-4 text-semantic-info-main mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+              </svg>
+              <span class="text-semantic-info-main text-sm">Configure os parâmetros e execute o algoritmo</span>
+            </div>
+          </div>
+          <div class="bg-white rounded-md shadow-sm p-4">
+            <h4 class="text-base font-medium text-text-primary mb-2">Dados:</h4>
+            <div class="text-sm text-text-secondary space-y-1">
+              <p>Colaboradores: {{ colaboradores.length }}</p>
+              <p>Projetos: {{ projetos.length }}</p>
+            </div>
+          </div>
         </div>
 
-        <div v-if="resultado" class="results-section">
-          <el-tabs v-model="activeTab" class="result-tabs">
-            <el-tab-pane label="Dados" name="dados">
-              <DadosTab :colaboradores="colaboradores" :projetos="projetos" />
-            </el-tab-pane>
-            
-            <el-tab-pane label="Fitness" name="fitness">
-              <FitnessTab :historico="resultado.historico_fitness" :melhor="resultado.melhor_fitness" />
-            </el-tab-pane>
-            
-            <el-tab-pane label="Conflitos" name="conflitos">
-              <ConflitosTab :penalidades="resultado.penalidades" :ocorrencias="resultado.ocorrencias_penalidades" />
-            </el-tab-pane>
-            
-            <el-tab-pane label="Gantt" name="gantt">
-              <GanttTab :tarefas="resultado.tarefas" />
-            </el-tab-pane>
-            
-            <el-tab-pane label="Calendário" name="calendario">
-              <CalendarioTab :tarefas="resultado.tarefas" :projetos="projetos" />
-            </el-tab-pane>
-          </el-tabs>
+        <div v-if="resultado" class="bg-white rounded-md shadow-sm">
+          <div class="border-b border-divider px-4">
+            <nav class="flex space-x-6">
+              <button 
+                v-for="tab in tabs" 
+                :key="tab.name"
+                @click="activeTab = tab.name"
+                :class="[
+                  'py-3 px-1 border-b-2 font-medium text-sm transition-colors',
+                  activeTab === tab.name 
+                    ? 'border-primary-main text-primary-main' 
+                    : 'border-transparent text-text-secondary hover:text-text-primary hover:border-gray-300'
+                ]"
+              >
+                {{ tab.label }}
+              </button>
+            </nav>
+          </div>
+          
+          <div class="p-4">
+            <DadosTab v-if="activeTab === 'dados'" :colaboradores="colaboradores" :projetos="projetos" />
+            <FitnessTab v-if="activeTab === 'fitness'" :historico="resultado.historico_fitness" :melhor="resultado.melhor_fitness" />
+            <ConflitosTab v-if="activeTab === 'conflitos'" :penalidades="resultado.penalidades" :ocorrencias="resultado.ocorrencias_penalidades" />
+            <GanttTab v-if="activeTab === 'gantt'" :tarefas="resultado.tarefas" />
+            <CalendarioTab v-if="activeTab === 'calendario'" :tarefas="resultado.tarefas" :projetos="projetos" />
+          </div>
         </div>
-      </el-main>
-    </el-container>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -123,7 +187,14 @@ export default {
       activeTab: 'dados',
       resultado: null,
       colaboradores: [],
-      projetos: []
+      projetos: [],
+      tabs: [
+        { name: 'dados', label: 'Dados' },
+        { name: 'fitness', label: 'Fitness' },
+        { name: 'conflitos', label: 'Conflitos' },
+        { name: 'gantt', label: 'Gantt' },
+        { name: 'calendario', label: 'Calendário' }
+      ]
     }
   },
   async mounted() {
@@ -141,10 +212,10 @@ export default {
         console.log('Projetos:', projRes.data)
         this.colaboradores = colabRes.data
         this.projetos = projRes.data
-        this.$message.success(`Carregados ${this.colaboradores.length} colaboradores e ${this.projetos.length} projetos`)
+        console.log(`Carregados ${this.colaboradores.length} colaboradores e ${this.projetos.length} projetos`)
       } catch (error) {
         console.error('Erro ao carregar dados:', error)
-        this.$message.error('Erro ao carregar dados: ' + error.message)
+        console.error('Erro ao carregar dados:', error.message)
       }
     },
     async executarAlgoritmo() {
@@ -153,9 +224,9 @@ export default {
         const response = await axios.post('/api/executar-algoritmo', this.params)
         this.resultado = response.data
         this.activeTab = 'gantt'
-        this.$message.success('Algoritmo executado com sucesso!')
+        console.log('Algoritmo executado com sucesso!')
       } catch (error) {
-        this.$message.error('Erro ao executar algoritmo')
+        console.error('Erro ao executar algoritmo')
       } finally {
         this.loading = false
       }
@@ -165,87 +236,14 @@ export default {
 </script>
 
 <style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-#app {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  height: 100vh;
-  background-color: #f8f9fa;
-}
-
-.app-container {
-  height: 100vh;
-}
-
-.sidebar {
-  background-color: #ffffff;
-  border-right: 1px solid #e4e7ed;
-  padding: 20px;
-  overflow-y: auto;
-}
-
-.params-card {
-  border: none;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
-}
-
-.main-content {
-  padding: 20px;
-  overflow-y: auto;
-  background-color: #f8f9fa;
-}
-
-.header {
-  margin-bottom: 20px;
-  padding-bottom: 15px;
-  border-bottom: 2px solid #409eff;
-}
-
-.header h1 {
-  color: #303133;
-  font-size: 24px;
-  font-weight: 600;
-}
-
-.welcome-section {
-  margin-top: 50px;
-}
-
-.results-section {
-  background-color: #ffffff;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
-}
-
-.result-tabs {
-  min-height: 500px;
-}
-
-.el-form-item {
-  margin-bottom: 18px;
-}
-
-.el-slider {
-  margin: 10px 0;
-}
-
 @media (max-width: 768px) {
-  .app-container {
+  .flex {
     flex-direction: column;
   }
   
-  .sidebar {
+  .w-72 {
     width: 100% !important;
     height: auto;
-  }
-  
-  .main-content {
-    padding: 10px;
   }
 }
 </style>

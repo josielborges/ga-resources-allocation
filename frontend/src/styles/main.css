@@ -1,0 +1,116 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* Design System Components */
+@layer components {
+  .card {
+    @apply bg-background-paper rounded-md shadow-sm p-4;
+  }
+  
+  .card-header {
+    @apply flex justify-between items-center mb-3 text-base font-semibold text-text-primary;
+  }
+  
+  .btn-primary {
+    @apply bg-primary-main text-white px-5 py-2.5 rounded-sm text-sm font-medium border border-transparent hover:bg-primary-light transition-colors;
+  }
+  
+  .btn-secondary {
+    @apply bg-secondary-main text-white px-5 py-2.5 rounded-sm text-sm font-medium border border-transparent hover:bg-secondary-light transition-colors;
+  }
+  
+  .btn-view-all {
+    @apply bg-transparent text-primary-main border border-divider px-4 py-1.5 rounded-sm text-sm font-medium hover:bg-gray-50 transition-colors;
+  }
+  
+  .stat-widget {
+    @apply card flex items-center space-x-4;
+  }
+  
+  .stat-icon {
+    @apply w-14 h-14 rounded-full flex items-center justify-center;
+  }
+  
+  .stat-icon-success {
+    @apply stat-icon bg-semantic-success-light text-semantic-success-main;
+  }
+  
+  .stat-icon-error {
+    @apply stat-icon bg-semantic-error-light text-semantic-error-main;
+  }
+  
+  .stat-icon-warning {
+    @apply stat-icon bg-semantic-warning-light text-semantic-warning-main;
+  }
+  
+  .stat-icon-info {
+    @apply stat-icon bg-semantic-info-light text-semantic-info-main;
+  }
+  
+  .metric-large {
+    @apply text-metric-large font-metric text-text-primary;
+  }
+  
+  .metric-small {
+    @apply text-metric-small font-semibold text-text-primary;
+  }
+  
+  .caption {
+    @apply text-xs font-normal uppercase tracking-wider text-text-secondary;
+  }
+  
+  .badge {
+    @apply px-2 py-1 rounded-xl text-xs font-semibold;
+  }
+  
+  .badge-new {
+    @apply badge bg-semantic-error-main text-white;
+  }
+  
+  .badge-success {
+    @apply badge bg-semantic-success-main text-white;
+  }
+  
+  .badge-warning {
+    @apply badge bg-semantic-warning-main text-white;
+  }
+  
+  .badge-info {
+    @apply badge bg-semantic-info-main text-white;
+  }
+  
+  .sidebar {
+    @apply bg-background-sidebar text-text-on-dark w-70;
+  }
+  
+  .sidebar-item {
+    @apply px-6 py-3 hover:bg-white hover:bg-opacity-5 transition-colors cursor-pointer;
+  }
+  
+  .sidebar-item-active {
+    @apply sidebar-item bg-primary-main text-white;
+  }
+  
+  .table-header {
+    @apply bg-gray-50 text-text-secondary text-sm font-medium uppercase tracking-wider;
+  }
+  
+  .table-cell {
+    @apply px-6 py-4 text-sm text-text-primary;
+  }
+  
+  .form-input {
+    @apply w-full px-3 py-2 border border-divider rounded-sm focus:outline-none focus:ring-2 focus:ring-primary-main focus:border-transparent;
+  }
+  
+  .form-select {
+    @apply form-input bg-white;
+  }
+  
+  .form-slider {
+    @apply w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer;
+  }
+}
