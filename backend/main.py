@@ -1,12 +1,16 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy.orm import Session
 import json
 import datetime
 from typing import List
 from models import *
 from genetic_algorithm import GeneticAlgorithm, Utils
 from utils.config import lifespan, settings
+from db.database import get_db
+from db import crud
+from db import schemas
 
 app = FastAPI(title="Resource Allocation API",
               openapi_url=settings.OPENAPI_URL,
@@ -28,6 +32,41 @@ def load_data():
         colaboradores = json.load(f)
     with open("data/projects.json", "r") as f:
         projetos = json.load(f)
+    return colaboradores, projetos
+
+def load_data_from_db(db: Session):
+    colaboradores_db = crud.get_colaboradores(db)
+    projetos_db = crud.get_projetos(db)
+    
+    # Convert to format expected by genetic algorithm
+    colaboradores = []
+    for colab in colaboradores_db:
+        colaboradores.append({
+            "id": colab.id,
+            "nome": colab.nome,
+            "cargo": colab.cargo.nome,
+            "habilidades": [h.nome for h in colab.habilidades],
+            "ausencias": [a.data.strftime("%Y-%m-%d") for a in colab.ausencias]
+        })
+    
+    projetos = []
+    for proj in projetos_db:
+        etapas = []
+        for etapa in proj.etapas:
+            etapas.append({
+                "id": etapa.id,
+                "nome": etapa.nome,
+                "duracao_dias": etapa.duracao_dias,
+                "cargo_necessario": etapa.cargo_necessario.nome,
+                "habilidades_necessarias": [h.nome for h in etapa.habilidades_necessarias]
+            })
+        
+        projetos.append({
+            "nome": proj.nome,
+            "color": proj.color,
+            "etapas": etapas
+        })
+    
     return colaboradores, projetos
 
 def convert_ausencias(colaboradores: List[dict], ref_date: datetime.date):
@@ -54,20 +93,36 @@ def montar_tarefas_globais(projetos: List[dict]):
             })
     return tarefas_globais
 
-@app.get("/api/colaboradores")
+@app.get("/api/colaboradores", response_model=List[schemas.Colaborador])
+async def get_colaboradores_db(db: Session = Depends(get_db)):
+    return crud.get_colaboradores(db)
+
+@app.get("/api/projetos", response_model=List[schemas.Projeto])
+async def get_projetos_db(db: Session = Depends(get_db)):
+    return crud.get_projetos(db)
+
+@app.get("/api/colaboradores/json")
 async def get_colaboradores():
     colaboradores, _ = load_data()
     return colaboradores
 
-@app.get("/api/projetos")
+@app.get("/api/projetos/json")
 async def get_projetos():
     _, projetos = load_data()
     return projetos
 
+@app.get("/api/habilidades", response_model=List[schemas.Habilidade])
+async def get_habilidades(db: Session = Depends(get_db)):
+    return crud.get_habilidades(db)
+
+@app.get("/api/cargos", response_model=List[schemas.Cargo])
+async def get_cargos(db: Session = Depends(get_db)):
+    return crud.get_cargos(db)
+
 @app.post("/api/executar-algoritmo")
-async def executar_algoritmo(params: AlgoritmoParams):
+async def executar_algoritmo(params: AlgoritmoParams, db: Session = Depends(get_db)):
     try:
-        colaboradores, projetos = load_data()
+        colaboradores, projetos = load_data_from_db(db)
         ref_date = datetime.datetime.strptime(params.ref_date, "%Y-%m-%d").date()
         
         colaboradores = convert_ausencias(colaboradores, ref_date)

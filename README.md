@@ -7,9 +7,19 @@ Aplicação de alocação de recursos usando Algoritmo Genético, migrada de Str
 ```
 resource-allocation/
 ├── backend/           # API FastAPI
+│   ├── db/           # Banco de dados
+│   │   ├── alembic/     # Migrations
+│   │   ├── models.py    # Modelos SQLAlchemy
+│   │   ├── schemas.py   # Schemas Pydantic
+│   │   ├── crud.py      # Operações CRUD
+│   │   └── database.py  # Configuração do banco
+│   ├── scripts/      # Scripts utilitários
+│   │   ├── setup_db.py  # Setup do banco
+│   │   └── seed_data.py # Popular dados
+│   ├── docs/         # Documentação
 │   ├── main.py       # Servidor principal
-│   ├── models.py     # Modelos Pydantic
 │   ├── genetic_algorithm.py  # Lógica do AG
+│   ├── Makefile      # Comandos úteis
 │   └── requirements.txt
 ├── frontend/         # Interface Vue.js
 │   ├── src/
@@ -18,7 +28,7 @@ resource-allocation/
 │   │   └── main.js     # Entrada da aplicação
 │   ├── package.json
 │   └── vite.config.js
-└── fase-02/dados/    # Dados JSON (colaboradores e projetos)
+└── data/            # Dados JSON (colaboradores e projetos)
 ```
 
 ## Instalação e Execução
@@ -26,7 +36,14 @@ resource-allocation/
 ### Backend (FastAPI)
 ```bash
 cd backend
+
+# Instalação completa (dependências + banco + dados)
+make full-setup
+
+# Ou manualmente:
 pip install -r requirements.txt
+make start-db
+make setup-db
 python main.py
 ```
 API disponível em: http://localhost:8000
