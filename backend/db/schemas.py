@@ -61,7 +61,6 @@ class EtapaBase(BaseModel):
     duracao_dias: int
 
 class EtapaCreate(EtapaBase):
-    projeto_id: int
     cargo_necessario_id: int
     habilidades_necessarias: List[str] = []
 
@@ -79,6 +78,9 @@ class ProjetoBase(BaseModel):
     color: str
 
 class ProjetoCreate(ProjetoBase):
+    etapas: List[EtapaCreate] = []
+
+class ProjetoUpdate(ProjetoBase):
     etapas: List[EtapaCreate] = []
 
 class Projeto(ProjetoBase):

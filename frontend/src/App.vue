@@ -180,8 +180,8 @@
         </div>
 
         <!-- Módulo Projetos -->
-        <div v-if="activeModule === 'projetos'" class="bg-white rounded-md shadow-sm p-6">
-          <p class="text-text-secondary">Módulo de gerenciamento de projetos em desenvolvimento...</p>
+        <div v-if="activeModule === 'projetos'">
+          <ProjetosCrud />
         </div>
 
         <!-- Módulo Colaboradores -->
@@ -206,6 +206,7 @@ import FitnessTab from './components/FitnessTab.vue'
 import ConflitosTab from './components/ConflitosTab.vue'
 import GanttTab from './components/GanttTab.vue'
 import CalendarioTab from './components/CalendarioTab.vue'
+import ProjetosCrud from './components/ProjetosCrud.vue'
 
 export default {
   name: 'App',
@@ -215,6 +216,7 @@ export default {
     ConflitosTab,
     GanttTab,
     CalendarioTab,
+    ProjetosCrud,
     CpuChipIcon,
     FolderIcon,
     UserGroupIcon,

@@ -101,6 +101,30 @@ async def get_colaboradores_db(db: Session = Depends(get_db)):
 async def get_projetos_db(db: Session = Depends(get_db)):
     return crud.get_projetos(db)
 
+@app.get("/api/projetos/{projeto_id}", response_model=schemas.Projeto)
+async def get_projeto(projeto_id: int, db: Session = Depends(get_db)):
+    projeto = crud.get_projeto(db, projeto_id)
+    if not projeto:
+        raise HTTPException(status_code=404, detail="Projeto não encontrado")
+    return projeto
+
+@app.post("/api/projetos", response_model=schemas.Projeto)
+async def create_projeto(projeto: schemas.ProjetoCreate, db: Session = Depends(get_db)):
+    return crud.create_projeto(db, projeto)
+
+@app.put("/api/projetos/{projeto_id}", response_model=schemas.Projeto)
+async def update_projeto(projeto_id: int, projeto: schemas.ProjetoCreate, db: Session = Depends(get_db)):
+    updated_projeto = crud.update_projeto(db, projeto_id, projeto)
+    if not updated_projeto:
+        raise HTTPException(status_code=404, detail="Projeto não encontrado")
+    return updated_projeto
+
+@app.delete("/api/projetos/{projeto_id}")
+async def delete_projeto(projeto_id: int, db: Session = Depends(get_db)):
+    if not crud.delete_projeto(db, projeto_id):
+        raise HTTPException(status_code=404, detail="Projeto não encontrado")
+    return {"message": "Projeto deletado com sucesso"}
+
 @app.get("/api/colaboradores/json")
 async def get_colaboradores():
     colaboradores, _ = load_data()
@@ -118,6 +142,10 @@ async def get_habilidades(db: Session = Depends(get_db)):
 @app.get("/api/cargos", response_model=List[schemas.Cargo])
 async def get_cargos(db: Session = Depends(get_db)):
     return crud.get_cargos(db)
+
+@app.get("/api/etapas", response_model=List[schemas.Etapa])
+async def get_etapas(db: Session = Depends(get_db)):
+    return crud.get_etapas(db)
 
 @app.post("/api/executar-algoritmo")
 async def executar_algoritmo(params: AlgoritmoParams, db: Session = Depends(get_db)):
