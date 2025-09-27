@@ -76,8 +76,8 @@
     </div>
 
     <!-- Modal de edição/criação -->
-    <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-lg w-full max-w-5xl max-h-[95vh] flex flex-col">
+    <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" style="margin: 0; padding: 16px;">
+      <div class="bg-white rounded-lg w-full max-w-5xl max-h-[95vh] flex flex-col overflow-hidden">
         <!-- Header -->
         <div class="flex justify-between items-center p-6 border-b border-gray-200">
           <h3 class="text-xl font-semibold">{{ editandoProjeto ? 'Editar Projeto' : 'Novo Projeto' }}</h3>
@@ -224,7 +224,7 @@
         </div>
         
         <!-- Footer -->
-        <div class="flex justify-end space-x-3 p-6 border-t border-gray-200 bg-gray-50">
+        <div class="flex justify-end space-x-3 p-6 border-t border-gray-200 bg-gray-50 rounded-b-lg">
           <button 
             type="button" 
             @click="fecharModal" 

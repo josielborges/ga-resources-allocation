@@ -1,6 +1,6 @@
 <template>
-  <div class="min-h-screen bg-background-default font-sans">
-    <div class="flex h-screen">
+  <div class="h-screen bg-background-default font-sans overflow-hidden">
+    <div class="flex h-full">
       <!-- Menu Lateral -->
       <div class="w-64 bg-gradient-to-b from-cyan-600 to-green-400 text-white overflow-y-auto">
         <div class="p-4">
@@ -24,174 +24,191 @@
         </div>
       </div>
 
-      <!-- Parâmetros Sidebar (apenas para algoritmo) -->
-      <div v-if="activeModule === 'roadmap'" class="w-72 bg-background-paper border-r border-divider p-4 overflow-y-auto">
-        <div class="bg-white rounded-md shadow-sm p-4">
-          <h3 class="text-base font-semibold text-text-primary mb-4">Parâmetros do algoritmo</h3>
+      <!-- Área do Roadmap com header estendido -->
+      <div v-if="activeModule === 'roadmap'" class="flex-1 flex flex-col">
+        <!-- Header estendido -->
+        <div class="text-white px-6 py-4 shadow-sm flex-shrink-0" style="background: linear-gradient(to bottom, #0891B2, #0C94AD);">
+          <h1 class="text-xl font-semibold">{{ getModuleTitle() }}</h1>
+        </div>
+        
+        <!-- Conteúdo do roadmap -->
+        <div class="flex flex-1 overflow-hidden">
+          <!-- Parâmetros Sidebar -->
+          <div class="w-72 bg-background-paper border-r border-divider flex-shrink-0">
+            <div class="p-4">
+            <div class="bg-white rounded-md shadow-sm p-4">
+              <h3 class="text-base font-semibold text-text-primary mb-4">Parâmetros do algoritmo</h3>
+              
+              <form class="space-y-4">
+                <div>
+                  <label class="caption block mb-2">População</label>
+                  <input 
+                    v-model="params.tam_pop" 
+                    type="range" 
+                    min="10" 
+                    max="100" 
+                    class="form-slider"
+                  />
+                  <div class="flex justify-between text-sm text-text-secondary mt-1">
+                    <span>10</span>
+                    <span class="font-medium">{{ params.tam_pop }}</span>
+                    <span>100</span>
+                  </div>
+                </div>
+                
+                <div>
+                  <label class="caption block mb-2">Gerações</label>
+                  <input 
+                    v-model="params.n_gen" 
+                    type="range" 
+                    min="5" 
+                    max="1000" 
+                    class="form-slider"
+                  />
+                  <div class="flex justify-between text-sm text-text-secondary mt-1">
+                    <span>5</span>
+                    <span class="font-medium">{{ params.n_gen }}</span>
+                    <span>1000</span>
+                  </div>
+                </div>
+                
+                <div>
+                  <label class="caption block mb-2">Crossover</label>
+                  <input 
+                    v-model="params.pc" 
+                    type="range" 
+                    min="0" 
+                    max="1" 
+                    step="0.1" 
+                    class="form-slider"
+                  />
+                  <div class="flex justify-between text-sm text-text-secondary mt-1">
+                    <span>0</span>
+                    <span class="font-medium">{{ params.pc }}</span>
+                    <span>1</span>
+                  </div>
+                </div>
+                
+                <div>
+                  <label class="caption block mb-2">Mutação</label>
+                  <input 
+                    v-model="params.pm" 
+                    type="range" 
+                    min="0" 
+                    max="1" 
+                    step="0.1" 
+                    class="form-slider"
+                  />
+                  <div class="flex justify-between text-sm text-text-secondary mt-1">
+                    <span>0</span>
+                    <span class="font-medium">{{ params.pm }}</span>
+                    <span>1</span>
+                  </div>
+                </div>
+                
+                <div>
+                  <label class="caption block mb-2">Data de Referência</label>
+                  <input 
+                    v-model="params.ref_date" 
+                    type="date" 
+                    class="form-input"
+                  />
+                </div>
+                
+                <button 
+                  @click="executarAlgoritmo" 
+                  :disabled="loading" 
+                  class="bg-primary-main text-white px-4 py-2 rounded-sm text-sm font-medium w-full mt-4 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary-light transition-colors"
+                  type="button"
+                >
+                  <span v-if="loading" class="flex items-center justify-center">
+                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Executando...
+                  </span>
+                  <span v-else>Executar Algoritmo</span>
+                </button>
+              </form>
+            </div>
+            </div>
+          </div>
           
-          <form class="space-y-4">
-            <div>
-              <label class="caption block mb-2">População</label>
-              <input 
-                v-model="params.tam_pop" 
-                type="range" 
-                min="10" 
-                max="100" 
-                class="form-slider"
-              />
-              <div class="flex justify-between text-sm text-text-secondary mt-1">
-                <span>10</span>
-                <span class="font-medium">{{ params.tam_pop }}</span>
-                <span>100</span>
+          <!-- Conteúdo principal -->
+          <div class="flex-1 p-4 overflow-y-auto">
+            <div v-if="!resultado" class="mt-6">
+              <div class="bg-semantic-info-light border border-semantic-info-main rounded-md p-3 mb-4">
+                <div class="flex items-center">
+                  <svg class="w-4 h-4 text-semantic-info-main mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                  </svg>
+                  <span class="text-semantic-info-main text-sm">Configure os parâmetros e execute o algoritmo</span>
+                </div>
+              </div>
+              <div class="bg-white rounded-md shadow-sm p-4">
+                <h4 class="text-base font-medium text-text-primary mb-2">Dados:</h4>
+                <div class="text-sm text-text-secondary space-y-1">
+                  <p>Colaboradores: {{ colaboradores.length }}</p>
+                  <p>Projetos: {{ projetos.length }}</p>
+                </div>
               </div>
             </div>
-            
-            <div>
-              <label class="caption block mb-2">Gerações</label>
-              <input 
-                v-model="params.n_gen" 
-                type="range" 
-                min="5" 
-                max="1000" 
-                class="form-slider"
-              />
-              <div class="flex justify-between text-sm text-text-secondary mt-1">
-                <span>5</span>
-                <span class="font-medium">{{ params.n_gen }}</span>
-                <span>1000</span>
+
+            <div v-if="resultado" class="bg-white rounded-md shadow-sm">
+              <div class="border-b border-divider px-4">
+                <nav class="flex space-x-6">
+                  <button 
+                    v-for="tab in tabs" 
+                    :key="tab.name"
+                    @click="activeTab = tab.name"
+                    :class="[
+                      'py-3 px-1 border-b-2 font-medium text-sm transition-colors',
+                      activeTab === tab.name 
+                        ? 'border-primary-main text-primary-main' 
+                        : 'border-transparent text-text-secondary hover:text-text-primary hover:border-gray-300'
+                    ]"
+                  >
+                    {{ tab.label }}
+                  </button>
+                </nav>
+              </div>
+              
+              <div class="p-4">
+                <DadosTab v-if="activeTab === 'dados'" :colaboradores="colaboradores" :projetos="projetos" />
+                <FitnessTab v-if="activeTab === 'fitness'" :historico="resultado.historico_fitness" :melhor="resultado.melhor_fitness" />
+                <ConflitosTab v-if="activeTab === 'conflitos'" :penalidades="resultado.penalidades" :ocorrencias="resultado.ocorrencias_penalidades" />
+                <GanttTab v-if="activeTab === 'gantt'" :tarefas="resultado.tarefas" />
+                <CalendarioTab v-if="activeTab === 'calendario'" :tarefas="resultado.tarefas" :projetos="projetos" />
               </div>
             </div>
-            
-            <div>
-              <label class="caption block mb-2">Crossover</label>
-              <input 
-                v-model="params.pc" 
-                type="range" 
-                min="0" 
-                max="1" 
-                step="0.1" 
-                class="form-slider"
-              />
-              <div class="flex justify-between text-sm text-text-secondary mt-1">
-                <span>0</span>
-                <span class="font-medium">{{ params.pc }}</span>
-                <span>1</span>
-              </div>
-            </div>
-            
-            <div>
-              <label class="caption block mb-2">Mutação</label>
-              <input 
-                v-model="params.pm" 
-                type="range" 
-                min="0" 
-                max="1" 
-                step="0.1" 
-                class="form-slider"
-              />
-              <div class="flex justify-between text-sm text-text-secondary mt-1">
-                <span>0</span>
-                <span class="font-medium">{{ params.pm }}</span>
-                <span>1</span>
-              </div>
-            </div>
-            
-            <div>
-              <label class="caption block mb-2">Data de Referência</label>
-              <input 
-                v-model="params.ref_date" 
-                type="date" 
-                class="form-input"
-              />
-            </div>
-            
-            <button 
-              @click="executarAlgoritmo" 
-              :disabled="loading" 
-              class="bg-primary-main text-white px-4 py-2 rounded-sm text-sm font-medium w-full mt-4 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary-light transition-colors"
-              type="button"
-            >
-              <span v-if="loading" class="flex items-center justify-center">
-                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Executando...
-              </span>
-              <span v-else>Executar Algoritmo</span>
-            </button>
-          </form>
+          </div>
         </div>
       </div>
 
-      <!-- Main Content -->
-      <div class="flex-1 p-4 overflow-y-auto">
-        <div class="mb-4 pb-2 border-b border-primary-main">
-          <h1 class="text-lg font-semibold text-text-primary">{{ getModuleTitle() }}</h1>
+      <!-- Main Content (outros módulos) -->
+      <div v-else class="flex-1 flex flex-col">
+        <!-- Header (outros módulos) -->
+        <div class="text-white px-6 py-4 shadow-sm flex-shrink-0" style="background: linear-gradient(to bottom, #0891B2, #0C94AD);">
+          <h1 class="text-xl font-semibold">{{ getModuleTitle() }}</h1>
         </div>
         
-        <!-- Módulo Algoritmo -->
-        <div v-if="activeModule === 'roadmap'">
-          <div v-if="!resultado" class="mt-6">
-            <div class="bg-semantic-info-light border border-semantic-info-main rounded-md p-3 mb-4">
-              <div class="flex items-center">
-                <svg class="w-4 h-4 text-semantic-info-main mr-2" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
-                </svg>
-                <span class="text-semantic-info-main text-sm">Configure os parâmetros e execute o algoritmo</span>
-              </div>
-            </div>
-            <div class="bg-white rounded-md shadow-sm p-4">
-              <h4 class="text-base font-medium text-text-primary mb-2">Dados:</h4>
-              <div class="text-sm text-text-secondary space-y-1">
-                <p>Colaboradores: {{ colaboradores.length }}</p>
-                <p>Projetos: {{ projetos.length }}</p>
-              </div>
-            </div>
+        <!-- Content -->
+        <div class="flex-1 p-4 overflow-y-auto">
+          <!-- Módulo Projetos -->
+          <div v-if="activeModule === 'projetos'">
+            <ProjetosCrud />
           </div>
 
-          <div v-if="resultado" class="bg-white rounded-md shadow-sm">
-            <div class="border-b border-divider px-4">
-              <nav class="flex space-x-6">
-                <button 
-                  v-for="tab in tabs" 
-                  :key="tab.name"
-                  @click="activeTab = tab.name"
-                  :class="[
-                    'py-3 px-1 border-b-2 font-medium text-sm transition-colors',
-                    activeTab === tab.name 
-                      ? 'border-primary-main text-primary-main' 
-                      : 'border-transparent text-text-secondary hover:text-text-primary hover:border-gray-300'
-                  ]"
-                >
-                  {{ tab.label }}
-                </button>
-              </nav>
-            </div>
-            
-            <div class="p-4">
-              <DadosTab v-if="activeTab === 'dados'" :colaboradores="colaboradores" :projetos="projetos" />
-              <FitnessTab v-if="activeTab === 'fitness'" :historico="resultado.historico_fitness" :melhor="resultado.melhor_fitness" />
-              <ConflitosTab v-if="activeTab === 'conflitos'" :penalidades="resultado.penalidades" :ocorrencias="resultado.ocorrencias_penalidades" />
-              <GanttTab v-if="activeTab === 'gantt'" :tarefas="resultado.tarefas" />
-              <CalendarioTab v-if="activeTab === 'calendario'" :tarefas="resultado.tarefas" :projetos="projetos" />
-            </div>
+          <!-- Módulo Colaboradores -->
+          <div v-if="activeModule === 'colaboradores'" class="bg-white rounded-md shadow-sm p-6">
+            <p class="text-text-secondary">Módulo de gerenciamento de colaboradores em desenvolvimento...</p>
           </div>
-        </div>
 
-        <!-- Módulo Projetos -->
-        <div v-if="activeModule === 'projetos'">
-          <ProjetosCrud />
-        </div>
-
-        <!-- Módulo Colaboradores -->
-        <div v-if="activeModule === 'colaboradores'" class="bg-white rounded-md shadow-sm p-6">
-          <p class="text-text-secondary">Módulo de gerenciamento de colaboradores em desenvolvimento...</p>
-        </div>
-
-        <!-- Módulo Relatórios -->
-        <div v-if="activeModule === 'relatorios'" class="bg-white rounded-md shadow-sm p-6">
-          <p class="text-text-secondary">Módulo de relatórios em desenvolvimento...</p>
+          <!-- Módulo Relatórios -->
+          <div v-if="activeModule === 'relatorios'" class="bg-white rounded-md shadow-sm p-6">
+            <p class="text-text-secondary">Módulo de relatórios em desenvolvimento...</p>
+          </div>
         </div>
       </div>
     </div>
@@ -302,6 +319,59 @@ export default {
 </script>
 
 <style>
+.form-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(to right, #0891B2 0%, #0C94AD 100%);
+  outline: none;
+  cursor: pointer;
+}
+
+.form-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid #0891B2;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.form-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid #0891B2;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Scrollbar Styles */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #0891B2, #0C94AD);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, #0e7490, #0a7c96);
+}
+
 @media (max-width: 768px) {
   .flex {
     flex-direction: column;

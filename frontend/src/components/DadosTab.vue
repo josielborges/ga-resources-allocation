@@ -36,16 +36,16 @@
                   <span class="px-2 py-1 bg-green-100 text-green-700 text-xs rounded font-medium">{{ etapa.duracao_dias }} dias</span>
                 </td>
                 <td class="px-3 py-1.5 text-sm">
-                  <span class="px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded">{{ etapa.cargo_necessario }}</span>
+                  <span class="px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded">{{ etapa.cargo_necessario?.nome || etapa.cargo_necessario }}</span>
                 </td>
                 <td class="px-3 py-1.5 text-sm">
                   <div class="flex flex-wrap gap-1">
                     <span 
                       v-for="hab in etapa.habilidades_necessarias" 
-                      :key="hab" 
+                      :key="hab.nome || hab" 
                       class="px-1.5 py-0.5 bg-gray-100 text-gray-600 text-xs rounded"
                     >
-                      {{ hab }}
+                      {{ hab.nome || hab }}
                     </span>
                   </div>
                 </td>
@@ -70,7 +70,7 @@
         </div>
       </div>
       
-      <div v-else class="bg-white rounded-md shadow-sm overflow-x-auto">
+      <div v-else class="bg-white rounded-md shadow-sm">
         <table class="min-w-full divide-y divide-gray-200">
           <thead class="bg-gray-50">
             <tr>
@@ -95,16 +95,16 @@
                 </div>
               </td>
               <td class="px-3 py-2 text-sm">
-                <span class="px-2 py-1 bg-green-100 text-green-700 text-xs rounded">{{ colaborador.cargo }}</span>
+                <span class="px-2 py-1 bg-green-100 text-green-700 text-xs rounded">{{ colaborador.cargo?.nome || colaborador.cargo }}</span>
               </td>
               <td class="px-3 py-2 text-sm">
                 <div class="flex flex-wrap gap-1">
                   <span 
                     v-for="hab in colaborador.habilidades.slice(0, 3)" 
-                    :key="hab" 
+                    :key="hab.nome || hab" 
                     class="px-1.5 py-0.5 bg-gray-100 text-gray-600 text-xs rounded"
                   >
-                    {{ hab }}
+                    {{ hab.nome || hab }}
                   </span>
                   <span v-if="colaborador.habilidades.length > 3" class="px-1.5 py-0.5 bg-gray-200 text-gray-500 text-xs rounded">
                     +{{ colaborador.habilidades.length - 3 }}
