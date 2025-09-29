@@ -205,6 +205,16 @@
             <ColaboradoresCrud />
           </div>
 
+          <!-- Módulo Cargos -->
+          <div v-if="activeModule === 'cargos'">
+            <CargosCrud />
+          </div>
+
+          <!-- Módulo Habilidades -->
+          <div v-if="activeModule === 'habilidades'">
+            <HabilidadesCrud />
+          </div>
+
           <!-- Módulo Relatórios -->
           <div v-if="activeModule === 'relatorios'" class="bg-white rounded-md shadow-sm p-6">
             <p class="text-text-secondary">Módulo de relatórios em desenvolvimento...</p>
@@ -225,6 +235,8 @@ import GanttTab from './components/GanttTab.vue'
 import CalendarioTab from './components/CalendarioTab.vue'
 import ProjetosCrud from './components/ProjetosCrud.vue'
 import ColaboradoresCrud from './components/ColaboradoresCrud.vue'
+import HabilidadesCrud from './components/HabilidadesCrud.vue'
+import CargosCrud from './components/CargosCrud.vue'
 
 export default {
   name: 'App',
@@ -236,6 +248,8 @@ export default {
     CalendarioTab,
     ProjetosCrud,
     ColaboradoresCrud,
+    HabilidadesCrud,
+    CargosCrud,
     CpuChipIcon,
     FolderIcon,
     UserGroupIcon,
@@ -261,6 +275,8 @@ export default {
         { id: 'estimativa', label: 'Gerador de Estimativa', icon: 'CpuChipIcon' },
         { id: 'projetos', label: 'Projetos', icon: 'FolderIcon' },
         { id: 'colaboradores', label: 'Colaboradores', icon: 'UserGroupIcon' },
+        { id: 'cargos', label: 'Cargos', icon: 'UserGroupIcon' },
+        { id: 'habilidades', label: 'Habilidades', icon: 'UserGroupIcon' },
         { id: 'relatorios', label: 'Relatórios', icon: 'DocumentChartBarIcon' }
       ],
       tabs: [
@@ -312,6 +328,8 @@ export default {
         'estimativa': 'Gerador de Estimativa',
         'projetos': 'Gerenciamento de Projetos',
         'colaboradores': 'Gerenciamento de Colaboradores',
+        'cargos': 'Gerenciamento de Cargos',
+        'habilidades': 'Gerenciamento de Habilidades',
         'relatorios': 'Relatórios e Análises'
       }
       return titles[this.activeModule] || 'Sistema de Alocação'

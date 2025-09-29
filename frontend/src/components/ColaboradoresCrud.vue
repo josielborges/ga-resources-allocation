@@ -202,14 +202,27 @@
         </div>
       </div>
     </div>
+    
+    <!-- Modal de confirmação -->
+    <ConfirmModal 
+      :show="showConfirmModal"
+      :title="'Confirmar exclusão'"
+      :message="`Tem certeza que deseja excluir o colaborador '${itemParaExcluir?.nome}'?`"
+      @confirm="executarExclusao"
+      @cancel="cancelarExclusao"
+    />
   </div>
 </template>
 
 <script>
 import axios from 'axios'
+import ConfirmModal from './ConfirmModal.vue'
 
 export default {
   name: 'ColaboradoresCrud',
+  components: {
+    ConfirmModal
+  },
   data() {
     return {
       colaboradores: [],
@@ -224,7 +237,9 @@ export default {
         cargo_id: '',
         habilidades_ids: [],
         ausencias: []
-      }
+      },
+      showConfirmModal: false,
+      itemParaExcluir: null
     }
   },
   async mounted() {
@@ -300,15 +315,25 @@ export default {
       }
     },
     
-    async confirmarExclusao(colaborador) {
-      if (confirm(`Tem certeza que deseja excluir o colaborador "${colaborador.nome}"?`)) {
-        try {
-          await axios.delete(`/api/colaboradores/${colaborador.id}`)
-          await this.carregarDados()
-        } catch (error) {
-          console.error('Erro ao excluir colaborador:', error)
-        }
+    confirmarExclusao(colaborador) {
+      this.itemParaExcluir = colaborador
+      this.showConfirmModal = true
+    },
+    
+    async executarExclusao() {
+      try {
+        await axios.delete(`/api/colaboradores/${this.itemParaExcluir.id}`)
+        await this.carregarDados()
+        this.cancelarExclusao()
+      } catch (error) {
+        console.error('Erro ao excluir colaborador:', error)
+        this.cancelarExclusao()
       }
+    },
+    
+    cancelarExclusao() {
+      this.showConfirmModal = false
+      this.itemParaExcluir = null
     }
   }
 }

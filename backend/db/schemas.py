@@ -44,8 +44,8 @@ class ColaboradorBase(BaseModel):
 
 class ColaboradorCreate(ColaboradorBase):
     cargo_id: int
-    habilidades: List[str] = []
-    ausencias: List[date] = []
+    habilidades_ids: List[int] = []
+    ausencias: List[dict] = []
 
 class Colaborador(ColaboradorBase):
     id: int

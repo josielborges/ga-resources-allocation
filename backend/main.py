@@ -147,6 +147,66 @@ async def get_cargos(db: Session = Depends(get_db)):
 async def get_etapas(db: Session = Depends(get_db)):
     return crud.get_etapas(db)
 
+# CRUD Habilidades
+@app.post("/api/habilidades", response_model=schemas.Habilidade)
+async def create_habilidade(habilidade: schemas.HabilidadeCreate, db: Session = Depends(get_db)):
+    return crud.create_habilidade(db, habilidade)
+
+@app.put("/api/habilidades/{habilidade_id}", response_model=schemas.Habilidade)
+async def update_habilidade(habilidade_id: int, habilidade: schemas.HabilidadeCreate, db: Session = Depends(get_db)):
+    updated_habilidade = crud.update_habilidade(db, habilidade_id, habilidade)
+    if not updated_habilidade:
+        raise HTTPException(status_code=404, detail="Habilidade não encontrada")
+    return updated_habilidade
+
+@app.delete("/api/habilidades/{habilidade_id}")
+async def delete_habilidade(habilidade_id: int, db: Session = Depends(get_db)):
+    result = crud.delete_habilidade(db, habilidade_id)
+    if result == "in_use":
+        raise HTTPException(status_code=400, detail="Não é possível excluir esta habilidade pois ela está sendo utilizada por colaboradores ou projetos")
+    elif not result:
+        raise HTTPException(status_code=404, detail="Habilidade não encontrada")
+    return {"message": "Habilidade deletada com sucesso"}
+
+# CRUD Cargos
+@app.post("/api/cargos", response_model=schemas.Cargo)
+async def create_cargo(cargo: schemas.CargoCreate, db: Session = Depends(get_db)):
+    return crud.create_cargo(db, cargo)
+
+@app.put("/api/cargos/{cargo_id}", response_model=schemas.Cargo)
+async def update_cargo(cargo_id: int, cargo: schemas.CargoCreate, db: Session = Depends(get_db)):
+    updated_cargo = crud.update_cargo(db, cargo_id, cargo)
+    if not updated_cargo:
+        raise HTTPException(status_code=404, detail="Cargo não encontrado")
+    return updated_cargo
+
+@app.delete("/api/cargos/{cargo_id}")
+async def delete_cargo(cargo_id: int, db: Session = Depends(get_db)):
+    result = crud.delete_cargo(db, cargo_id)
+    if result == "in_use":
+        raise HTTPException(status_code=400, detail="Não é possível excluir este cargo pois ele está sendo utilizado por colaboradores ou projetos")
+    elif not result:
+        raise HTTPException(status_code=404, detail="Cargo não encontrado")
+    return {"message": "Cargo deletado com sucesso"}
+
+# CRUD Colaboradores
+@app.post("/api/colaboradores", response_model=schemas.Colaborador)
+async def create_colaborador(colaborador: schemas.ColaboradorCreate, db: Session = Depends(get_db)):
+    return crud.create_colaborador(db, colaborador)
+
+@app.put("/api/colaboradores/{colaborador_id}", response_model=schemas.Colaborador)
+async def update_colaborador(colaborador_id: int, colaborador: schemas.ColaboradorCreate, db: Session = Depends(get_db)):
+    updated_colaborador = crud.update_colaborador(db, colaborador_id, colaborador)
+    if not updated_colaborador:
+        raise HTTPException(status_code=404, detail="Colaborador não encontrado")
+    return updated_colaborador
+
+@app.delete("/api/colaboradores/{colaborador_id}")
+async def delete_colaborador(colaborador_id: int, db: Session = Depends(get_db)):
+    if not crud.delete_colaborador(db, colaborador_id):
+        raise HTTPException(status_code=404, detail="Colaborador não encontrado")
+    return {"message": "Colaborador deletado com sucesso"}
+
 @app.post("/api/executar-algoritmo")
 async def executar_algoritmo(params: AlgoritmoParams, db: Session = Depends(get_db)):
     try:

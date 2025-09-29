@@ -8,7 +8,7 @@ colaborador_habilidade = Table(
     'colaborador_habilidade',
     Base.metadata,
     Column('colaborador_id', Integer, ForeignKey('colaboradores.id'), primary_key=True),
-    Column('habilidade_id', Integer, ForeignKey('habilidades.id'), primary_key=True)
+    Column('habilidade_id', Integer, ForeignKey('habilidades.id', ondelete='RESTRICT'), primary_key=True)
 )
 
 # Association table for many-to-many relationship between etapas and habilidades
@@ -16,7 +16,7 @@ etapa_habilidade = Table(
     'etapa_habilidade',
     Base.metadata,
     Column('etapa_id', Integer, ForeignKey('etapas.id'), primary_key=True),
-    Column('habilidade_id', Integer, ForeignKey('habilidades.id'), primary_key=True)
+    Column('habilidade_id', Integer, ForeignKey('habilidades.id', ondelete='RESTRICT'), primary_key=True)
 )
 
 class Habilidade(Base):
@@ -36,7 +36,7 @@ class Colaborador(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     nome = Column(String, index=True)
-    cargo_id = Column(Integer, ForeignKey("cargos.id"))
+    cargo_id = Column(Integer, ForeignKey("cargos.id", ondelete="RESTRICT"))
     
     cargo = relationship("Cargo")
     habilidades = relationship("Habilidade", secondary=colaborador_habilidade, back_populates="colaboradores")
@@ -67,7 +67,7 @@ class Etapa(Base):
     projeto_id = Column(Integer, ForeignKey("projetos.id"))
     nome = Column(String)
     duracao_dias = Column(Integer)
-    cargo_necessario_id = Column(Integer, ForeignKey("cargos.id"))
+    cargo_necessario_id = Column(Integer, ForeignKey("cargos.id", ondelete="RESTRICT"))
     
     projeto = relationship("Projeto", back_populates="etapas")
     cargo_necessario = relationship("Cargo")

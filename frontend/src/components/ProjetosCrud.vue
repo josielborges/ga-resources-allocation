@@ -246,14 +246,27 @@
         </div>
       </div>
     </div>
+    
+    <!-- Modal de confirmação -->
+    <ConfirmModal 
+      :show="showConfirmModal"
+      :title="'Confirmar exclusão'"
+      :message="`Tem certeza que deseja excluir o projeto '${itemParaExcluir?.nome}'?`"
+      @confirm="executarExclusao"
+      @cancel="cancelarExclusao"
+    />
   </div>
 </template>
 
 <script>
 import axios from 'axios'
+import ConfirmModal from './ConfirmModal.vue'
 
 export default {
   name: 'ProjetosCrud',
+  components: {
+    ConfirmModal
+  },
   data() {
     return {
       projetos: [],
@@ -267,7 +280,9 @@ export default {
         nome: '',
         color: '#3B82F6',
         etapas: []
-      }
+      },
+      showConfirmModal: false,
+      itemParaExcluir: null
     }
   },
   async mounted() {
@@ -357,15 +372,25 @@ export default {
       }
     },
     
-    async confirmarExclusao(projeto) {
-      if (confirm(`Tem certeza que deseja excluir o projeto "${projeto.nome}"?`)) {
-        try {
-          await axios.delete(`/api/projetos/${projeto.id}`)
-          await this.carregarDados()
-        } catch (error) {
-          console.error('Erro ao excluir projeto:', error)
-        }
+    confirmarExclusao(projeto) {
+      this.itemParaExcluir = projeto
+      this.showConfirmModal = true
+    },
+    
+    async executarExclusao() {
+      try {
+        await axios.delete(`/api/projetos/${this.itemParaExcluir.id}`)
+        await this.carregarDados()
+        this.cancelarExclusao()
+      } catch (error) {
+        console.error('Erro ao excluir projeto:', error)
+        this.cancelarExclusao()
       }
+    },
+    
+    cancelarExclusao() {
+      this.showConfirmModal = false
+      this.itemParaExcluir = null
     }
   }
 }
