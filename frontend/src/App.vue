@@ -201,8 +201,8 @@
           </div>
 
           <!-- Módulo Colaboradores -->
-          <div v-if="activeModule === 'colaboradores'" class="bg-white rounded-md shadow-sm p-6">
-            <p class="text-text-secondary">Módulo de gerenciamento de colaboradores em desenvolvimento...</p>
+          <div v-if="activeModule === 'colaboradores'">
+            <ColaboradoresCrud />
           </div>
 
           <!-- Módulo Relatórios -->
@@ -224,6 +224,7 @@ import ConflitosTab from './components/ConflitosTab.vue'
 import GanttTab from './components/GanttTab.vue'
 import CalendarioTab from './components/CalendarioTab.vue'
 import ProjetosCrud from './components/ProjetosCrud.vue'
+import ColaboradoresCrud from './components/ColaboradoresCrud.vue'
 
 export default {
   name: 'App',
@@ -234,6 +235,7 @@ export default {
     GanttTab,
     CalendarioTab,
     ProjetosCrud,
+    ColaboradoresCrud,
     CpuChipIcon,
     FolderIcon,
     UserGroupIcon,
