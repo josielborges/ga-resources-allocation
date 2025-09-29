@@ -124,9 +124,9 @@
               
               <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <!-- Etapas Existentes -->
-                <div v-for="(etapa, index) in form.etapas" :key="index" class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <div v-for="(etapa, index) in form.etapas" :key="index" class="bg-gray-50 border border-gray-200 rounded-lg p-3">
                   <!-- Card Header -->
-                  <div class="flex justify-between items-center mb-3">
+                  <div class="flex justify-between items-center mb-2">
                     <div class="flex items-center space-x-2">
                       <div class="w-6 h-6 bg-primary-main text-white rounded-full flex items-center justify-center text-xs font-bold">
                         {{ index + 1 }}
@@ -146,7 +146,7 @@
                   </div>
                   
                   <!-- Card Content -->
-                  <div class="space-y-3">
+                  <div class="space-y-2">
                     <div>
                       <label class="block text-xs font-medium text-gray-700 mb-1">Nome da Etapa</label>
                       <input 
@@ -154,11 +154,11 @@
                         type="text" 
                         required
                         placeholder="Ex: Análise de Requisitos"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-primary-main"
+                        class="w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-primary-main"
                       />
                     </div>
                     
-                    <div class="grid grid-cols-2 gap-3">
+                    <div class="grid grid-cols-2 gap-2">
                       <div>
                         <label class="block text-xs font-medium text-gray-700 mb-1">Duração</label>
                         <div class="relative">
@@ -167,9 +167,9 @@
                             type="number" 
                             min="1" 
                             required
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-primary-main"
+                            class="w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-primary-main"
                           />
-                          <span class="absolute right-3 top-2 text-xs text-gray-500">dias</span>
+                          <span class="absolute right-2 top-1.5 text-xs text-gray-500">dias</span>
                         </div>
                       </div>
                       
@@ -178,10 +178,10 @@
                         <select 
                           v-model="etapa.cargo_necessario_id" 
                           required
-                          class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-primary-main"
+                          class="w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-primary-main"
                         >
                           <option value="">Selecionar</option>
-                          <option v-for="cargo in cargos" :key="cargo.id" :value="cargo.id">
+                          <option v-for="cargo in cargosOrdenados" :key="cargo.id" :value="cargo.id">
                             {{ cargo.nome }}
                           </option>
                         </select>
@@ -189,15 +189,15 @@
                     </div>
                     
                     <div>
-                      <label class="block text-xs font-medium text-gray-700 mb-2">Habilidades Necessárias</label>
-                      <div class="max-h-20 overflow-y-auto border border-gray-200 rounded-md p-2 bg-white">
+                      <label class="block text-xs font-medium text-gray-700 mb-1">Habilidades Necessárias</label>
+                      <div class="border border-gray-200 rounded-md p-2 bg-white">
                         <div class="grid grid-cols-2 gap-1">
-                          <label v-for="habilidade in habilidades" :key="habilidade.id" class="flex items-center text-xs hover:bg-gray-50 p-1 rounded">
+                          <label v-for="habilidade in habilidadesOrdenadas" :key="habilidade.id" class="flex items-center text-xs hover:bg-gray-50 p-1 rounded">
                             <input 
                               type="checkbox" 
                               :value="habilidade.nome"
                               v-model="etapa.habilidades_necessarias"
-                              class="mr-2 text-primary-main"
+                              class="mr-1.5 text-primary-main"
                             />
                             <span class="truncate">{{ habilidade.nome }}</span>
                           </label>
@@ -211,12 +211,12 @@
                 <button 
                   type="button" 
                   @click="adicionarEtapa" 
-                  class="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-8 hover:border-primary-main hover:bg-primary-50 transition-colors flex flex-col items-center justify-center space-y-3 min-h-[200px]"
+                  class="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-primary-main hover:bg-primary-50 transition-colors flex flex-col items-center justify-center space-y-2 min-h-[150px]"
                 >
-                  <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                   </svg>
-                  <span class="text-gray-600 font-medium">Adicionar Etapa</span>
+                  <span class="text-gray-600 font-medium text-sm">Adicionar Etapa</span>
                 </button>
               </div>
             </div>
@@ -288,6 +288,12 @@ export default {
   computed: {
     projetosOrdenados() {
       return [...this.projetos].sort((a, b) => a.nome.localeCompare(b.nome))
+    },
+    cargosOrdenados() {
+      return [...this.cargos].sort((a, b) => a.nome.localeCompare(b.nome))
+    },
+    habilidadesOrdenadas() {
+      return [...this.habilidades].sort((a, b) => a.nome.localeCompare(b.nome))
     }
   },
   async mounted() {
