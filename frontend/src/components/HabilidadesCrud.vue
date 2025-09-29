@@ -165,8 +165,11 @@ export default {
         return
       }
       try {
-        await axios.put(`/api/habilidades/${habilidade.id}`, { nome: this.nomeEditando.trim() })
-        await this.carregarDados()
+        const response = await axios.put(`/api/habilidades/${habilidade.id}`, { nome: this.nomeEditando.trim() })
+        const index = this.habilidades.findIndex(h => h.id === habilidade.id)
+        if (index !== -1) {
+          this.habilidades[index] = response.data
+        }
         this.cancelarEdicao()
       } catch (error) {
         console.error('Erro ao salvar habilidade:', error)
@@ -177,8 +180,8 @@ export default {
     async adicionarHabilidade() {
       if (!this.novaHabilidade.trim()) return
       try {
-        await axios.post('/api/habilidades', { nome: this.novaHabilidade.trim() })
-        await this.carregarDados()
+        const response = await axios.post('/api/habilidades', { nome: this.novaHabilidade.trim() })
+        this.habilidades.push(response.data)
         this.novaHabilidade = ''
       } catch (error) {
         console.error('Erro ao adicionar habilidade:', error)
@@ -193,7 +196,10 @@ export default {
     async executarExclusao() {
       try {
         await axios.delete(`/api/habilidades/${this.itemParaExcluir.id}`)
-        await this.carregarDados()
+        const index = this.habilidades.findIndex(h => h.id === this.itemParaExcluir.id)
+        if (index !== -1) {
+          this.habilidades.splice(index, 1)
+        }
         this.cancelarExclusao()
       } catch (error) {
         console.error('Erro ao excluir habilidade:', error)

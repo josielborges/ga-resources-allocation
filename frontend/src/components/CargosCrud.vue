@@ -165,8 +165,11 @@ export default {
         return
       }
       try {
-        await axios.put(`/api/cargos/${cargo.id}`, { nome: this.nomeEditando.trim() })
-        await this.carregarDados()
+        const response = await axios.put(`/api/cargos/${cargo.id}`, { nome: this.nomeEditando.trim() })
+        const index = this.cargos.findIndex(c => c.id === cargo.id)
+        if (index !== -1) {
+          this.cargos[index] = response.data
+        }
         this.cancelarEdicao()
       } catch (error) {
         console.error('Erro ao salvar cargo:', error)
@@ -177,8 +180,8 @@ export default {
     async adicionarCargo() {
       if (!this.novoCargo.trim()) return
       try {
-        await axios.post('/api/cargos', { nome: this.novoCargo.trim() })
-        await this.carregarDados()
+        const response = await axios.post('/api/cargos', { nome: this.novoCargo.trim() })
+        this.cargos.push(response.data)
         this.novoCargo = ''
       } catch (error) {
         console.error('Erro ao adicionar cargo:', error)
@@ -193,7 +196,10 @@ export default {
     async executarExclusao() {
       try {
         await axios.delete(`/api/cargos/${this.itemParaExcluir.id}`)
-        await this.carregarDados()
+        const index = this.cargos.findIndex(c => c.id === this.itemParaExcluir.id)
+        if (index !== -1) {
+          this.cargos.splice(index, 1)
+        }
         this.cancelarExclusao()
       } catch (error) {
         console.error('Erro ao excluir cargo:', error)
