@@ -20,7 +20,7 @@
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
-          <tr v-for="habilidade in habilidades" :key="habilidade.id" class="hover:bg-gray-50">
+          <tr v-for="habilidade in habilidadesOrdenadas" :key="habilidade.id" class="hover:bg-gray-50">
             <td class="px-4 py-2">
               <input 
                 v-if="editando === habilidade.id"
@@ -128,6 +128,11 @@ export default {
       showNotification: false,
       notificationTitle: '',
       notificationMessage: ''
+    }
+  },
+  computed: {
+    habilidadesOrdenadas() {
+      return [...this.habilidades].sort((a, b) => a.nome.localeCompare(b.nome))
     }
   },
   async mounted() {

@@ -33,7 +33,7 @@
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
-          <tr v-for="colaborador in colaboradores" :key="colaborador.id" class="hover:bg-gray-50">
+          <tr v-for="colaborador in colaboradoresOrdenados" :key="colaborador.id" class="hover:bg-gray-50">
             <td class="px-4 py-2 whitespace-nowrap">
               <div class="text-sm font-medium text-gray-900">{{ colaborador.nome }}</div>
             </td>
@@ -128,9 +128,9 @@
             <!-- Habilidades -->
             <div>
               <label class="block text-sm font-medium text-text-primary mb-1">Habilidades</label>
-              <div class="max-h-24 overflow-y-auto border border-gray-200 rounded-md p-2 bg-white">
+              <div class="border border-gray-200 rounded-md p-2 bg-white">
                 <div class="grid grid-cols-2 gap-1">
-                  <label v-for="habilidade in habilidades" :key="habilidade.id" class="flex items-center text-xs hover:bg-gray-50 p-1 rounded">
+                  <label v-for="habilidade in habilidadesOrdenadas" :key="habilidade.id" class="flex items-center text-xs hover:bg-gray-50 p-1 rounded">
                     <input 
                       type="checkbox" 
                       :value="habilidade.id"
@@ -240,6 +240,14 @@ export default {
       },
       showConfirmModal: false,
       itemParaExcluir: null
+    }
+  },
+  computed: {
+    colaboradoresOrdenados() {
+      return [...this.colaboradores].sort((a, b) => a.nome.localeCompare(b.nome))
+    },
+    habilidadesOrdenadas() {
+      return [...this.habilidades].sort((a, b) => a.nome.localeCompare(b.nome))
     }
   },
   async mounted() {

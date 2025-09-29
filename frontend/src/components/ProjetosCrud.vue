@@ -32,7 +32,7 @@
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
-          <tr v-for="projeto in projetos" :key="projeto.id" class="hover:bg-gray-50">
+          <tr v-for="projeto in projetosOrdenados" :key="projeto.id" class="hover:bg-gray-50">
             <td class="px-4 py-2 whitespace-nowrap">
               <div class="flex items-center">
                 <div class="w-3 h-3 rounded-full mr-2" :style="{ backgroundColor: projeto.color }"></div>
@@ -283,6 +283,11 @@ export default {
       },
       showConfirmModal: false,
       itemParaExcluir: null
+    }
+  },
+  computed: {
+    projetosOrdenados() {
+      return [...this.projetos].sort((a, b) => a.nome.localeCompare(b.nome))
     }
   },
   async mounted() {
