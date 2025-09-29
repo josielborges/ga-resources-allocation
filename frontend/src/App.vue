@@ -180,6 +180,7 @@
                 <ConflitosTab v-if="activeTab === 'conflitos'" :penalidades="resultado.penalidades" :ocorrencias="resultado.ocorrencias_penalidades" />
                 <GanttTab v-if="activeTab === 'gantt'" :tarefas="resultado.tarefas" />
                 <CalendarioTab v-if="activeTab === 'calendario'" :tarefas="resultado.tarefas" :projetos="projetos" />
+                <MapaAlocacaoTab v-if="activeTab === 'mapa'" :tarefas="resultado.tarefas" :projetos="projetos" :colaboradores="colaboradores" />
               </div>
             </div>
           </div>
@@ -233,6 +234,7 @@ import FitnessTab from './components/FitnessTab.vue'
 import ConflitosTab from './components/ConflitosTab.vue'
 import GanttTab from './components/GanttTab.vue'
 import CalendarioTab from './components/CalendarioTab.vue'
+import MapaAlocacaoTab from './components/MapaAlocacaoTab.vue'
 import ProjetosCrud from './components/ProjetosCrud.vue'
 import ColaboradoresCrud from './components/ColaboradoresCrud.vue'
 import HabilidadesCrud from './components/HabilidadesCrud.vue'
@@ -246,6 +248,7 @@ export default {
     ConflitosTab,
     GanttTab,
     CalendarioTab,
+    MapaAlocacaoTab,
     ProjetosCrud,
     ColaboradoresCrud,
     HabilidadesCrud,
@@ -272,19 +275,20 @@ export default {
       projetos: [],
       menuItems: [
         { id: 'roadmap', label: 'Gerador de Roadmap', icon: 'CpuChipIcon' },
-        { id: 'estimativa', label: 'Gerador de Estimativa', icon: 'CpuChipIcon' },
+        // { id: 'estimativa', label: 'Gerador de Estimativa', icon: 'CpuChipIcon' },
         { id: 'projetos', label: 'Projetos', icon: 'FolderIcon' },
         { id: 'colaboradores', label: 'Colaboradores', icon: 'UserGroupIcon' },
         { id: 'cargos', label: 'Cargos', icon: 'UserGroupIcon' },
         { id: 'habilidades', label: 'Habilidades', icon: 'UserGroupIcon' },
-        { id: 'relatorios', label: 'Relatórios', icon: 'DocumentChartBarIcon' }
+        // { id: 'relatorios', label: 'Relatórios', icon: 'DocumentChartBarIcon' }
       ],
       tabs: [
         { name: 'dados', label: 'Dados' },
         { name: 'fitness', label: 'Fitness' },
         { name: 'conflitos', label: 'Conflitos' },
         { name: 'gantt', label: 'Gantt' },
-        { name: 'calendario', label: 'Calendário' }
+        { name: 'calendario', label: 'Calendário' },
+        { name: 'mapa', label: 'Mapa de Alocação' }
       ]
     }
   },
