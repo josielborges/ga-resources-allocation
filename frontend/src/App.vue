@@ -6,20 +6,66 @@
         <div class="p-4">
           <h2 class="text-lg font-semibold mb-6">Roadmaps & Estimativas</h2>
           <nav class="space-y-1">
-            <button 
-              v-for="item in menuItems" 
-              :key="item.id"
-              @click="activeModule = item.id"
-              :class="[
-                'w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors',
-                activeModule === item.id 
-                  ? 'bg-white bg-opacity-20 text-white shadow-md' 
-                  : 'text-white hover:bg-white hover:bg-opacity-15'
-              ]"
-            >
-              <component :is="item.icon" class="w-5 h-5" />
-              {{ item.label }}
-            </button>
+            <template v-for="item in menuItems" :key="item.id">
+              <!-- Item normal -->
+              <button 
+                v-if="!item.submenu"
+                @click="activeModule = item.id"
+                :class="[
+                  'w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors',
+                  activeModule === item.id 
+                    ? 'bg-white bg-opacity-20 text-white shadow-md' 
+                    : 'text-white hover:bg-white hover:bg-opacity-15'
+                ]"
+              >
+                <component :is="item.icon" class="w-5 h-5" />
+                {{ item.label }}
+              </button>
+              
+              <!-- Item com submenu -->
+              <div v-else>
+                <button 
+                  @click="item.expanded = !item.expanded"
+                  :class="[
+                    'w-full flex items-center justify-between gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors',
+                    item.submenu.some(sub => activeModule === sub.id)
+                      ? 'bg-white bg-opacity-20 text-white shadow-md' 
+                      : 'text-white hover:bg-white hover:bg-opacity-15'
+                  ]"
+                >
+                  <div class="flex items-center gap-3">
+                    <component :is="item.icon" class="w-5 h-5" />
+                    {{ item.label }}
+                  </div>
+                  <svg 
+                    :class="['w-4 h-4 transition-transform', item.expanded ? 'rotate-180' : '']"
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                
+                <!-- Submenu -->
+                <div v-if="item.expanded" class="ml-8 mt-1 space-y-1">
+                  <button 
+                    v-for="subItem in item.submenu" 
+                    :key="subItem.id"
+                    @click="activeModule = subItem.id"
+                    :class="[
+                      'w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors',
+                      activeModule === subItem.id 
+                        ? 'bg-white bg-opacity-20 text-white shadow-md' 
+                        : 'text-white hover:bg-white hover:bg-opacity-15'
+                    ]"
+                  >
+                    <component :is="subItem.icon" class="w-4 h-4" />
+                    {{ subItem.label }}
+                  </button>
+                </div>
+              </div>
+            </template>
           </nav>
         </div>
       </div>
@@ -228,7 +274,7 @@
 
 <script>
 import axios from 'axios'
-import { CpuChipIcon, FolderIcon, UserGroupIcon, DocumentChartBarIcon } from '@heroicons/vue/24/outline'
+import { CpuChipIcon, FolderIcon, UserGroupIcon, DocumentChartBarIcon, CogIcon, BriefcaseIcon, AcademicCapIcon } from '@heroicons/vue/24/outline'
 import DadosTab from './components/DadosTab.vue'
 import FitnessTab from './components/FitnessTab.vue'
 import ConflitosTab from './components/ConflitosTab.vue'
@@ -256,7 +302,10 @@ export default {
     CpuChipIcon,
     FolderIcon,
     UserGroupIcon,
-    DocumentChartBarIcon
+    DocumentChartBarIcon,
+    CogIcon,
+    BriefcaseIcon,
+    AcademicCapIcon
   },
   data() {
     return {
@@ -278,8 +327,16 @@ export default {
         // { id: 'estimativa', label: 'Gerador de Estimativa', icon: 'CpuChipIcon' },
         { id: 'projetos', label: 'Projetos', icon: 'FolderIcon' },
         { id: 'colaboradores', label: 'Colaboradores', icon: 'UserGroupIcon' },
-        { id: 'cargos', label: 'Cargos', icon: 'UserGroupIcon' },
-        { id: 'habilidades', label: 'Habilidades', icon: 'UserGroupIcon' },
+        { 
+          id: 'configuracoes', 
+          label: 'Configurações', 
+          icon: 'CogIcon',
+          expanded: false,
+          submenu: [
+            { id: 'cargos', label: 'Cargos', icon: 'BriefcaseIcon' },
+            { id: 'habilidades', label: 'Habilidades', icon: 'AcademicCapIcon' }
+          ]
+        },
         // { id: 'relatorios', label: 'Relatórios', icon: 'DocumentChartBarIcon' }
       ],
       tabs: [

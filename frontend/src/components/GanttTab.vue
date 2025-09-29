@@ -60,10 +60,10 @@
         <thead class="bg-gray-50">
           <tr>
             <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase min-w-20">Projeto</th>
-            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase min-w-32">Tarefa</th>
+            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase w-48">Tarefa</th>
             <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase w-20">Início</th>
             <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase w-20">Fim</th>
-            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase w-28">Colaborador</th>
+            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase w-40">Colaborador</th>
             <th class="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase w-16">Dias</th>
             <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase min-w-48">Timeline</th>
           </tr>
@@ -78,10 +78,10 @@
                 {{ tarefa.projeto }}
               </span>
             </td>
-            <td class="px-3 py-1.5 text-sm font-medium">{{ tarefa.nome_tarefa }}</td>
+            <td class="px-3 py-1.5 text-sm font-medium truncate" :title="tarefa.nome_tarefa">{{ tarefa.nome_tarefa }}</td>
             <td class="px-3 py-1.5 text-xs text-gray-600">{{ tarefa.data_inicio }}</td>
             <td class="px-3 py-1.5 text-xs text-gray-600">{{ tarefa.data_fim }}</td>
-            <td class="px-3 py-1.5 text-sm">{{ tarefa.colaborador }}</td>
+            <td class="px-3 py-1.5 text-sm font-medium">{{ tarefa.colaborador }}</td>
             <td class="px-3 py-1.5 text-sm text-center font-medium">{{ tarefa.duracao_dias }}</td>
             <td class="px-3 py-1.5">
               <div class="gantt-timeline-compact">
