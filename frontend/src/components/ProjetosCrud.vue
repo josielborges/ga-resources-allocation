@@ -77,55 +77,52 @@
 
     <!-- Modal de edição/criação -->
     <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" style="margin: 0; padding: 16px;">
-      <div class="bg-white rounded-lg w-full max-w-5xl max-h-[95vh] flex flex-col overflow-hidden">
+      <div class="bg-white rounded-lg w-full max-w-5xl max-h-[98vh] flex flex-col overflow-hidden">
         <!-- Header -->
-        <div class="flex justify-between items-center p-6 border-b border-gray-200">
-          <h3 class="text-xl font-semibold">{{ editandoProjeto ? 'Editar Projeto' : 'Novo Projeto' }}</h3>
+        <div class="flex justify-between items-center px-4 py-3 border-b border-gray-200">
+          <h3 class="text-lg font-semibold">{{ editandoProjeto ? 'Editar Projeto' : 'Novo Projeto' }}</h3>
           <button @click="fecharModal" class="text-gray-400 hover:text-gray-600">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
           </button>
         </div>
         
         <!-- Content -->
-        <div class="flex-1 overflow-y-auto p-6">
-          <form @submit.prevent="salvarProjeto" class="space-y-6">
+        <div class="flex-1 overflow-y-auto px-4 py-3">
+          <div class="space-y-4">
             <!-- Dados do Projeto -->
-            <div class="grid grid-cols-2 gap-6">
-              <div>
-                <label class="block text-sm font-medium text-text-primary mb-2">Nome do Projeto</label>
+            <div class="grid grid-cols-3 gap-4">
+              <div class="col-span-2">
+                <label class="block text-sm font-medium mb-1">Nome do Projeto</label>
                 <input 
                   v-model="form.nome" 
                   type="text" 
                   required
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-main"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-primary-main"
                 />
               </div>
               
               <div>
-                <label class="block text-sm font-medium text-text-primary mb-2">Cor</label>
-                <div class="flex items-center space-x-3">
-                  <input 
-                    v-model="form.color" 
-                    type="color" 
-                    class="w-16 h-10 border border-gray-300 rounded-md cursor-pointer"
-                  />
-                  <span class="text-sm text-gray-500">{{ form.color }}</span>
-                </div>
+                <label class="block text-sm font-medium mb-1">Cor</label>
+                <input 
+                  v-model="form.color" 
+                  type="color" 
+                  class="w-full h-10 border border-gray-300 rounded-md cursor-pointer"
+                />
               </div>
             </div>
             
             <!-- Etapas -->
             <div>
-              <div class="flex justify-between items-center mb-4">
-                <h4 class="text-lg font-medium text-text-primary">Etapas do Projeto</h4>
+              <div class="flex justify-between items-center mb-2">
+                <h4 class="text-base font-medium">Etapas</h4>
                 <button 
                   type="button" 
                   @click="adicionarEtapa" 
-                  class="bg-primary-main text-white px-3 py-1.5 rounded-md text-sm font-medium hover:bg-primary-light transition-colors flex items-center space-x-1"
+                  class="bg-primary-main text-white px-2 py-1 rounded text-xs font-medium hover:bg-primary-light transition-colors flex items-center space-x-1"
                 >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                   </svg>
                   <span>Adicionar</span>
@@ -197,7 +194,7 @@
                           </option>
                         </select>
                       </td>
-                      <td class="sheets-cell predecessoras-cell">
+                      <td class="sheets-cell predecessoras-cell text-center">
                         <div class="predecessoras-simple">
                           <span 
                             v-if="!etapa.predecessoras || etapa.predecessoras.length === 0"
@@ -219,10 +216,12 @@
                         </div>
                       </td>
                       <td class="sheets-cell" @mousedown.stop @click.stop>
-                        <HabilidadesSelect 
-                          v-model="etapa.habilidades_necessarias"
-                          :habilidades="habilidadesOrdenadas"
-                        />
+                        <div @click.stop>
+                          <HabilidadesSelect 
+                            v-model="etapa.habilidades_necessarias"
+                            :habilidades="habilidadesOrdenadas"
+                          />
+                        </div>
                       </td>
                       <td class="sheets-cell text-center">
                         <button 
@@ -239,28 +238,29 @@
                 </table>
               </div>
             </div>
-          </form>
+          </div>
         </div>
         
         <!-- Footer -->
-        <div class="flex justify-end space-x-3 p-6 border-t border-gray-200 bg-gray-50 rounded-b-lg">
+        <div class="flex justify-end space-x-2 px-4 py-2 border-t border-gray-200 bg-gray-50">
           <button 
             type="button" 
             @click="fecharModal" 
-            class="px-6 py-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 font-medium"
+            class="px-4 py-1.5 text-sm text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50"
           >
             Cancelar
           </button>
           <button 
+            type="button"
             @click="salvarProjeto"
             :disabled="salvando"
-            class="px-6 py-2 bg-primary-main text-white rounded-md hover:bg-primary-light disabled:opacity-50 font-medium flex items-center space-x-2"
+            class="px-4 py-1.5 text-sm bg-primary-main text-white rounded hover:bg-primary-light disabled:opacity-50 flex items-center space-x-1"
           >
-            <svg v-if="salvando" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+            <svg v-if="salvando" class="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            <span>{{ salvando ? 'Salvando...' : 'Salvar Projeto' }}</span>
+            <span>{{ salvando ? 'Salvando...' : 'Salvar' }}</span>
           </button>
         </div>
       </div>
@@ -422,6 +422,7 @@ export default {
     },
     
     async salvarProjeto() {
+      console.log('ProjetosCrud: salvarProjeto called')
       this.salvando = true
       try {
         const formData = {
@@ -577,7 +578,7 @@ export default {
   border-bottom: 1px solid #e0e0e0;
   padding: 0;
   margin: 0;
-  height: 32px;
+  height: 28px;
   vertical-align: middle;
   position: relative;
 }
@@ -591,8 +592,8 @@ export default {
   font-weight: 500;
   color: #3c4043;
   text-align: center;
-  font-size: 12px;
-  padding: 8px 4px;
+  font-size: 11px;
+  padding: 4px 2px;
   border-right: 1px solid #dadce0;
 }
 
@@ -635,11 +636,11 @@ export default {
 
 .sheets-input, .sheets-select {
   width: 100%;
-  height: 32px;
+  height: 28px;
   border: none;
   outline: none;
-  padding: 0 8px;
-  font-size: 13px;
+  padding: 0 6px;
+  font-size: 12px;
   background: transparent;
   font-family: inherit;
 }
@@ -705,7 +706,7 @@ export default {
 .predecessoras-container {
   display: flex;
   align-items: center;
-  height: 32px;
+  height: 28px;
   padding: 0 4px;
   gap: 4px;
 }
@@ -780,7 +781,7 @@ export default {
 .nome-container {
   display: flex;
   align-items: center;
-  height: 32px;
+  height: 28px;
 }
 
 .predecessor-link-nome {
@@ -816,29 +817,38 @@ export default {
 .predecessoras-simple {
   display: flex;
   align-items: center;
-  height: 32px;
-  padding: 0 8px;
+  justify-content: center;
+  height: 28px;
+  padding: 0 6px;
 }
 
 .predecessoras-numbers {
   display: flex;
   gap: 4px;
   flex-wrap: wrap;
+  justify-content: center;
 }
 
 .predecessor-number {
   background: #e8f0fe;
   color: #1a73e8;
-  font-size: 12px;
-  font-weight: 500;
+  font-size: 11px;
+  font-weight: 600;
   padding: 2px 6px;
-  border-radius: 10px;
+  border-radius: 4px;
   cursor: pointer;
   user-select: none;
+  min-width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
 }
 
 .predecessor-number:hover {
   background: #d2e3fc;
   color: #1565c0;
+  transform: scale(1.05);
 }
 </style>

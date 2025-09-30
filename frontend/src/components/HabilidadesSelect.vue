@@ -18,8 +18,8 @@
     <!-- Modal compacto -->
     <div 
       v-if="showModal"
-      class="absolute z-20 w-64 mt-1 bg-white border border-gray-300 shadow-lg p-3"
-      style="right: 0; border-radius: 4px;"
+      class="fixed z-[9999] w-64 bg-white border border-gray-300 shadow-lg p-3"
+      :style="modalPosition"
       @click.stop
     >
       <div class="mb-2">
@@ -67,6 +67,15 @@
           </span>
         </div>
       </div>
+      
+      <div class="mt-2 pt-2 border-t border-gray-200">
+        <button 
+          @click.stop="closeModal"
+          class="w-full px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded"
+        >
+          Fechar
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -88,7 +97,8 @@ export default {
   data() {
     return {
       showModal: false,
-      searchTerm: ''
+      searchTerm: '',
+      buttonRect: null
     }
   },
   computed: {
@@ -100,11 +110,26 @@ export default {
       return this.habilidades.filter(hab => 
         hab.nome.toLowerCase().includes(this.searchTerm.toLowerCase())
       )
+    },
+    modalPosition() {
+      if (!this.buttonRect) return { top: '0px', left: '0px', borderRadius: '4px' }
+      return {
+        top: `${this.buttonRect.bottom + 2}px`,
+        left: `${Math.max(0, this.buttonRect.right - 256)}px`,
+        borderRadius: '4px'
+      }
     }
   },
   methods: {
     toggleModal(event) {
+      console.log('HabilidadesSelect: toggleModal called')
       event.stopPropagation()
+      
+      if (!this.showModal) {
+        // Capturar posição do botão antes de abrir
+        this.buttonRect = event.target.getBoundingClientRect()
+      }
+      
       this.showModal = !this.showModal
       if (this.showModal) {
         this.searchTerm = ''
@@ -130,8 +155,11 @@ export default {
         this.$emit('update:modelValue', current)
       }
     },
+    closeModal() {
+      this.showModal = false
+    },
     handleClickOutside(event) {
-      if (this.$el && !this.$el.contains(event.target)) {
+      if (this.showModal && this.$el && !this.$el.contains(event.target)) {
         this.showModal = false
       }
     }
