@@ -118,106 +118,125 @@
             
             <!-- Etapas -->
             <div>
-              <div class="mb-4">
+              <div class="flex justify-between items-center mb-4">
                 <h4 class="text-lg font-medium text-text-primary">Etapas do Projeto</h4>
+                <button 
+                  type="button" 
+                  @click="adicionarEtapa" 
+                  class="bg-primary-main text-white px-3 py-1.5 rounded-md text-sm font-medium hover:bg-primary-light transition-colors flex items-center space-x-1"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                  </svg>
+                  <span>Adicionar</span>
+                </button>
               </div>
               
-              <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <!-- Etapas Existentes -->
-                <div v-for="(etapa, index) in form.etapas" :key="index" class="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                  <!-- Card Header -->
-                  <div class="flex justify-between items-center mb-2">
-                    <div class="flex items-center space-x-2">
-                      <div class="w-6 h-6 bg-primary-main text-white rounded-full flex items-center justify-center text-xs font-bold">
-                        {{ index + 1 }}
-                      </div>
-                      <span class="font-medium text-gray-900">Etapa {{ index + 1 }}</span>
-                    </div>
-                    <button 
-                      type="button" 
-                      @click="removerEtapa(index)" 
-                      class="text-red-500 hover:text-red-700 p-1 rounded-md hover:bg-red-50"
-                      title="Remover Etapa"
-                    >
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                      </svg>
-                    </button>
-                  </div>
-                  
-                  <!-- Card Content -->
-                  <div class="space-y-2">
-                    <div>
-                      <label class="block text-xs font-medium text-gray-700 mb-1">Nome da Etapa</label>
-                      <input 
-                        v-model="etapa.nome" 
-                        type="text" 
-                        required
-                        placeholder="Ex: Análise de Requisitos"
-                        class="w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-primary-main"
-                      />
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-2">
-                      <div>
-                        <label class="block text-xs font-medium text-gray-700 mb-1">Duração</label>
-                        <div class="relative">
-                          <input 
-                            v-model.number="etapa.duracao_dias" 
-                            type="number" 
-                            min="1" 
-                            required
-                            class="w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-primary-main"
-                          />
-                          <span class="absolute right-2 top-1.5 text-xs text-gray-500">dias</span>
+              <div class="sheets-container border border-gray-300">
+                <table class="sheets-table">
+                  <thead>
+                    <tr class="sheets-header">
+                      <th class="sheets-cell sheets-header-cell w-12">#</th>
+                      <th class="sheets-cell sheets-header-cell">Nome</th>
+                      <th class="sheets-cell sheets-header-cell w-20">Dias</th>
+                      <th class="sheets-cell sheets-header-cell w-32">Cargo</th>
+                      <th class="sheets-cell sheets-header-cell w-32">Predecessoras</th>
+                      <th class="sheets-cell sheets-header-cell">Habilidades</th>
+                      <th class="sheets-cell sheets-header-cell w-16">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody ref="etapasContainer">
+                    <tr v-for="(etapa, index) in form.etapas" :key="`etapa-${index}`" class="sheets-row" :data-index="index">
+                      <td class="sheets-cell sheets-number-cell">
+                        <div class="drag-handle sheets-drag-handle" :title="`Etapa ${index + 1}`">
+                          {{ index + 1 }}
                         </div>
-                      </div>
-                      
-                      <div>
-                        <label class="block text-xs font-medium text-gray-700 mb-1">Cargo</label>
+                      </td>
+                      <td class="sheets-cell nome-cell">
+                        <div class="nome-container">
+                          <div 
+                            class="predecessor-link-nome"
+                            draggable="true"
+                            @dragstart="handlePredecessorDragStart(index, $event)"
+                            @dragend="handleDragEnd"
+                            title="Arraste para outra etapa para torná-la predecessora desta"
+                          >
+                            🔗
+                          </div>
+                          <input 
+                            v-model="etapa.nome" 
+                            type="text" 
+                            required
+                            placeholder="Nome da etapa"
+                            class="sheets-input nome-input"
+                            @dragover.prevent="handleDragOver(index, $event)"
+                            @dragleave="handleDragLeave"
+                            @drop="handlePredecessorDrop(index, $event)"
+                            :class="{ 'drop-active': dragOverIndex === index }"
+                          />
+                        </div>
+                      </td>
+                      <td class="sheets-cell">
+                        <input 
+                          v-model.number="etapa.duracao_dias" 
+                          type="number" 
+                          min="1" 
+                          required
+                          class="sheets-input text-center"
+                        />
+                      </td>
+                      <td class="sheets-cell">
                         <select 
                           v-model="etapa.cargo_necessario_id" 
                           required
-                          class="w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-primary-main"
+                          class="sheets-select"
                         >
                           <option value="">Selecionar</option>
                           <option v-for="cargo in cargosOrdenados" :key="cargo.id" :value="cargo.id">
                             {{ cargo.nome }}
                           </option>
                         </select>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <label class="block text-xs font-medium text-gray-700 mb-1">Habilidades Necessárias</label>
-                      <div class="border border-gray-200 rounded-md p-2 bg-white">
-                        <div class="grid grid-cols-2 gap-1">
-                          <label v-for="habilidade in habilidadesOrdenadas" :key="habilidade.id" class="flex items-center text-xs hover:bg-gray-50 p-1 rounded">
-                            <input 
-                              type="checkbox" 
-                              :value="habilidade.nome"
-                              v-model="etapa.habilidades_necessarias"
-                              class="mr-1.5 text-primary-main"
-                            />
-                            <span class="truncate">{{ habilidade.nome }}</span>
-                          </label>
+                      </td>
+                      <td class="sheets-cell predecessoras-cell">
+                        <div class="predecessoras-simple">
+                          <span 
+                            v-if="!etapa.predecessoras || etapa.predecessoras.length === 0"
+                            class="text-gray-400 text-xs"
+                          >
+                            -
+                          </span>
+                          <div v-else class="predecessoras-numbers">
+                            <span 
+                              v-for="predIndex in etapa.predecessoras" 
+                              :key="predIndex"
+                              class="predecessor-number"
+                              @click="removePredecessora(index, predIndex)"
+                              :title="`Predecessora: Etapa ${predIndex + 1} (clique para remover)`"
+                            >
+                              {{ predIndex + 1 }}
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <!-- Botão Adicionar Etapa -->
-                <button 
-                  type="button" 
-                  @click="adicionarEtapa" 
-                  class="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-primary-main hover:bg-primary-50 transition-colors flex flex-col items-center justify-center space-y-2 min-h-[150px]"
-                >
-                  <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                  </svg>
-                  <span class="text-gray-600 font-medium text-sm">Adicionar Etapa</span>
-                </button>
+                      </td>
+                      <td class="sheets-cell" @mousedown.stop @click.stop>
+                        <HabilidadesSelect 
+                          v-model="etapa.habilidades_necessarias"
+                          :habilidades="habilidadesOrdenadas"
+                        />
+                      </td>
+                      <td class="sheets-cell text-center">
+                        <button 
+                          type="button" 
+                          @click="removerEtapa(index)" 
+                          class="sheets-delete-btn"
+                          title="Remover etapa"
+                        >
+                          ×
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
           </form>
@@ -261,11 +280,14 @@
 <script>
 import axios from 'axios'
 import ConfirmModal from './ConfirmModal.vue'
+import HabilidadesSelect from './HabilidadesSelect.vue'
+import Sortable from 'sortablejs'
 
 export default {
   name: 'ProjetosCrud',
   components: {
-    ConfirmModal
+    ConfirmModal,
+    HabilidadesSelect
   },
   data() {
     return {
@@ -282,7 +304,9 @@ export default {
         etapas: []
       },
       showConfirmModal: false,
-      itemParaExcluir: null
+      itemParaExcluir: null,
+      draggedIndex: null,
+      dragOverIndex: null
     }
   },
   computed: {
@@ -294,10 +318,32 @@ export default {
     },
     habilidadesOrdenadas() {
       return [...this.habilidades].sort((a, b) => a.nome.localeCompare(b.nome))
+    },
+    
+    etapasComPredecessoras() {
+      return this.form.etapas.map((etapa, index) => {
+        const predecessoraIndex = etapa.predecessora_id
+        return {
+          ...etapa,
+          predecessora_id: predecessoraIndex !== null && predecessoraIndex < this.form.etapas.length 
+            ? this.form.etapas[predecessoraIndex]?.id || null 
+            : null
+        }
+      })
     }
   },
   async mounted() {
     await this.carregarDados()
+  },
+  
+  watch: {
+    showModal(newVal) {
+      if (newVal) {
+        this.$nextTick(() => {
+          this.initSortable()
+        })
+      }
+    }
   },
   methods: {
     async carregarDados() {
@@ -324,12 +370,26 @@ export default {
         this.form = {
           nome: projeto.nome,
           color: projeto.color,
-          etapas: projeto.etapas.map(etapa => ({
-            nome: etapa.nome,
-            duracao_dias: etapa.duracao_dias,
-            cargo_necessario_id: etapa.cargo_necessario.id,
-            habilidades_necessarias: etapa.habilidades_necessarias.map(h => h.nome)
-          }))
+          etapas: projeto.etapas
+            .sort((a, b) => (a.ordem || 0) - (b.ordem || 0))
+            .map((etapa, index) => {
+              // Encontrar índice da predecessora
+              let predecessoraIndex = null
+              if (etapa.predecessora_id) {
+                predecessoraIndex = projeto.etapas
+                  .sort((a, b) => (a.ordem || 0) - (b.ordem || 0))
+                  .findIndex(e => e.id === etapa.predecessora_id)
+              }
+              
+              return {
+                nome: etapa.nome,
+                duracao_dias: etapa.duracao_dias,
+                cargo_necessario_id: etapa.cargo_necessario.id,
+                habilidades_necessarias: etapa.habilidades_necessarias.map(h => h.nome),
+                ordem: etapa.ordem !== undefined ? etapa.ordem : index,
+                predecessoras: etapa.predecessora_id ? [predecessoraIndex].filter(i => i !== -1) : []
+              }
+            })
         }
       } else {
         this.form = {
@@ -351,7 +411,9 @@ export default {
         nome: '',
         duracao_dias: 1,
         cargo_necessario_id: '',
-        habilidades_necessarias: []
+        habilidades_necessarias: [],
+        ordem: this.form.etapas.length,
+        predecessoras: []
       })
     },
     
@@ -362,10 +424,20 @@ export default {
     async salvarProjeto() {
       this.salvando = true
       try {
+        const formData = {
+          ...this.form,
+          etapas: this.form.etapas.map((etapa, index) => ({
+            ...etapa,
+            predecessora_id: etapa.predecessora_id !== null && etapa.predecessora_id < index 
+              ? etapa.predecessora_id 
+              : null
+          }))
+        }
+        
         if (this.editandoProjeto) {
-          await axios.put(`/api/projetos/${this.editandoProjeto.id}`, this.form)
+          await axios.put(`/api/projetos/${this.editandoProjeto.id}`, formData)
         } else {
-          await axios.post('/api/projetos', this.form)
+          await axios.post('/api/projetos', formData)
         }
         await this.carregarDados()
         this.fecharModal()
@@ -402,7 +474,371 @@ export default {
     cancelarExclusao() {
       this.showConfirmModal = false
       this.itemParaExcluir = null
+    },
+    
+    handlePredecessorDragStart(index, event) {
+      console.log('Drag start:', index)
+      this.draggedIndex = index
+      event.dataTransfer.setData('text/plain', index.toString())
+      event.dataTransfer.effectAllowed = 'copy'
+      event.stopPropagation()
+    },
+    
+    handleDragEnd() {
+      console.log('Drag end')
+      this.draggedIndex = null
+      this.dragOverIndex = null
+    },
+    
+    handleDragOver(targetIndex, event) {
+      event.preventDefault()
+      this.dragOverIndex = targetIndex
+    },
+    
+    handleDragLeave() {
+      this.dragOverIndex = null
+    },
+    
+    handlePredecessorDrop(targetIndex, event) {
+      event.preventDefault()
+      console.log('Drop on:', targetIndex)
+      const sourceIndex = parseInt(event.dataTransfer.getData('text/plain'))
+      console.log('Source:', sourceIndex, 'Target:', targetIndex)
+      
+      if (sourceIndex !== targetIndex) {
+        // Inverter lógica: targetIndex vira predecessor de sourceIndex
+        if (!this.form.etapas[sourceIndex].predecessoras) {
+          this.$set(this.form.etapas[sourceIndex], 'predecessoras', [])
+        }
+        
+        if (!this.form.etapas[sourceIndex].predecessoras.includes(targetIndex)) {
+          this.form.etapas[sourceIndex].predecessoras.push(targetIndex)
+          console.log('Added predecessor:', targetIndex, 'to', sourceIndex)
+        }
+      }
+      
+      this.dragOverIndex = null
+    },
+    
+    removePredecessora(etapaIndex, predecessoraIndex) {
+      const predecessoras = this.form.etapas[etapaIndex].predecessoras
+      const index = predecessoras.indexOf(predecessoraIndex)
+      if (index > -1) {
+        predecessoras.splice(index, 1)
+      }
+    },
+    
+    initSortable() {
+      if (this.$refs.etapasContainer) {
+        Sortable.create(this.$refs.etapasContainer, {
+          animation: 150,
+          ghostClass: 'sortable-ghost',
+          chosenClass: 'sortable-chosen',
+          dragClass: 'sortable-drag',
+          handle: '.drag-handle',
+          onEnd: (evt) => {
+            const oldIndex = evt.oldIndex
+            const newIndex = evt.newIndex
+            
+            if (oldIndex !== newIndex && oldIndex < this.form.etapas.length && newIndex < this.form.etapas.length) {
+              const movedItem = this.form.etapas.splice(oldIndex, 1)[0]
+              this.form.etapas.splice(newIndex, 0, movedItem)
+              
+              this.form.etapas.forEach((etapa, index) => {
+                etapa.ordem = index
+                if (etapa.predecessoras) {
+                  etapa.predecessoras = etapa.predecessoras.filter(p => p < index)
+                }
+              })
+            }
+          }
+        })
+      }
     }
   }
 }
 </script>
+
+<style scoped>
+/* Google Sheets Style */
+.sheets-container {
+  background: white;
+  font-family: 'Roboto', Arial, sans-serif;
+}
+
+.sheets-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.sheets-cell {
+  border-right: 1px solid #e0e0e0;
+  border-bottom: 1px solid #e0e0e0;
+  padding: 0;
+  margin: 0;
+  height: 32px;
+  vertical-align: middle;
+  position: relative;
+}
+
+.sheets-header {
+  background: #f8f9fa;
+  border-bottom: 2px solid #dadce0;
+}
+
+.sheets-header-cell {
+  font-weight: 500;
+  color: #3c4043;
+  text-align: center;
+  font-size: 12px;
+  padding: 8px 4px;
+  border-right: 1px solid #dadce0;
+}
+
+.sheets-row:hover {
+  background: #f8f9fa;
+}
+
+.sheets-row:hover .sheets-cell {
+  background: #f8f9fa;
+}
+
+.sheets-number-cell {
+  background: #f8f9fa;
+  text-align: center;
+  font-weight: 500;
+  color: #5f6368;
+  width: 48px;
+  border-right: 2px solid #dadce0;
+}
+
+.sheets-drag-handle {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  font-size: 12px;
+  user-select: none;
+}
+
+.sheets-drag-handle:active {
+  cursor: grabbing;
+}
+
+.sheets-drag-handle:hover {
+  background: #e8f0fe;
+  color: #1a73e8;
+}
+
+.sheets-input, .sheets-select {
+  width: 100%;
+  height: 32px;
+  border: none;
+  outline: none;
+  padding: 0 8px;
+  font-size: 13px;
+  background: transparent;
+  font-family: inherit;
+}
+
+.sheets-input:focus, .sheets-select:focus {
+  background: white;
+  box-shadow: inset 0 0 0 2px #1a73e8;
+  z-index: 1;
+  position: relative;
+}
+
+.sheets-input::placeholder {
+  color: #9aa0a6;
+  font-style: italic;
+}
+
+.sheets-select {
+  cursor: pointer;
+}
+
+.sheets-delete-btn {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: #5f6368;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+}
+
+.sheets-delete-btn:hover {
+  background: #fce8e6;
+  color: #d93025;
+}
+
+/* Sortable styles */
+.sortable-ghost {
+  opacity: 0.5;
+  background: #e8f0fe;
+}
+
+.sortable-chosen {
+  background: #e8f0fe;
+}
+
+.sortable-drag {
+  background: #e8f0fe;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Remove default table spacing */
+.sheets-table td, .sheets-table th {
+  padding: 0;
+  margin: 0;
+}
+
+/* Predecessoras styles */
+.predecessoras-container {
+  display: flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 4px;
+  gap: 4px;
+}
+
+.predecessoras-tags {
+  display: flex;
+  gap: 2px;
+  flex-wrap: wrap;
+}
+
+.predecessor-tag {
+  background: #e8f0fe;
+  color: #1a73e8;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.predecessor-tag:hover {
+  background: #d2e3fc;
+}
+
+.predecessor-remove {
+  font-size: 12px;
+  font-weight: bold;
+  opacity: 0.7;
+}
+
+.predecessor-remove:hover {
+  opacity: 1;
+  color: #d93025;
+}
+
+.predecessor-drop-zone {
+  flex: 1;
+  min-height: 24px;
+  border: 1px dashed transparent;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.predecessor-drop-zone.drop-active {
+  border-color: #1a73e8;
+  background: #e8f0fe;
+}
+
+.predecessor-drop-zone.drop-active .drop-hint {
+  color: #1a73e8;
+  font-weight: 500;
+}
+
+.sheets-drag-handle[draggable="true"] {
+  cursor: grab;
+}
+
+.sheets-drag-handle[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+.nome-cell {
+  position: relative;
+}
+
+.nome-container {
+  display: flex;
+  align-items: center;
+  height: 32px;
+}
+
+.predecessor-link-nome {
+  font-size: 12px;
+  cursor: grab;
+  padding: 4px;
+  margin-right: 4px;
+  border-radius: 3px;
+  background: #f8f9fa;
+  border: 1px solid #e0e0e0;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.predecessor-link-nome:hover {
+  background: #e8f0fe;
+  border-color: #1a73e8;
+}
+
+.predecessor-link-nome:active {
+  cursor: grabbing;
+}
+
+.nome-input {
+  flex: 1;
+}
+
+.nome-input.drop-active {
+  background: #e8f0fe;
+  border-color: #1a73e8;
+}
+
+.predecessoras-simple {
+  display: flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 8px;
+}
+
+.predecessoras-numbers {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.predecessor-number {
+  background: #e8f0fe;
+  color: #1a73e8;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.predecessor-number:hover {
+  background: #d2e3fc;
+  color: #1565c0;
+}
+</style>

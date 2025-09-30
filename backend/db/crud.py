@@ -21,12 +21,14 @@ def create_projeto(db: Session, projeto: schemas.ProjetoCreate):
     db.refresh(db_projeto)
     
     # Criar etapas
-    for etapa_data in projeto.etapas:
+    for i, etapa_data in enumerate(projeto.etapas):
         db_etapa = models.Etapa(
             projeto_id=db_projeto.id,
             nome=etapa_data.nome,
             duracao_dias=etapa_data.duracao_dias,
-            cargo_necessario_id=etapa_data.cargo_necessario_id
+            cargo_necessario_id=etapa_data.cargo_necessario_id,
+            ordem=getattr(etapa_data, 'ordem', i),
+            predecessora_id=getattr(etapa_data, 'predecessora_id', None)
         )
         db.add(db_etapa)
         db.commit()
@@ -62,12 +64,14 @@ def update_projeto(db: Session, projeto_id: int, projeto: schemas.ProjetoCreate)
     db.commit()
     
     # Criar novas etapas
-    for etapa_data in projeto.etapas:
+    for i, etapa_data in enumerate(projeto.etapas):
         db_etapa = models.Etapa(
             projeto_id=projeto_id,
             nome=etapa_data.nome,
             duracao_dias=etapa_data.duracao_dias,
-            cargo_necessario_id=etapa_data.cargo_necessario_id
+            cargo_necessario_id=etapa_data.cargo_necessario_id,
+            ordem=getattr(etapa_data, 'ordem', i),
+            predecessora_id=getattr(etapa_data, 'predecessora_id', None)
         )
         db.add(db_etapa)
         db.commit()

@@ -68,10 +68,13 @@ class Etapa(Base):
     nome = Column(String)
     duracao_dias = Column(Integer)
     cargo_necessario_id = Column(Integer, ForeignKey("cargos.id", ondelete="RESTRICT"))
+    ordem = Column(Integer, default=0)
+    predecessora_id = Column(Integer, ForeignKey("etapas.id"), nullable=True)
     
     projeto = relationship("Projeto", back_populates="etapas")
     cargo_necessario = relationship("Cargo")
     habilidades_necessarias = relationship("Habilidade", secondary=etapa_habilidade, back_populates="etapas")
+    predecessora = relationship("Etapa", remote_side=[id])
 
 # Add back_populates to Habilidade
 Habilidade.colaboradores = relationship("Colaborador", secondary=colaborador_habilidade, back_populates="habilidades")
