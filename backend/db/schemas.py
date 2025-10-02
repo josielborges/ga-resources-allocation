@@ -64,7 +64,7 @@ class EtapaCreate(EtapaBase):
     cargo_necessario_id: int
     habilidades_necessarias: List[str] = []
     ordem: int = 0
-    predecessora_id: Optional[int] = None
+    predecessoras_ids: List[int] = []
 
 class Etapa(EtapaBase):
     id: int
@@ -72,8 +72,7 @@ class Etapa(EtapaBase):
     cargo_necessario: Cargo
     habilidades_necessarias: List[Habilidade] = []
     ordem: int = 0
-    predecessora_id: Optional[int] = None
-    predecessora: Optional['Etapa'] = None
+    predecessoras: List['Etapa'] = []
     
     class Config:
         from_attributes = True

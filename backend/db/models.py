@@ -19,6 +19,14 @@ etapa_habilidade = Table(
     Column('habilidade_id', Integer, ForeignKey('habilidades.id', ondelete='RESTRICT'), primary_key=True)
 )
 
+# Association table for etapa predecessors
+etapa_predecessora = Table(
+    'etapa_predecessora',
+    Base.metadata,
+    Column('etapa_id', Integer, ForeignKey('etapas.id'), primary_key=True),
+    Column('predecessora_id', Integer, ForeignKey('etapas.id'), primary_key=True)
+)
+
 class Habilidade(Base):
     __tablename__ = "habilidades"
     
@@ -69,12 +77,24 @@ class Etapa(Base):
     duracao_dias = Column(Integer)
     cargo_necessario_id = Column(Integer, ForeignKey("cargos.id", ondelete="RESTRICT"))
     ordem = Column(Integer, default=0)
-    predecessora_id = Column(Integer, ForeignKey("etapas.id"), nullable=True)
     
     projeto = relationship("Projeto", back_populates="etapas")
     cargo_necessario = relationship("Cargo")
     habilidades_necessarias = relationship("Habilidade", secondary=etapa_habilidade, back_populates="etapas")
-    predecessora = relationship("Etapa", remote_side=[id])
+    predecessoras = relationship(
+        "Etapa",
+        secondary=etapa_predecessora,
+        primaryjoin=id == etapa_predecessora.c.etapa_id,
+        secondaryjoin=id == etapa_predecessora.c.predecessora_id,
+        back_populates="dependentes"
+    )
+    dependentes = relationship(
+        "Etapa",
+        secondary=etapa_predecessora,
+        primaryjoin=id == etapa_predecessora.c.predecessora_id,
+        secondaryjoin=id == etapa_predecessora.c.etapa_id,
+        back_populates="predecessoras"
+    )
 
 # Add back_populates to Habilidade
 Habilidade.colaboradores = relationship("Colaborador", secondary=colaborador_habilidade, back_populates="habilidades")

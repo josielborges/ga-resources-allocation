@@ -382,12 +382,16 @@ export default {
           etapas: projeto.etapas
             .sort((a, b) => (a.ordem || 0) - (b.ordem || 0))
             .map((etapa, index) => {
-              // Encontrar índice da predecessora
-              let predecessoraIndex = null
-              if (etapa.predecessora_id) {
-                predecessoraIndex = projeto.etapas
-                  .sort((a, b) => (a.ordem || 0) - (b.ordem || 0))
-                  .findIndex(e => e.id === etapa.predecessora_id)
+              // Encontrar índices das predecessoras
+              const predecessorasIndices = []
+              if (etapa.predecessoras && etapa.predecessoras.length > 0) {
+                const etapasOrdenadas = projeto.etapas.sort((a, b) => (a.ordem || 0) - (b.ordem || 0))
+                etapa.predecessoras.forEach(pred => {
+                  const predIndex = etapasOrdenadas.findIndex(e => e.id === pred.id)
+                  if (predIndex !== -1) {
+                    predecessorasIndices.push(predIndex)
+                  }
+                })
               }
               
               return {
@@ -396,7 +400,7 @@ export default {
                 cargo_necessario_id: etapa.cargo_necessario.id,
                 habilidades_necessarias: etapa.habilidades_necessarias.map(h => h.nome),
                 ordem: etapa.ordem !== undefined ? etapa.ordem : index,
-                predecessoras: etapa.predecessora_id ? [predecessoraIndex].filter(i => i !== -1) : []
+                predecessoras: predecessorasIndices
               }
             })
         }
@@ -438,9 +442,7 @@ export default {
           ...this.form,
           etapas: this.form.etapas.map((etapa, index) => ({
             ...etapa,
-            predecessora_id: etapa.predecessora_id !== null && etapa.predecessora_id < index 
-              ? etapa.predecessora_id 
-              : null
+            predecessoras_ids: etapa.predecessoras || []
           }))
         }
         
