@@ -28,62 +28,30 @@
     <!-- Modal compacto -->
     <div 
       v-if="showModal"
-      class="fixed z-[9999] w-64 bg-white border border-gray-300 shadow-lg p-3"
+      class="fixed z-[9999] w-96 bg-white border border-gray-300 shadow-xl rounded p-1"
       :style="modalPosition"
       @click.stop
     >
-      <div class="mb-2">
-        <input 
-          v-model="searchTerm"
-          type="text"
-          placeholder="Buscar..."
-          class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-primary-main"
-        />
-      </div>
-      
-      <div class="max-h-32 overflow-y-auto space-y-1">
-        <label 
-          v-for="habilidade in filteredHabilidades" 
+      <div class="grid grid-cols-3 gap-0.5">
+        <div 
+          v-for="habilidade in habilidades" 
           :key="habilidade.id" 
-          class="flex items-center text-xs hover:bg-gray-50 p-1 rounded cursor-pointer"
-          @click.stop
+          class="text-xs px-1 py-0.5 rounded cursor-pointer transition-colors text-center truncate"
+          :class="selectedHabilidades.includes(habilidade.nome) ? 'bg-green-100 text-green-800 font-medium' : 'hover:bg-gray-50 text-gray-700'"
+          @click.stop="toggleHabilidade(habilidade.nome)"
+          :title="habilidade.nome"
         >
-          <input 
-            type="checkbox" 
-            :value="habilidade.nome"
-            :checked="selectedHabilidades.includes(habilidade.nome)"
-            @change="toggleHabilidade(habilidade.nome)"
-            class="mr-2 text-primary-main"
-          />
-          <span class="truncate">{{ habilidade.nome }}</span>
-        </label>
-      </div>
-      
-      <div v-if="selectedHabilidades.length > 0" class="mt-2 pt-2 border-t border-gray-200">
-        <div class="text-xs text-gray-600 mb-1">Selecionadas:</div>
-        <div class="flex flex-wrap gap-1">
-          <span 
-            v-for="hab in selectedHabilidades" 
-            :key="hab"
-            class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"
-          >
-            {{ abbreviateText(hab) }}
-            <button 
-              @click.stop="removeHabilidade(hab)"
-              class="ml-1 hover:text-primary-600"
-            >
-              ×
-            </button>
-          </span>
+          {{ habilidade.nome }}
         </div>
       </div>
       
-      <div class="mt-2 pt-2 border-t border-gray-200">
+      <div class="mt-1 pt-1 border-t border-gray-200 flex justify-between items-center">
+        <span class="text-xs text-gray-600">{{ selectedHabilidades.length }} sel.</span>
         <button 
           @click.stop="closeModal"
-          class="w-full px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded"
+          class="px-2 py-0.5 text-xs bg-green-600 text-white rounded hover:bg-green-700"
         >
-          Fechar
+          OK
         </button>
       </div>
     </div>
@@ -107,7 +75,6 @@ export default {
   data() {
     return {
       showModal: false,
-      searchTerm: '',
       buttonRect: null
     }
   },
@@ -115,18 +82,12 @@ export default {
     selectedHabilidades() {
       return this.modelValue || []
     },
-    filteredHabilidades() {
-      if (!this.searchTerm.trim()) return this.habilidades
-      return this.habilidades.filter(hab => 
-        hab.nome.toLowerCase().includes(this.searchTerm.toLowerCase())
-      )
-    },
+
     modalPosition() {
-      if (!this.buttonRect) return { top: '0px', left: '0px', borderRadius: '4px' }
+      if (!this.buttonRect) return { top: '0px', left: '0px' }
       return {
         top: `${this.buttonRect.bottom + 2}px`,
-        left: `${Math.max(0, this.buttonRect.right - 256)}px`,
-        borderRadius: '4px'
+        left: `${Math.max(0, this.buttonRect.right - 384)}px`
       }
     }
   },
@@ -141,9 +102,6 @@ export default {
       }
       
       this.showModal = !this.showModal
-      if (this.showModal) {
-        this.searchTerm = ''
-      }
     },
     toggleHabilidade(habilidade) {
       const current = [...this.selectedHabilidades]
@@ -234,7 +192,7 @@ export default {
   font-weight: 500;
   background: #f3f4f6;
   color: #6b7280;
-  border-radius: 9999px;
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s;
   border: 1px dashed #d1d5db;
