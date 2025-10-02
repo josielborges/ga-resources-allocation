@@ -1,19 +1,29 @@
 <template>
   <div class="relative">
-    <button 
-      @click.stop="toggleModal"
-      class="sheets-habilidades-btn"
-    >
-      <span v-if="selectedHabilidades.length === 0" class="text-gray-500">
-        Selecionar...
+    <div class="habilidades-container">
+      <!-- Selected habilidades as pills -->
+      <div v-if="selectedHabilidades.length > 0" class="selected-tags">
+        <span 
+          v-for="hab in selectedHabilidades" 
+          :key="hab"
+          class="habilidade-pill"
+          :title="hab"
+          @click.stop="removeHabilidade(hab)"
+        >
+          {{ abbreviateText(hab) }}
+        </span>
+      </div>
+      
+      <!-- Add button -->
+      <span 
+        @click.stop="toggleModal"
+        class="add-pill"
+        :class="{ 'first-item': selectedHabilidades.length === 0 }"
+      >
+        <span v-if="selectedHabilidades.length === 0">Selecionar habilidades</span>
+        <span v-else>+</span>
       </span>
-      <span v-else class="text-gray-900">
-        {{ selectedHabilidades.length }} habilidade{{ selectedHabilidades.length > 1 ? 's' : '' }}
-      </span>
-      <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-      </svg>
-    </button>
+    </div>
     
     <!-- Modal compacto -->
     <div 
@@ -55,9 +65,9 @@
           <span 
             v-for="hab in selectedHabilidades" 
             :key="hab"
-            class="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-primary-100 text-primary-800"
+            class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"
           >
-            {{ hab.length > 8 ? hab.substring(0, 8) + '...' : hab }}
+            {{ abbreviateText(hab) }}
             <button 
               @click.stop="removeHabilidade(hab)"
               class="ml-1 hover:text-primary-600"
@@ -147,6 +157,15 @@ export default {
       
       this.$emit('update:modelValue', current)
     },
+
+    abbreviateText(text) {
+      const stopWords = ['de', 'da', 'do', 'das', 'dos', 'e', 'em', 'com', 'para', 'por', 'a', 'o', 'as', 'os', 'um', 'uma', 'uns', 'umas']
+      return text
+        .split(' ')
+        .filter(word => !stopWords.includes(word.toLowerCase()))
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1, 5).toLowerCase())
+        .join(' ')
+    },
     removeHabilidade(habilidade) {
       const current = [...this.selectedHabilidades]
       const index = current.indexOf(habilidade)
@@ -174,34 +193,66 @@ export default {
 </script>
 
 <style scoped>
-.sheets-habilidades-btn {
+.habilidades-container {
   width: 100%;
-  height: 32px;
-  border: none;
-  outline: none;
-  padding: 0 8px;
-  font-size: 13px;
-  background: transparent;
-  text-align: left;
+  min-height: 32px;
   display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
   align-items: center;
-  justify-content: space-between;
+  background: transparent;
+}
+
+.selected-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  flex: 1;
+}
+
+.habilidade-pill {
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 500;
+  background: #dcfce7;
+  color: #166534;
+  border-radius: 9999px;
   cursor: pointer;
-  font-family: inherit;
+  transition: all 0.2s;
+  white-space: nowrap;
+  min-width: fit-content;
 }
 
-.sheets-habilidades-btn:hover {
-  background: #f8f9fa;
+.habilidade-pill:hover {
+  background: #bbf7d0;
+  transform: scale(1.02);
 }
 
-.sheets-habilidades-btn:focus {
-  background: white;
-  box-shadow: inset 0 0 0 2px #1a73e8;
-  z-index: 1;
-  position: relative;
+.add-pill {
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 500;
+  background: #f3f4f6;
+  color: #6b7280;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px dashed #d1d5db;
 }
 
-.sheets-habilidades-btn * {
-  pointer-events: none;
+.add-pill:hover {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.add-pill.first-item {
+  color: #9ca3af;
+  border: none;
+  background: transparent;
+}
+
+.add-pill.first-item:hover {
+  background: #f9fafb;
+  color: #374151;
 }
 </style>

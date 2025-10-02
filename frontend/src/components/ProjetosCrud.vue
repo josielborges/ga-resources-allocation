@@ -135,10 +135,10 @@
                     <tr class="sheets-header">
                       <th class="sheets-cell sheets-header-cell w-10 text-center">#</th>
                       <th class="sheets-cell sheets-header-cell min-w-[200px]">Nome da Etapa</th>
-                      <th class="sheets-cell sheets-header-cell w-16 text-center">Dias</th>
-                      <th class="sheets-cell sheets-header-cell w-32">Cargo</th>
-                      <th class="sheets-cell sheets-header-cell w-24 text-center">Pred.</th>
-                      <th class="sheets-cell sheets-header-cell min-w-[150px]">Habilidades</th>
+                      <th class="sheets-cell sheets-header-cell w-12 text-center">Dias</th>
+                      <th class="sheets-cell sheets-header-cell w-40">Cargo</th>
+                      <th class="sheets-cell sheets-header-cell w-20 text-center">Pred.</th>
+                      <th class="sheets-cell sheets-header-cell w-56">Habilidades</th>
                       <th class="sheets-cell sheets-header-cell w-12 text-center">Ações</th>
                     </tr>
                   </thead>
@@ -178,7 +178,7 @@
                           />
                         </div>
                       </td>
-                      <td class="sheets-cell">
+                      <td class="sheets-cell w-12">
                         <input 
                           v-model.number="etapa.duracao_dias" 
                           type="number" 
@@ -189,7 +189,7 @@
                           placeholder="0"
                         />
                       </td>
-                      <td class="sheets-cell">
+                      <td class="sheets-cell w-40">
                         <select 
                           v-model="etapa.cargo_necessario_id" 
                           required
@@ -201,7 +201,7 @@
                           </option>
                         </select>
                       </td>
-                      <td class="sheets-cell predecessoras-cell">
+                      <td class="sheets-cell predecessoras-cell w-16">
                         <div class="predecessoras-compact">
                           <span 
                             v-if="!etapa.predecessoras || etapa.predecessoras.length === 0"
@@ -222,8 +222,8 @@
                           </div>
                         </div>
                       </td>
-                      <td class="sheets-cell habilidades-cell" @mousedown.stop @click.stop>
-                        <div @click.stop class="h-full">
+                      <td class="sheets-cell habilidades-cell w-48" @mousedown.stop @click.stop>
+                        <div @click.stop class="h-full pl-1 pr-1 mt-1">
                           <HabilidadesSelect 
                             v-model="etapa.habilidades_necessarias"
                             :habilidades="habilidadesOrdenadas"
@@ -598,7 +598,7 @@ export default {
 .sheets-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .sheets-cell {
@@ -674,7 +674,7 @@ export default {
   border: none;
   outline: none;
   padding: 0 8px;
-  font-size: 13px;
+  font-size: 12px;
   background: transparent;
   font-family: inherit;
   transition: all 0.15s ease;
@@ -837,6 +837,7 @@ export default {
   cursor: grab;
   padding: 6px;
   margin-right: 6px;
+  margin-left: 5px;
   border-radius: 3px;
   background: #f1f5f9;
   border: 1px solid #e2e8f0;
