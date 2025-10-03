@@ -247,6 +247,9 @@
                   </tbody>
                 </table>
               </div>
+              
+              <!-- Flowchart das Etapas -->
+              <EtapasFlowchartDagre :etapas="form.etapas" />
             </div>
           </div>
         </div>
@@ -291,13 +294,15 @@
 import axios from 'axios'
 import ConfirmModal from './ConfirmModal.vue'
 import HabilidadesSelect from './HabilidadesSelect.vue'
+import EtapasFlowchartDagre from './EtapasFlowchartDagre.vue'
 import Sortable from 'sortablejs'
 
 export default {
   name: 'ProjetosCrud',
   components: {
     ConfirmModal,
-    HabilidadesSelect
+    HabilidadesSelect,
+    EtapasFlowchartDagre
   },
   data() {
     return {
