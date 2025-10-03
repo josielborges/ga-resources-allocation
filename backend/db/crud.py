@@ -65,6 +65,7 @@ def update_projeto(db: Session, projeto_id: int, projeto: schemas.ProjetoCreate)
     db.commit()
     
     todas_etapas = []
+    etapas_utilizadas = set()
     
     for i, etapa_data in enumerate(projeto.etapas):
         original_index = getattr(etapa_data, 'originalIndex', i)
@@ -81,6 +82,8 @@ def update_projeto(db: Session, projeto_id: int, projeto: schemas.ProjetoCreate)
                 habilidade = db.query(models.Habilidade).filter(models.Habilidade.nome == hab_nome).first()
                 if habilidade:
                     db_etapa.habilidades_necessarias.append(habilidade)
+            
+            etapas_utilizadas.add(original_index)
         else:
             db_etapa = models.Etapa(
                 projeto_id=projeto_id,
@@ -99,6 +102,11 @@ def update_projeto(db: Session, projeto_id: int, projeto: schemas.ProjetoCreate)
                     db_etapa.habilidades_necessarias.append(habilidade)
         
         todas_etapas.append(db_etapa)
+    
+    for i, etapa_existente in enumerate(etapas_existentes_ordenadas):
+        if i not in etapas_utilizadas:
+            db.delete(etapa_existente)
+    db.commit()
     
     db.commit()
     
