@@ -143,13 +143,13 @@
                     </tr>
                   </thead>
                   <tbody ref="etapasContainer">
-                    <tr v-for="(etapa, index) in form.etapas" :key="`etapa-${etapa.nome}-${index}`" class="sheets-row group" :data-index="index">
+                    <tr v-for="(etapa, index) in form.etapas" :key="`etapa-${index}-${etapa.nome}-${JSON.stringify(etapa.predecessoras)}`" class="sheets-row group" :data-index="index">
                       <td class="sheets-cell sheets-number-cell">
-                        <div class="drag-handle sheets-drag-handle" :title="`Etapa ${index + 1} - Arraste para reordenar`">
+                        <div class="drag-handle sheets-drag-handle" :title="`Etapa ${etapa.originalIndex + 1} - Arraste para reordenar`">
                           <svg class="w-3 h-3 text-gray-400 group-hover:text-blue-500" fill="currentColor" viewBox="0 0 20 20">
                             <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
                           </svg>
-                          <span class="text-xs font-medium ml-1">{{ index + 1 }}</span>
+                          <span class="text-xs font-medium ml-1">{{ etapa.originalIndex + 1 }}</span>
                         </div>
                       </td>
                       <td class="sheets-cell nome-cell">
@@ -400,7 +400,8 @@ export default {
                 cargo_necessario_id: etapa.cargo_necessario.id,
                 habilidades_necessarias: etapa.habilidades_necessarias.map(h => h.nome),
                 ordem: etapa.ordem !== undefined ? etapa.ordem : index,
-                predecessoras: predecessorasIndices
+                predecessoras: predecessorasIndices,
+                originalIndex: index
               }
             })
         }
@@ -426,7 +427,8 @@ export default {
         cargo_necessario_id: '',
         habilidades_necessarias: [],
         ordem: this.form.etapas.length,
-        predecessoras: []
+        predecessoras: [],
+        originalIndex: this.form.etapas.length
       })
     },
     
@@ -440,10 +442,31 @@ export default {
       try {
         const formData = {
           ...this.form,
-          etapas: this.form.etapas.map((etapa, index) => ({
-            ...etapa,
-            predecessoras_ids: etapa.predecessoras || []
-          }))
+          etapas: this.form.etapas.map((etapa, index) => {
+            // Para projetos existentes, converter originalIndex para IDs reais
+            // Para projetos novos, usar os originalIndex como referência de ordem
+            let predecessoras_ids = []
+            if (etapa.predecessoras && etapa.predecessoras.length > 0) {
+              if (this.editandoProjeto) {
+                const etapasOriginais = this.editandoProjeto.etapas.sort((a, b) => (a.ordem || 0) - (b.ordem || 0))
+                predecessoras_ids = etapa.predecessoras
+                  .map(originalIndex => {
+                    const etapaOriginal = etapasOriginais[originalIndex]
+                    return etapaOriginal ? etapaOriginal.id : null
+                  })
+                  .filter(id => id !== null)
+              } else {
+                // Para projetos novos, usar os originalIndex diretamente
+                predecessoras_ids = etapa.predecessoras
+              }
+            }
+            
+            return {
+              ...etapa,
+              ordem: index,
+              predecessoras_ids
+            }
+          })
         }
         
         if (this.editandoProjeto) {
@@ -489,9 +512,10 @@ export default {
     },
     
     handlePredecessorDragStart(index, event) {
-      console.log('Drag start:', index)
-      this.draggedIndex = index
-      event.dataTransfer.setData('text/plain', index.toString())
+      const originalIndex = this.form.etapas[index].originalIndex
+      console.log('Drag start:', originalIndex)
+      this.draggedIndex = originalIndex
+      event.dataTransfer.setData('text/plain', originalIndex.toString())
       event.dataTransfer.effectAllowed = 'copy'
       event.stopPropagation()
     },
@@ -513,28 +537,32 @@ export default {
     
     handlePredecessorDrop(targetIndex, event) {
       event.preventDefault()
-      console.log('Drop on:', targetIndex)
-      const sourceIndex = parseInt(event.dataTransfer.getData('text/plain'))
-      console.log('Source:', sourceIndex, 'Target:', targetIndex)
+      const targetOriginalIndex = this.form.etapas[targetIndex].originalIndex
+      const sourceOriginalIndex = parseInt(event.dataTransfer.getData('text/plain'))
+      console.log('Drop on:', targetOriginalIndex, 'Source:', sourceOriginalIndex)
       
-      if (sourceIndex !== targetIndex) {
-        // Inverter lógica: targetIndex vira predecessor de sourceIndex
-        if (!this.form.etapas[sourceIndex].predecessoras) {
-          this.form.etapas[sourceIndex].predecessoras = []
-        }
+      if (sourceOriginalIndex !== targetOriginalIndex) {
+        // Encontrar o índice atual do sourceOriginalIndex no array
+        const sourceArrayIndex = this.form.etapas.findIndex(e => e.originalIndex === sourceOriginalIndex)
         
-        if (!this.form.etapas[sourceIndex].predecessoras.includes(targetIndex)) {
-          this.form.etapas[sourceIndex].predecessoras.push(targetIndex)
-          console.log('Added predecessor:', targetIndex, 'to', sourceIndex)
+        if (sourceArrayIndex !== -1) {
+          if (!this.form.etapas[sourceArrayIndex].predecessoras) {
+            this.form.etapas[sourceArrayIndex].predecessoras = []
+          }
+          
+          if (!this.form.etapas[sourceArrayIndex].predecessoras.includes(targetOriginalIndex)) {
+            this.form.etapas[sourceArrayIndex].predecessoras.push(targetOriginalIndex)
+            console.log('Added predecessor:', targetOriginalIndex, 'to', sourceOriginalIndex)
+          }
         }
       }
       
       this.dragOverIndex = null
     },
     
-    removePredecessora(etapaIndex, predecessoraIndex) {
+    removePredecessora(etapaIndex, predecessoraOriginalIndex) {
       const predecessoras = this.form.etapas[etapaIndex].predecessoras
-      const index = predecessoras.indexOf(predecessoraIndex)
+      const index = predecessoras.indexOf(predecessoraOriginalIndex)
       if (index > -1) {
         predecessoras.splice(index, 1)
       }
@@ -553,29 +581,10 @@ export default {
             const newIndex = evt.newIndex
             
             if (oldIndex !== newIndex && oldIndex < this.form.etapas.length && newIndex < this.form.etapas.length) {
-              // Criar uma nova cópia do array para forçar reatividade
+              // Apenas reordenar o array sem alterar índices ou predecessoras
               const etapas = [...this.form.etapas]
               const movedItem = etapas.splice(oldIndex, 1)[0]
               etapas.splice(newIndex, 0, movedItem)
-              
-              // Atualizar ordem e ajustar predecessoras
-              etapas.forEach((etapa, index) => {
-                etapa.ordem = index
-                if (etapa.predecessoras) {
-                  // Ajustar índices das predecessoras baseado na nova ordem
-                  etapa.predecessoras = etapa.predecessoras
-                    .map(predIndex => {
-                      if (predIndex === oldIndex) return newIndex
-                      if (oldIndex < newIndex) {
-                        if (predIndex > oldIndex && predIndex <= newIndex) return predIndex - 1
-                      } else {
-                        if (predIndex >= newIndex && predIndex < oldIndex) return predIndex + 1
-                      }
-                      return predIndex
-                    })
-                    .filter(p => p < index) // Manter apenas predecessoras válidas
-                }
-              })
               
               // Substituir o array completo para garantir reatividade
               this.form.etapas = etapas

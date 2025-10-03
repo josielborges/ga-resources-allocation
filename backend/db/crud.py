@@ -46,7 +46,8 @@ def create_projeto(db: Session, projeto: schemas.ProjetoCreate):
     for i, etapa_data in enumerate(projeto.etapas):
         if hasattr(etapa_data, 'predecessoras_ids'):
             for pred_id in etapa_data.predecessoras_ids:
-                if pred_id < len(etapas_criadas):
+                # Para projetos novos, pred_id são índices, não IDs
+                if isinstance(pred_id, int) and pred_id < len(etapas_criadas):
                     etapas_criadas[i].predecessoras.append(etapas_criadas[pred_id])
     db.commit()
     
@@ -59,49 +60,66 @@ def update_projeto(db: Session, projeto_id: int, projeto: schemas.ProjetoCreate)
     
     db_projeto.nome = projeto.nome
     db_projeto.color = projeto.color
-    db.commit()
     
-    # Limpar relações many-to-many das etapas existentes
+    # Obter etapas existentes ordenadas
     etapas_existentes = db.query(models.Etapa).filter(models.Etapa.projeto_id == projeto_id).all()
-    for etapa in etapas_existentes:
-        etapa.habilidades_necessarias.clear()
-        etapa.predecessoras.clear()
-    db.commit()
+    etapas_existentes_ordenadas = sorted(etapas_existentes, key=lambda e: e.ordem or 0)
     
-    # Remover etapas existentes
-    db.query(models.Etapa).filter(models.Etapa.projeto_id == projeto_id).delete()
-    db.commit()
-    
-    # Criar novas etapas primeiro
-    etapas_criadas = []
+    # Atualizar etapas existentes
     for i, etapa_data in enumerate(projeto.etapas):
-        db_etapa = models.Etapa(
-            projeto_id=projeto_id,
-            nome=etapa_data.nome,
-            duracao_dias=etapa_data.duracao_dias,
-            cargo_necessario_id=etapa_data.cargo_necessario_id,
-            ordem=getattr(etapa_data, 'ordem', i)
-        )
-        db.add(db_etapa)
-        db.commit()
-        db.refresh(db_etapa)
-        etapas_criadas.append(db_etapa)
-        
-        # Adicionar habilidades necessárias
-        for hab_nome in etapa_data.habilidades_necessarias:
-            habilidade = db.query(models.Habilidade).filter(models.Habilidade.nome == hab_nome).first()
-            if habilidade:
-                db_etapa.habilidades_necessarias.append(habilidade)
-        db.commit()
+        if i < len(etapas_existentes_ordenadas):
+            # Atualizar etapa existente
+            db_etapa = etapas_existentes_ordenadas[i]
+            db_etapa.nome = etapa_data.nome
+            db_etapa.duracao_dias = etapa_data.duracao_dias
+            db_etapa.cargo_necessario_id = etapa_data.cargo_necessario_id
+            db_etapa.ordem = getattr(etapa_data, 'ordem', i)
+            
+            # Limpar e atualizar habilidades
+            db_etapa.habilidades_necessarias.clear()
+            for hab_nome in etapa_data.habilidades_necessarias:
+                habilidade = db.query(models.Habilidade).filter(models.Habilidade.nome == hab_nome).first()
+                if habilidade:
+                    db_etapa.habilidades_necessarias.append(habilidade)
+        else:
+            # Criar nova etapa
+            db_etapa = models.Etapa(
+                projeto_id=projeto_id,
+                nome=etapa_data.nome,
+                duracao_dias=etapa_data.duracao_dias,
+                cargo_necessario_id=etapa_data.cargo_necessario_id,
+                ordem=getattr(etapa_data, 'ordem', i)
+            )
+            db.add(db_etapa)
+            db.commit()
+            db.refresh(db_etapa)
+            etapas_existentes_ordenadas.append(db_etapa)
+            
+            # Adicionar habilidades
+            for hab_nome in etapa_data.habilidades_necessarias:
+                habilidade = db.query(models.Habilidade).filter(models.Habilidade.nome == hab_nome).first()
+                if habilidade:
+                    db_etapa.habilidades_necessarias.append(habilidade)
     
-    # Adicionar predecessoras após todas as etapas serem criadas
+    # Remover etapas extras se houver
+    if len(etapas_existentes_ordenadas) > len(projeto.etapas):
+        for etapa in etapas_existentes_ordenadas[len(projeto.etapas):]:
+            db.delete(etapa)
+    
+    db.commit()
+    
+    # Limpar e atualizar predecessoras
+    for etapa in etapas_existentes_ordenadas[:len(projeto.etapas)]:
+        etapa.predecessoras.clear()
+    
     for i, etapa_data in enumerate(projeto.etapas):
         if hasattr(etapa_data, 'predecessoras_ids'):
             for pred_id in etapa_data.predecessoras_ids:
-                if pred_id < len(etapas_criadas):
-                    etapas_criadas[i].predecessoras.append(etapas_criadas[pred_id])
-    db.commit()
+                pred_etapa = db.query(models.Etapa).filter(models.Etapa.id == pred_id).first()
+                if pred_etapa:
+                    etapas_existentes_ordenadas[i].predecessoras.append(pred_etapa)
     
+    db.commit()
     db.refresh(db_projeto)
     return db_projeto
 
