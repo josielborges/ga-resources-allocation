@@ -143,13 +143,13 @@
                     </tr>
                   </thead>
                   <tbody ref="etapasContainer">
-                    <tr v-for="(etapa, index) in form.etapas" :key="`etapa-${index}-${etapa.nome}-${JSON.stringify(etapa.predecessoras)}`" class="sheets-row group" :data-index="index">
+                    <tr v-for="(etapa, index) in form.etapas" :key="etapa.originalIndex" class="sheets-row group" :data-index="index">
                       <td class="sheets-cell sheets-number-cell">
-                        <div class="drag-handle sheets-drag-handle" :title="`Etapa ${etapa.originalIndex + 1} - Arraste para reordenar`">
+                        <div class="drag-handle sheets-drag-handle" :title="`Etapa ${index + 1} - Arraste para reordenar`">
                           <svg class="w-3 h-3 text-gray-400 group-hover:text-blue-500" fill="currentColor" viewBox="0 0 20 20">
                             <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
                           </svg>
-                          <span class="text-xs font-medium ml-1">{{ etapa.originalIndex + 1 }}</span>
+                          <span class="text-xs font-medium ml-1">{{ index + 1 }}</span>
                         </div>
                       </td>
                       <td class="sheets-cell nome-cell">
@@ -171,6 +171,7 @@
                             required
                             placeholder="Digite o nome da etapa"
                             class="sheets-input nome-input"
+
                             @dragover.prevent="handleDragOver(index, $event)"
                             @dragleave="handleDragLeave"
                             @drop="handlePredecessorDrop(index, $event)"
@@ -215,9 +216,9 @@
                               :key="predIndex"
                               class="predecessor-badge"
                               @click="removePredecessora(index, predIndex)"
-                              :title="`Depende da etapa ${predIndex + 1} (clique para remover)`"
+                              :title="`Depende da etapa ${getCurrentVisualPosition(predIndex)} (clique para remover)`"
                             >
-                              {{ predIndex + 1 }}
+                              {{ getCurrentVisualPosition(predIndex) }}
                             </span>
                           </div>
                         </div>
@@ -437,7 +438,6 @@ export default {
     },
     
     async salvarProjeto() {
-      console.log('ProjetosCrud: salvarProjeto called')
       this.salvando = true
       try {
         const formData = {
@@ -568,6 +568,11 @@ export default {
       }
     },
     
+    getCurrentVisualPosition(originalIndex) {
+      const currentIndex = this.form.etapas.findIndex(etapa => etapa.originalIndex === originalIndex)
+      return currentIndex !== -1 ? currentIndex + 1 : originalIndex + 1
+    },
+    
     initSortable() {
       if (this.$refs.etapasContainer) {
         Sortable.create(this.$refs.etapasContainer, {
@@ -581,12 +586,10 @@ export default {
             const newIndex = evt.newIndex
             
             if (oldIndex !== newIndex && oldIndex < this.form.etapas.length && newIndex < this.form.etapas.length) {
-              // Apenas reordenar o array sem alterar índices ou predecessoras
               const etapas = [...this.form.etapas]
               const movedItem = etapas.splice(oldIndex, 1)[0]
               etapas.splice(newIndex, 0, movedItem)
               
-              // Substituir o array completo para garantir reatividade
               this.form.etapas = etapas
             }
           }

@@ -65,6 +65,7 @@ class EtapaCreate(EtapaBase):
     habilidades_necessarias: List[str] = []
     ordem: int = 0
     predecessoras_ids: List[int] = []
+    originalIndex: Optional[int] = None
 
 class Etapa(EtapaBase):
     id: int
