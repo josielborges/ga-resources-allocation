@@ -253,6 +253,16 @@ export default {
   async mounted() {
     await this.carregarDados()
   },
+  
+  watch: {
+    showModal(newVal) {
+      if (newVal) {
+        document.addEventListener('keydown', this.handleEscKey)
+      } else {
+        document.removeEventListener('keydown', this.handleEscKey)
+      }
+    }
+  },
   methods: {
     async carregarDados() {
       this.loading = true
@@ -336,6 +346,12 @@ export default {
       } catch (error) {
         console.error('Erro ao excluir colaborador:', error)
         this.cancelarExclusao()
+      }
+    },
+    
+    handleEscKey(event) {
+      if (event.key === 'Escape' && this.showModal) {
+        this.fecharModal()
       }
     },
     
