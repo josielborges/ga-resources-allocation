@@ -195,6 +195,7 @@
                           v-model="etapa.cargo_necessario_id" 
                           required
                           class="sheets-select text-sm"
+                          @change="clearHabilidades(index)"
                         >
                           <option value="" class="text-gray-400">Selecionar cargo</option>
                           <option v-for="cargo in cargosOrdenados" :key="cargo.id" :value="cargo.id" class="text-gray-900">
@@ -358,6 +359,9 @@ export default {
         this.$nextTick(() => {
           this.initSortable()
         })
+        document.addEventListener('keydown', this.handleEscKey)
+      } else {
+        document.removeEventListener('keydown', this.handleEscKey)
       }
     }
   },
@@ -585,6 +589,16 @@ export default {
     getCurrentVisualPosition(originalIndex) {
       const currentIndex = this.form.etapas.findIndex(etapa => etapa.originalIndex === originalIndex)
       return currentIndex !== -1 ? currentIndex + 1 : originalIndex + 1
+    },
+    
+    handleEscKey(event) {
+      if (event.key === 'Escape' && this.showModal) {
+        this.fecharModal()
+      }
+    },
+    
+    clearHabilidades(etapaIndex) {
+      this.form.etapas[etapaIndex].habilidades_necessarias = []
     },
     
     initSortable() {
