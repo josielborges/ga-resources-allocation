@@ -427,13 +427,21 @@ export default {
     },
     
     adicionarEtapa() {
+      const predecessoras = []
+      
+      // If there are existing etapas, set the last one as predecessor
+      if (this.form.etapas.length > 0) {
+        const lastEtapaIndex = this.form.etapas.length - 1
+        predecessoras.push(this.form.etapas[lastEtapaIndex].originalIndex)
+      }
+      
       this.form.etapas.push({
         nome: '',
         duracao_dias: 1,
         cargo_necessario_id: '',
         habilidades_necessarias: [],
         ordem: this.form.etapas.length,
-        predecessoras: [],
+        predecessoras: predecessoras,
         originalIndex: this.form.etapas.length
       })
     },

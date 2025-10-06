@@ -40,9 +40,16 @@ def create_projeto(db: Session, projeto: schemas.ProjetoCreate):
                 db_etapa.habilidades_necessarias.append(habilidade)
         db.commit()
     
+    # Handle predecessors for new projects
     for i, etapa_data in enumerate(projeto.etapas):
-        if hasattr(etapa_data, 'predecessoras_ids'):
-            for pred_id in etapa_data.predecessoras_ids:
+        predecessoras_ids = getattr(etapa_data, 'predecessoras_ids', [])
+        
+        # If no predecessors specified but there are previous etapas, set last one as predecessor
+        if not predecessoras_ids and i > 0:
+            etapas_criadas[i].predecessoras.append(etapas_criadas[i-1])
+        else:
+            # Handle explicit predecessor references
+            for pred_id in predecessoras_ids:
                 if isinstance(pred_id, int) and pred_id < len(etapas_criadas):
                     etapas_criadas[i].predecessoras.append(etapas_criadas[pred_id])
     db.commit()
@@ -111,9 +118,18 @@ def update_projeto(db: Session, projeto_id: int, projeto: schemas.ProjetoCreate)
     db.commit()
     
     for i, etapa_data in enumerate(projeto.etapas):
-        if hasattr(etapa_data, 'predecessoras_ids'):
-            db_etapa = todas_etapas[i]
-            for pred_id in etapa_data.predecessoras_ids:
+        db_etapa = todas_etapas[i]
+        predecessoras_ids = getattr(etapa_data, 'predecessoras_ids', [])
+        
+        # If this is a new etapa (no predecessors specified) and there are previous etapas
+        if not predecessoras_ids and i > 0:
+            # Set the previous etapa as predecessor
+            prev_etapa = todas_etapas[i-1]
+            if prev_etapa.id != db_etapa.id:
+                db_etapa.predecessoras.append(prev_etapa)
+        else:
+            # Handle explicit predecessor references
+            for pred_id in predecessoras_ids:
                 pred_etapa = db.query(models.Etapa).filter(models.Etapa.id == pred_id).first()
                 if pred_etapa and pred_etapa.id != db_etapa.id:
                     db_etapa.predecessoras.append(pred_etapa)
