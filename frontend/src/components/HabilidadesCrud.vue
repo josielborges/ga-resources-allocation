@@ -28,25 +28,29 @@
       <table v-else class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
           <tr>
-            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
-            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cargo</th>
+            <th @click="ordenarPor('cargo')" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+              <div class="flex items-center space-x-1">
+                <span>Cargo</span>
+                <svg v-if="ordenacao.campo === 'cargo'" class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                  <path v-if="ordenacao.direcao === 'asc'" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/>
+                  <path v-else d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z"/>
+                </svg>
+              </div>
+            </th>
+            <th @click="ordenarPor('nome')" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+              <div class="flex items-center space-x-1">
+                <span>Nome</span>
+                <svg v-if="ordenacao.campo === 'nome'" class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                  <path v-if="ordenacao.direcao === 'asc'" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/>
+                  <path v-else d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z"/>
+                </svg>
+              </div>
+            </th>
             <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
           <tr v-for="habilidade in habilidadesOrdenadas" :key="habilidade.id" class="hover:bg-gray-50">
-            <td class="px-4 py-2">
-              <input 
-                v-if="editando === habilidade.id"
-                v-model="nomeEditando"
-                @keyup.enter="salvarEdicao(habilidade)"
-                @keyup.escape="cancelarEdicao"
-                @blur="salvarEdicao(habilidade)"
-                class="w-full px-3 py-1.5 text-sm border border-blue-300 rounded-md bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                ref="inputEdit"
-              />
-              <div v-else class="text-sm font-medium text-gray-900 py-1">{{ habilidade.nome }}</div>
-            </td>
             <td class="px-4 py-2">
               <select 
                 v-if="editando === habilidade.id"
@@ -59,32 +63,75 @@
               </select>
               <div v-else class="text-sm text-gray-900 py-1">{{ habilidade.cargo.nome }}</div>
             </td>
+            <td class="px-4 py-2">
+              <input 
+                v-if="editando === habilidade.id"
+                v-model="nomeEditando"
+                @keyup.enter="salvarEdicao(habilidade)"
+                @keyup.escape="cancelarEdicao"
+                class="w-full px-3 py-1.5 text-sm border border-blue-300 rounded-md bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                ref="inputEdit"
+              />
+              <div v-else class="text-sm font-medium text-gray-900 py-1">{{ habilidade.nome }}</div>
+            </td>
             <td class="px-4 py-2 whitespace-nowrap text-right text-sm font-medium">
               <div class="flex justify-end space-x-2">
-                <button 
-                  v-if="editando !== habilidade.id"
-                  @click="iniciarEdicao(habilidade)" 
-                  class="text-blue-600 hover:text-blue-800 p-1.5 rounded-md hover:bg-blue-50 transition-colors"
-                  title="Editar"
-                >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                  </svg>
-                </button>
-                <button 
-                  @click="confirmarExclusao(habilidade)" 
-                  class="text-red-600 hover:text-red-900 p-1"
-                  title="Excluir"
-                >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                  </svg>
-                </button>
+                <template v-if="editando === habilidade.id">
+                  <button 
+                    @click="salvarEdicao(habilidade)"
+                    class="text-green-600 hover:text-green-800 p-1.5 rounded-md hover:bg-green-50 transition-colors"
+                    title="Salvar"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                  </button>
+                  <button 
+                    @click="cancelarEdicao"
+                    class="text-gray-600 hover:text-gray-800 p-1.5 rounded-md hover:bg-gray-50 transition-colors"
+                    title="Cancelar"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                  </button>
+                </template>
+                <template v-else>
+                  <button 
+                    @click="iniciarEdicao(habilidade)" 
+                    class="text-blue-600 hover:text-blue-800 p-1.5 rounded-md hover:bg-blue-50 transition-colors"
+                    title="Editar"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                    </svg>
+                  </button>
+                  <button 
+                    @click="confirmarExclusao(habilidade)" 
+                    class="text-red-600 hover:text-red-900 p-1"
+                    title="Excluir"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                  </button>
+                </template>
               </div>
             </td>
           </tr>
           <!-- Linha para adicionar nova habilidade -->
           <tr class="bg-blue-50 border-t-2 border-blue-200">
+            <td class="px-4 py-3">
+              <select 
+                v-model="novoCargoId"
+                class="w-full px-3 py-1.5 text-sm border border-blue-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">Selecionar cargo</option>
+                <option v-for="cargo in cargosOrdenados" :key="cargo.id" :value="cargo.id">
+                  {{ cargo.nome }}
+                </option>
+              </select>
+            </td>
             <td class="px-4 py-3">
               <div class="flex items-center space-x-2">
                 <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -97,17 +144,6 @@
                   class="flex-1 px-3 py-1.5 text-sm border border-blue-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
-            </td>
-            <td class="px-4 py-3">
-              <select 
-                v-model="novoCargoId"
-                class="w-full px-3 py-1.5 text-sm border border-blue-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="">Selecionar cargo</option>
-                <option v-for="cargo in cargosOrdenados" :key="cargo.id" :value="cargo.id">
-                  {{ cargo.nome }}
-                </option>
-              </select>
             </td>
             <td class="px-4 py-3 text-right">
               <button 
@@ -164,6 +200,7 @@ export default {
       novaHabilidade: '',
       novoCargoId: '',
       cargoSelecionado: '',
+      ordenacao: { campo: 'nome', direcao: 'asc' },
       showConfirmModal: false,
       itemParaExcluir: null,
       showNotification: false,
@@ -173,7 +210,19 @@ export default {
   },
   computed: {
     habilidadesOrdenadas() {
-      return [...this.habilidades].sort((a, b) => a.nome.localeCompare(b.nome))
+      const sorted = [...this.habilidades].sort((a, b) => {
+        let valorA, valorB
+        if (this.ordenacao.campo === 'cargo') {
+          valorA = a.cargo.nome
+          valorB = b.cargo.nome
+        } else {
+          valorA = a.nome
+          valorB = b.nome
+        }
+        const resultado = valorA.localeCompare(valorB)
+        return this.ordenacao.direcao === 'asc' ? resultado : -resultado
+      })
+      return sorted
     },
     cargosOrdenados() {
       return [...this.cargos].sort((a, b) => a.nome.localeCompare(b.nome))
@@ -196,6 +245,15 @@ export default {
         console.error('Erro ao carregar dados:', error)
       } finally {
         this.loading = false
+      }
+    },
+    
+    ordenarPor(campo) {
+      if (this.ordenacao.campo === campo) {
+        this.ordenacao.direcao = this.ordenacao.direcao === 'asc' ? 'desc' : 'asc'
+      } else {
+        this.ordenacao.campo = campo
+        this.ordenacao.direcao = 'asc'
       }
     },
     
