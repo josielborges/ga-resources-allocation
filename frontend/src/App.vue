@@ -80,77 +80,173 @@
         <!-- Conteúdo do roadmap -->
         <div class="flex flex-1 overflow-hidden">
           <!-- Parâmetros Sidebar -->
-          <div class="w-72 bg-background-paper border-r border-divider flex-shrink-0">
+          <div class="w-72 bg-background-paper border-r border-divider flex-shrink-0 overflow-y-auto">
             <div class="p-4">
             <div class="bg-white rounded-md shadow-sm p-4">
               <h3 class="text-base font-semibold text-text-primary mb-4">Parâmetros do algoritmo</h3>
               
               <form class="space-y-4">
                 <div>
-                  <label class="caption block mb-2">População</label>
-                  <input 
-                    v-model="params.tam_pop" 
-                    type="range" 
-                    min="10" 
-                    max="100" 
-                    class="form-slider"
-                  />
-                  <div class="flex justify-between text-sm text-text-secondary mt-1">
-                    <span>10</span>
-                    <span class="font-medium">{{ params.tam_pop }}</span>
-                    <span>100</span>
-                  </div>
+                  <label class="caption block mb-2">Algoritmo</label>
+                  <select v-model="params.algorithm" class="form-input w-full text-sm">
+                    <option value="ga">Algoritmo Genético</option>
+                    <option value="aco">Colônia de Formigas</option>
+                  </select>
                 </div>
+                <!-- GA Parameters -->
+                <template v-if="params.algorithm === 'ga'">
+                  <div>
+                    <label class="caption block mb-2">População</label>
+                    <input 
+                      v-model="params.tam_pop" 
+                      type="range" 
+                      min="10" 
+                      max="100" 
+                      class="form-slider"
+                    />
+                    <div class="flex justify-between text-sm text-text-secondary mt-1">
+                      <span>10</span>
+                      <span class="font-medium">{{ params.tam_pop }}</span>
+                      <span>100</span>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label class="caption block mb-2">Gerações</label>
+                    <input 
+                      v-model="params.n_gen" 
+                      type="range" 
+                      min="5" 
+                      max="1000" 
+                      class="form-slider"
+                    />
+                    <div class="flex justify-between text-sm text-text-secondary mt-1">
+                      <span>5</span>
+                      <span class="font-medium">{{ params.n_gen }}</span>
+                      <span>1000</span>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label class="caption block mb-2">Crossover</label>
+                    <input 
+                      v-model="params.pc" 
+                      type="range" 
+                      min="0" 
+                      max="1" 
+                      step="0.1" 
+                      class="form-slider"
+                    />
+                    <div class="flex justify-between text-sm text-text-secondary mt-1">
+                      <span>0</span>
+                      <span class="font-medium">{{ params.pc }}</span>
+                      <span>1</span>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label class="caption block mb-2">Mutação</label>
+                    <input 
+                      v-model="params.pm" 
+                      type="range" 
+                      min="0" 
+                      max="1" 
+                      step="0.1" 
+                      class="form-slider"
+                    />
+                    <div class="flex justify-between text-sm text-text-secondary mt-1">
+                      <span>0</span>
+                      <span class="font-medium">{{ params.pm }}</span>
+                      <span>1</span>
+                    </div>
+                  </div>
+                </template>
                 
-                <div>
-                  <label class="caption block mb-2">Gerações</label>
-                  <input 
-                    v-model="params.n_gen" 
-                    type="range" 
-                    min="5" 
-                    max="1000" 
-                    class="form-slider"
-                  />
-                  <div class="flex justify-between text-sm text-text-secondary mt-1">
-                    <span>5</span>
-                    <span class="font-medium">{{ params.n_gen }}</span>
-                    <span>1000</span>
+                <!-- ACO Parameters -->
+                <template v-else>
+                  <div>
+                    <label class="caption block mb-2">Número de Formigas</label>
+                    <input 
+                      v-model="params.tam_pop" 
+                      type="range" 
+                      min="10" 
+                      max="50" 
+                      class="form-slider"
+                    />
+                    <div class="flex justify-between text-sm text-text-secondary mt-1">
+                      <span>10</span>
+                      <span class="font-medium">{{ params.tam_pop }}</span>
+                      <span>50</span>
+                    </div>
                   </div>
-                </div>
-                
-                <div>
-                  <label class="caption block mb-2">Crossover</label>
-                  <input 
-                    v-model="params.pc" 
-                    type="range" 
-                    min="0" 
-                    max="1" 
-                    step="0.1" 
-                    class="form-slider"
-                  />
-                  <div class="flex justify-between text-sm text-text-secondary mt-1">
-                    <span>0</span>
-                    <span class="font-medium">{{ params.pc }}</span>
-                    <span>1</span>
+                  
+                  <div>
+                    <label class="caption block mb-2">Iterações Máximas</label>
+                    <input 
+                      v-model="params.n_gen" 
+                      type="range" 
+                      min="5" 
+                      max="50" 
+                      class="form-slider"
+                    />
+                    <div class="flex justify-between text-sm text-text-secondary mt-1">
+                      <span>5</span>
+                      <span class="font-medium">{{ params.n_gen }}</span>
+                      <span>50</span>
+                    </div>
                   </div>
-                </div>
-                
-                <div>
-                  <label class="caption block mb-2">Mutação</label>
-                  <input 
-                    v-model="params.pm" 
-                    type="range" 
-                    min="0" 
-                    max="1" 
-                    step="0.1" 
-                    class="form-slider"
-                  />
-                  <div class="flex justify-between text-sm text-text-secondary mt-1">
-                    <span>0</span>
-                    <span class="font-medium">{{ params.pm }}</span>
-                    <span>1</span>
+                  
+                  <div>
+                    <label class="caption block mb-2">Alpha (Importância do Feromônio)</label>
+                    <input 
+                      v-model="params.alpha" 
+                      type="range" 
+                      min="0.1" 
+                      max="3" 
+                      step="0.1" 
+                      class="form-slider"
+                    />
+                    <div class="flex justify-between text-sm text-text-secondary mt-1">
+                      <span>0.1</span>
+                      <span class="font-medium">{{ params.alpha }}</span>
+                      <span>3</span>
+                    </div>
                   </div>
-                </div>
+                  
+                  <div>
+                    <label class="caption block mb-2">Beta (Importância da Heurística)</label>
+                    <input 
+                      v-model="params.beta" 
+                      type="range" 
+                      min="0.1" 
+                      max="5" 
+                      step="0.1" 
+                      class="form-slider"
+                    />
+                    <div class="flex justify-between text-sm text-text-secondary mt-1">
+                      <span>0.1</span>
+                      <span class="font-medium">{{ params.beta }}</span>
+                      <span>5</span>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label class="caption block mb-2">Rho (Taxa de Evaporação)</label>
+                    <input 
+                      v-model="params.rho" 
+                      type="range" 
+                      min="0.1" 
+                      max="0.9" 
+                      step="0.1" 
+                      class="form-slider"
+                    />
+                    <div class="flex justify-between text-sm text-text-secondary mt-1">
+                      <span>0.1</span>
+                      <span class="font-medium">{{ params.rho }}</span>
+                      <span>0.9</span>
+                    </div>
+                  </div>
+                </template>
                 
                 <div>
                   <label class="caption block mb-2">Data de Referência</label>
@@ -161,10 +257,91 @@
                   />
                 </div>
                 
+                <div class="space-y-2">
+                  <button 
+                    @click="executarAlgoritmo" 
+                    :disabled="loading" 
+                    class="bg-primary-main text-white px-4 py-2 rounded-sm text-sm font-medium w-full disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary-light transition-colors"
+                    type="button"
+                  >
+                    <span v-if="loading" class="flex items-center justify-center">
+                      <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Executando...
+                    </span>
+                    <span v-else>Executar {{ params.algorithm.toUpperCase() }}</span>
+                  </button>
+                  
+                  <button 
+                    @click="showComparisonParams = !showComparisonParams" 
+                    class="bg-green-600 text-white px-4 py-2 rounded-sm text-sm font-medium w-full hover:bg-green-700 transition-colors"
+                    type="button"
+                  >
+                    {{ showComparisonParams ? 'Ocultar' : 'Configurar' }} Comparação
+                  </button>
+                </div>
+              </form>
+              
+              <!-- Comparison Parameters -->
+              <div v-if="showComparisonParams" class="mt-4 bg-gray-50 rounded-md p-4">
+                <h4 class="text-sm font-semibold mb-3">Parâmetros para Comparação</h4>
+                
+                <!-- GA Parameters -->
+                <div class="mb-4">
+                  <h5 class="text-xs font-medium text-blue-600 mb-2">Algoritmo Genético</h5>
+                  <div class="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <label class="block mb-1">População</label>
+                      <input v-model="gaParams.tam_pop" type="number" min="10" max="100" class="w-full px-2 py-1 border rounded text-xs">
+                    </div>
+                    <div>
+                      <label class="block mb-1">Gerações</label>
+                      <input v-model="gaParams.n_gen" type="number" min="10" max="500" class="w-full px-2 py-1 border rounded text-xs">
+                    </div>
+                    <div>
+                      <label class="block mb-1">Crossover</label>
+                      <input v-model="gaParams.pc" type="number" min="0" max="1" step="0.1" class="w-full px-2 py-1 border rounded text-xs">
+                    </div>
+                    <div>
+                      <label class="block mb-1">Mutação</label>
+                      <input v-model="gaParams.pm" type="number" min="0" max="1" step="0.1" class="w-full px-2 py-1 border rounded text-xs">
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- ACO Parameters -->
+                <div class="mb-4">
+                  <h5 class="text-xs font-medium text-green-600 mb-2">Otimização por Colônia de Formigas</h5>
+                  <div class="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <label class="block mb-1">Formigas</label>
+                      <input v-model="acoParams.tam_pop" type="number" min="10" max="50" class="w-full px-2 py-1 border rounded text-xs">
+                    </div>
+                    <div>
+                      <label class="block mb-1">Iterações</label>
+                      <input v-model="acoParams.n_gen" type="number" min="5" max="50" class="w-full px-2 py-1 border rounded text-xs">
+                    </div>
+                    <div>
+                      <label class="block mb-1">Alpha</label>
+                      <input v-model="acoParams.alpha" type="number" min="0.1" max="3" step="0.1" class="w-full px-2 py-1 border rounded text-xs">
+                    </div>
+                    <div>
+                      <label class="block mb-1">Beta</label>
+                      <input v-model="acoParams.beta" type="number" min="0.1" max="5" step="0.1" class="w-full px-2 py-1 border rounded text-xs">
+                    </div>
+                    <div>
+                      <label class="block mb-1">Rho</label>
+                      <input v-model="acoParams.rho" type="number" min="0.1" max="0.9" step="0.1" class="w-full px-2 py-1 border rounded text-xs">
+                    </div>
+                  </div>
+                </div>
+                
                 <button 
-                  @click="executarAlgoritmo" 
+                  @click="compararAlgoritmos" 
                   :disabled="loading" 
-                  class="bg-primary-main text-white px-4 py-2 rounded-sm text-sm font-medium w-full mt-4 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary-light transition-colors"
+                  class="bg-purple-600 text-white px-4 py-2 rounded-sm text-sm font-medium w-full disabled:opacity-50 disabled:cursor-not-allowed hover:bg-purple-700 transition-colors"
                   type="button"
                 >
                   <span v-if="loading" class="flex items-center justify-center">
@@ -172,11 +349,11 @@
                       <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                       <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Executando...
+                    Comparando...
                   </span>
-                  <span v-else>Executar Algoritmo</span>
+                  <span v-else>Executar Comparação</span>
                 </button>
-              </form>
+              </div>
             </div>
             </div>
           </div>
@@ -227,6 +404,56 @@
                 <GanttTab v-if="activeTab === 'gantt'" :tarefas="resultado.tarefas" />
                 <CalendarioTab v-if="activeTab === 'calendario'" :tarefas="resultado.tarefas" :projetos="projetos" />
                 <MapaAlocacaoTab v-if="activeTab === 'mapa'" :tarefas="resultado.tarefas" :projetos="projetos" :colaboradores="colaboradores" />
+                <div v-if="activeTab === 'comparacao'" class="space-y-4">
+                  <div v-if="!comparacaoResultado" class="text-center py-8">
+                    <p class="text-text-secondary">Use o botão "Comparar GA vs ACO" para ver a análise comparativa dos algoritmos.</p>
+                  </div>
+                  <div v-else>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                      <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <h4 class="font-semibold text-blue-800 mb-2">Algoritmo Genético (GA)</h4>
+                        <div class="space-y-1 text-sm">
+                          <p><span class="font-medium">Melhor Fitness:</span> {{ comparacaoResultado.ga_stats.best_fitness.toFixed(2) }}</p>
+                          <p><span class="font-medium">Fitness Médio:</span> {{ comparacaoResultado.ga_stats.avg_fitness.toFixed(2) }}</p>
+                          <p><span class="font-medium">Tempo Médio:</span> {{ comparacaoResultado.ga_stats.avg_time.toFixed(2) }}s</p>
+                          <p><span class="font-medium">Convergência:</span> {{ comparacaoResultado.ga_stats.avg_convergence.toFixed(0) }} gerações</p>
+                        </div>
+                      </div>
+                      <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <h4 class="font-semibold text-green-800 mb-2">Otimização por Colônia de Formigas (ACO)</h4>
+                        <div class="space-y-1 text-sm">
+                          <p><span class="font-medium">Melhor Fitness:</span> {{ comparacaoResultado.aco_stats.best_fitness.toFixed(2) }}</p>
+                          <p><span class="font-medium">Fitness Médio:</span> {{ comparacaoResultado.aco_stats.avg_fitness.toFixed(2) }}</p>
+                          <p><span class="font-medium">Tempo Médio:</span> {{ comparacaoResultado.aco_stats.avg_time.toFixed(2) }}s</p>
+                          <p><span class="font-medium">Convergência:</span> {{ comparacaoResultado.aco_stats.avg_convergence.toFixed(0) }} iterações</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="bg-white border rounded-lg p-4">
+                      <h4 class="font-semibold mb-3">Análise Comparativa</h4>
+                      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                        <div class="text-center">
+                          <p class="font-medium text-lg" :class="comparacaoResultado.comparison.winner === 'ACO' ? 'text-green-600' : 'text-blue-600'">
+                            {{ comparacaoResultado.comparison.winner }}
+                          </p>
+                          <p class="text-text-secondary">Vencedor</p>
+                        </div>
+                        <div class="text-center">
+                          <p class="font-medium text-lg" :class="comparacaoResultado.comparison.fitness_improvement > 0 ? 'text-green-600' : 'text-red-600'">
+                            {{ comparacaoResultado.comparison.fitness_improvement.toFixed(1) }}%
+                          </p>
+                          <p class="text-text-secondary">Melhoria no Fitness</p>
+                        </div>
+                        <div class="text-center">
+                          <p class="font-medium text-lg">
+                            {{ comparacaoResultado.comparison.time_difference.toFixed(2) }}s
+                          </p>
+                          <p class="text-text-secondary">Diferença de Tempo</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -311,12 +538,30 @@ export default {
     return {
       activeModule: 'roadmap',
       params: {
-        tam_pop: 20,
-        n_gen: 100,
+        algorithm: 'ga',
+        tam_pop: 50,
+        n_gen: 200,
         pc: 0.7,
         pm: 0.3,
+        alpha: 1.0,
+        beta: 2.0,
+        rho: 0.5,
         ref_date: '2025-01-01'
       },
+      gaParams: {
+        tam_pop: 50,
+        n_gen: 500,
+        pc: 0.8,
+        pm: 0.2
+      },
+      acoParams: {
+        tam_pop: 50,
+        n_gen: 15,
+        alpha: 1.0,
+        beta: 2.0,
+        rho: 0.5
+      },
+      showComparisonParams: false,
       loading: false,
       activeTab: 'dados',
       resultado: null,
@@ -345,12 +590,25 @@ export default {
         { name: 'conflitos', label: 'Conflitos' },
         { name: 'gantt', label: 'Gantt' },
         { name: 'calendario', label: 'Calendário' },
-        { name: 'mapa', label: 'Mapa de Alocação' }
-      ]
+        { name: 'mapa', label: 'Mapa de Alocação' },
+        { name: 'comparacao', label: 'Comparação' }
+      ],
+      comparacaoResultado: null
     }
   },
   async mounted() {
     await this.carregarDados()
+  },
+  watch: {
+    'params.algorithm'(newAlgorithm) {
+      if (newAlgorithm === 'ga') {
+        this.params.tam_pop = 50
+        this.params.n_gen = 100
+      } else if (newAlgorithm === 'aco') {
+        this.params.tam_pop = 30
+        this.params.n_gen = 15
+      }
+    }
   },
   methods: {
     async carregarDados() {
@@ -373,12 +631,31 @@ export default {
     async executarAlgoritmo() {
       this.loading = true
       try {
-        const response = await axios.post('/api/executar-algoritmo', this.params)
+        const endpoint = this.params.algorithm === 'aco' ? '/api/executar-aco' : '/api/executar-algoritmo'
+        const response = await axios.post(endpoint, this.params)
         this.resultado = response.data
         this.activeTab = 'gantt'
-        console.log('Algoritmo executado com sucesso!')
+        console.log(`${this.params.algorithm.toUpperCase()} executado com sucesso!`)
       } catch (error) {
         console.error('Erro ao executar algoritmo')
+      } finally {
+        this.loading = false
+      }
+    },
+    async compararAlgoritmos() {
+      this.loading = true
+      try {
+        const comparisonParams = {
+          ref_date: this.params.ref_date,
+          ga_params: this.gaParams,
+          aco_params: this.acoParams
+        }
+        const response = await axios.post('/api/comparar-algoritmos', comparisonParams)
+        this.comparacaoResultado = response.data
+        this.activeTab = 'comparacao'
+        console.log('Comparação executada com sucesso!')
+      } catch (error) {
+        console.error('Erro ao comparar algoritmos')
       } finally {
         this.loading = false
       }

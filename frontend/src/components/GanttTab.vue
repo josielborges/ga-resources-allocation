@@ -231,7 +231,7 @@ export default {
         ...grupo,
         total_tarefas: grupo.tarefas.length,
         duracao_total: grupo.fim_dias - grupo.inicio_dias + 1,
-        data_inicio: grupo.tarefas[0]?.data_inicio || '',
+        data_inicio: grupo.tarefas.reduce((earliest, t) => t.data_inicio < earliest ? t.data_inicio : earliest, grupo.tarefas[0]?.data_inicio || ''),
         data_fim: grupo.tarefas.reduce((latest, t) => t.data_fim > latest ? t.data_fim : latest, grupo.tarefas[0]?.data_fim || '')
       })).sort((a, b) => a.fim_dias - b.fim_dias)
     },
@@ -254,12 +254,8 @@ export default {
         }
         
         grupos[tarefa.projeto].tarefas.push(tarefa)
-        if (tarefa.data_inicio < grupos[tarefa.projeto].data_inicio) {
-          grupos[tarefa.projeto].data_inicio = tarefa.data_inicio
-        }
-        if (tarefa.data_fim > grupos[tarefa.projeto].data_fim) {
-          grupos[tarefa.projeto].data_fim = tarefa.data_fim
-        }
+        grupos[tarefa.projeto].data_inicio = grupos[tarefa.projeto].data_inicio < tarefa.data_inicio ? grupos[tarefa.projeto].data_inicio : tarefa.data_inicio
+        grupos[tarefa.projeto].data_fim = grupos[tarefa.projeto].data_fim > tarefa.data_fim ? grupos[tarefa.projeto].data_fim : tarefa.data_fim
       })
       
       return Object.values(grupos).map(grupo => {

@@ -7,6 +7,8 @@ import datetime
 from typing import List
 from models import *
 from services.algorithm_service import AlgorithmService
+from services.aco_service import ACOService
+from algorithm_comparison import AlgorithmComparison
 from utils.config import lifespan, settings
 from db.database import get_db
 from db import crud
@@ -26,6 +28,8 @@ app.add_middleware(
 )
 
 algorithm_service = AlgorithmService()
+aco_service = ACOService()
+comparison_service = AlgorithmComparison()
 
 def load_data():
     with open("data/colaborators.json", "r") as f:
@@ -168,6 +172,49 @@ async def executar_algoritmo(params: AlgoritmoParams, db: Session = Depends(get_
             penalidades=result["penalidades"],
             ocorrencias_penalidades=result["ocorrencias_penalidades"]
         )
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/executar-aco")
+async def executar_aco(params: AlgoritmoParams, db: Session = Depends(get_db)):
+    try:
+        result = aco_service.execute_algorithm({
+            "ref_date": params.ref_date,
+            "tam_pop": params.tam_pop,
+            "n_gen": params.n_gen,
+            "pc": params.pc,
+            "pm": params.pm
+        }, db)
+        
+        return ResultadoAlgoritmo(
+            tarefas=result["tarefas"],
+            melhor_fitness=result["melhor_fitness"],
+            historico_fitness=result["historico_fitness"],
+            penalidades=result["penalidades"],
+            ocorrencias_penalidades=result["ocorrencias_penalidades"]
+        )
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/comparar-algoritmos")
+async def comparar_algoritmos(request: dict, db: Session = Depends(get_db)):
+    try:
+        colaboradores, projetos = aco_service.load_data_from_db(db)
+        ref_date = datetime.datetime.strptime(request["ref_date"], "%Y-%m-%d").date()
+        
+        colaboradores = aco_service.convert_absences(colaboradores, ref_date)
+        tarefas_globais = aco_service.build_global_tasks(projetos)
+        
+        ga_params = request.get("ga_params", {})
+        aco_params = request.get("aco_params", {})
+        
+        comparison_result = comparison_service.run_comparison(
+            tarefas_globais, colaboradores, ga_params, aco_params, runs=3
+        )
+        
+        return comparison_result
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
