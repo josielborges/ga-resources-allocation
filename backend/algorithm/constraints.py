@@ -16,7 +16,9 @@ class ConstraintValidator:
         "absence_conflict": 500,
         "collaborator_overlap": 2000,
         "project_overlap": 1000,
-        "makespan": 200
+        "makespan": 200,
+        "resource_idle_time": 100,
+        "bottleneck_delay": 300
     }
     
     @classmethod
@@ -91,4 +93,39 @@ class ConstraintValidator:
                                 "intervalo2": (start2, end2)
                             }
                         ))
+        return violations
+    
+    @classmethod
+    def validate_resource_efficiency(cls, allocations: Dict[int, List[tuple]], 
+                                   collaborators: List[Dict]) -> List[ConstraintViolation]:
+        """Penalize idle time for scarce resources"""
+        violations = []
+        
+        for collaborator in collaborators:
+            collab_id = collaborator["id"]
+            if collab_id not in allocations or not allocations[collab_id]:
+                continue
+                
+            # Check if this is a scarce resource
+            is_scarce = any(skill in ["Análise", "Analise"] for skill in collaborator["habilidades"])
+            
+            if is_scarce:
+                intervals = sorted(allocations[collab_id], key=lambda x: x[0])
+                total_idle = 0
+                
+                for i in range(len(intervals) - 1):
+                    gap = intervals[i+1][0] - intervals[i][1]
+                    if gap > 0:
+                        total_idle += gap
+                
+                if total_idle > 5:
+                    violations.append(ConstraintViolation(
+                        type="resource_idle_time",
+                        penalty=cls.PENALTIES["resource_idle_time"] * total_idle,
+                        details={
+                            "colaborador": collaborator["nome"],
+                            "idle_days": total_idle
+                        }
+                    ))
+        
         return violations

@@ -6,9 +6,17 @@ class TaskScheduler:
     
     @staticmethod
     def calculate_task_timing(task: Dict, collaborator: Dict, project_end: int, 
-                            collaborator_end: int, ref_date: datetime.date) -> Tuple[int, int]:
-        """Calculate start and end times for a task"""
-        start_day = max(project_end, collaborator_end)
+                            collaborator_end: int, ref_date: datetime.date, 
+                            task_completions: Dict[int, int] = None) -> Tuple[int, int]:
+        """Calculate start and end times for a task considering predecessors"""
+        # Consider predecessor completion times
+        predecessor_end = 0
+        if task_completions and "predecessoras" in task:
+            for pred_id in task["predecessoras"]:
+                if pred_id in task_completions:
+                    predecessor_end = max(predecessor_end, task_completions[pred_id])
+        
+        start_day = max(collaborator_end, predecessor_end)
         
         # Skip absences and weekends
         while (start_day in collaborator["ausencias"] or 
@@ -37,7 +45,7 @@ class TaskScheduler:
                       collaborators: List[Dict], ref_date: datetime.date) -> List[Dict]:
         """Build complete schedule from solution"""
         allocations = {col["id"]: [] for col in collaborators}
-        project_ends = {task["projeto"]: 0 for task in tasks}
+        task_completions = {}  # Track individual task completion times
         schedule = []
         
         for i, task in enumerate(tasks):
@@ -45,16 +53,13 @@ class TaskScheduler:
             collaborator = next(c for c in collaborators if c["id"] == collaborator_id)
             
             # Get timing constraints
-            project_end = project_ends[task["projeto"]]
             collaborator_end = max([end for _, end in allocations[collaborator_id]], default=0)
             
-            # Calculate timing
+            # Calculate timing with predecessor constraints
             start_day, end_day = TaskScheduler.calculate_task_timing(
-                task, collaborator, project_end, collaborator_end, ref_date
+                task, collaborator, 0, collaborator_end, ref_date, task_completions
             )
-            
-            # Update tracking
-            project_ends[task["projeto"]] = end_day
+            task_completions[task["task_id"]] = end_day
             allocations[collaborator_id].append((start_day, end_day))
             
             # Format dates

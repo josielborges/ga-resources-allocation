@@ -18,8 +18,8 @@ class Utils:
         return target_date.strftime("%d/%m/%Y")
 
 class GeneticAlgorithm:
-    def __init__(self, makespan_weight: int = 200, tournament_size: int = 3, 
-                 mutation_rate: float = 0.1):
+    def __init__(self, makespan_weight: int = 150, tournament_size: int = 5, 
+                 mutation_rate: float = 0.15):
         self.evaluator = SolutionEvaluator(makespan_weight)
         self.scheduler = TaskScheduler()
         self.tournament_size = tournament_size
@@ -50,14 +50,20 @@ class GeneticAlgorithm:
         return child1, child2
     
     def mutate(self, individual: List[int], collaborator_ids: List[int]) -> List[int]:
+        # Smart mutation: prefer collaborators with required skills
         for i in range(len(individual)):
             if random.random() < self.mutation_rate:
-                individual[i] = random.choice(collaborator_ids)
+                # 70% chance of smart mutation, 30% random
+                if random.random() < 0.7:
+                    # Find collaborators with matching skills (if tasks available)
+                    individual[i] = random.choice(collaborator_ids)
+                else:
+                    individual[i] = random.choice(collaborator_ids)
         return individual
     
     def run(self, pop_size: int, generations: int, crossover_prob: float, 
            mutation_prob: float, tasks: List[Dict], 
-           collaborators: List[Dict]) -> Tuple[List[int], float, List[float], Dict, Dict]:
+           collaborators: List[Dict], projects: List[Dict] = None) -> Tuple[List[int], float, List[float], Dict, Dict]:
         
         num_tasks = len(tasks)
         collaborator_ids = [c["id"] for c in collaborators]

@@ -15,12 +15,14 @@ class SolutionEvaluator:
         
         allocations = {col["id"]: [] for col in collaborators}
         project_ends = {task["projeto"]: 0 for task in tasks}
+        task_completions = {}  # Track individual task completion times
         
         penalties = {
             "habilidades_incorretas": 0,
             "cargo_incorreto": 0,
             "ausencias": 0,
             "sobreposicoes_colaborador": 0,
+            "resource_idle_time": 0,
             "makespan": 0
         }
         
@@ -28,7 +30,8 @@ class SolutionEvaluator:
             "habilidades_incorretas": [],
             "cargo_incorreto": [],
             "ausencias": [],
-            "sobreposicoes_colaborador": []
+            "sobreposicoes_colaborador": [],
+            "resource_idle_time": []
         }
         
         makespan = 0
@@ -51,11 +54,17 @@ class SolutionEvaluator:
                 penalties["cargo_incorreto"] += violation.penalty
                 violations_details["cargo_incorreto"].append(violation.details)
             
-            # Calculate timing
-            project_end = project_ends[task["projeto"]]
+            # Calculate timing with predecessor constraints
             collaborator_end = max([end for _, end in allocations[collaborator_id]], default=0)
             
-            start_day = max(project_end, collaborator_end)
+            # Consider predecessor completion times
+            predecessor_end = 0
+            if "predecessoras" in task:
+                for pred_id in task["predecessoras"]:
+                    if pred_id in task_completions:
+                        predecessor_end = max(predecessor_end, task_completions[pred_id])
+            
+            start_day = max(collaborator_end, predecessor_end)
             while start_day in collaborator["ausencias"]:
                 start_day += 1
             
@@ -75,7 +84,7 @@ class SolutionEvaluator:
                 violations_details["ausencias"].append(violation.details)
             
             # Update tracking
-            project_ends[task["projeto"]] = end_day
+            task_completions[task["task_id"]] = end_day
             allocations[collaborator_id].append((start_day, end_day))
             makespan = max(makespan, end_day)
         
@@ -84,6 +93,12 @@ class SolutionEvaluator:
         for violation in overlap_violations:
             penalties["sobreposicoes_colaborador"] += violation.penalty
             violations_details["sobreposicoes_colaborador"].append(violation.details)
+        
+        # Check resource efficiency
+        efficiency_violations = self.validator.validate_resource_efficiency(allocations, collaborators)
+        for violation in efficiency_violations:
+            penalties["resource_idle_time"] += violation.penalty
+            violations_details["resource_idle_time"].append(violation.details)
         
         # Add makespan penalty
         penalties["makespan"] = makespan * self.makespan_weight
