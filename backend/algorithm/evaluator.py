@@ -23,6 +23,7 @@ class SolutionEvaluator:
             "ausencias": 0,
             "sobreposicoes_colaborador": 0,
             "resource_idle_time": 0,
+            "gaps_projeto": 0,
             "makespan": 0
         }
         
@@ -31,7 +32,8 @@ class SolutionEvaluator:
             "cargo_incorreto": [],
             "ausencias": [],
             "sobreposicoes_colaborador": [],
-            "resource_idle_time": []
+            "resource_idle_time": [],
+            "gaps_projeto": []
         }
         
         makespan = 0
@@ -99,6 +101,34 @@ class SolutionEvaluator:
         for violation in efficiency_violations:
             penalties["resource_idle_time"] += violation.penalty
             violations_details["resource_idle_time"].append(violation.details)
+        
+        # Penalize gaps between project tasks
+        project_intervals = {}
+        for i, task in enumerate(tasks):
+            project = task["projeto"]
+            if project not in project_intervals:
+                project_intervals[project] = []
+            
+            collaborator_id = solution[i]
+            collaborator_end = max([end for _, end in allocations[collaborator_id]], default=0)
+            start_day = collaborator_end
+            end_day = start_day + task["duracao_dias"]
+            project_intervals[project].append((start_day, end_day))
+        
+        for project, intervals in project_intervals.items():
+            if len(intervals) > 1:
+                sorted_intervals = sorted(intervals, key=lambda x: x[0])
+                for i in range(len(sorted_intervals) - 1):
+                    current_end = sorted_intervals[i][1]
+                    next_start = sorted_intervals[i + 1][0]
+                    gap = next_start - current_end
+                    if gap > 0:
+                        penalties["gaps_projeto"] += gap * 50
+                        violations_details["gaps_projeto"].append({
+                            "projeto": project,
+                            "gap_dias": gap,
+                            "entre_tarefas": f"Tarefa {i+1} e {i+2}"
+                        })
         
         # Add makespan penalty
         penalties["makespan"] = makespan * self.makespan_weight
