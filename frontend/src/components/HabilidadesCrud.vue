@@ -3,6 +3,19 @@
     <!-- Header -->
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold text-text-primary">Habilidades</h2>
+      <div class="flex items-center space-x-2">
+        <label class="text-sm font-medium text-gray-700">Filtrar por cargo:</label>
+        <select 
+          v-model="cargoSelecionado" 
+          @change="carregarDados"
+          class="px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary-main"
+        >
+          <option value="">Todos os cargos</option>
+          <option v-for="cargo in cargosOrdenados" :key="cargo.id" :value="cargo.id">
+            {{ cargo.nome }}
+          </option>
+        </select>
+      </div>
     </div>
 
     <!-- Tabela de habilidades -->
@@ -16,6 +29,7 @@
         <thead class="bg-gray-50">
           <tr>
             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cargo</th>
             <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
           </tr>
         </thead>
@@ -32,6 +46,18 @@
                 ref="inputEdit"
               />
               <div v-else class="text-sm font-medium text-gray-900 py-1">{{ habilidade.nome }}</div>
+            </td>
+            <td class="px-4 py-2">
+              <select 
+                v-if="editando === habilidade.id"
+                v-model="cargoEditando"
+                class="w-full px-3 py-1.5 text-sm border border-blue-300 rounded-md bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option v-for="cargo in cargosOrdenados" :key="cargo.id" :value="cargo.id">
+                  {{ cargo.nome }}
+                </option>
+              </select>
+              <div v-else class="text-sm text-gray-900 py-1">{{ habilidade.cargo.nome }}</div>
             </td>
             <td class="px-4 py-2 whitespace-nowrap text-right text-sm font-medium">
               <div class="flex justify-end space-x-2">
@@ -72,10 +98,21 @@
                 />
               </div>
             </td>
+            <td class="px-4 py-3">
+              <select 
+                v-model="novoCargoId"
+                class="w-full px-3 py-1.5 text-sm border border-blue-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">Selecionar cargo</option>
+                <option v-for="cargo in cargosOrdenados" :key="cargo.id" :value="cargo.id">
+                  {{ cargo.nome }}
+                </option>
+              </select>
+            </td>
             <td class="px-4 py-3 text-right">
               <button 
                 @click="adicionarHabilidade"
-                :disabled="!novaHabilidade.trim()"
+                :disabled="!novaHabilidade.trim() || !novoCargoId"
                 class="bg-blue-600 text-white px-3 py-1.5 rounded-md text-xs font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Adicionar
@@ -119,10 +156,14 @@ export default {
   data() {
     return {
       habilidades: [],
+      cargos: [],
       loading: false,
       editando: null,
       nomeEditando: '',
+      cargoEditando: '',
       novaHabilidade: '',
+      novoCargoId: '',
+      cargoSelecionado: '',
       showConfirmModal: false,
       itemParaExcluir: null,
       showNotification: false,
@@ -133,6 +174,9 @@ export default {
   computed: {
     habilidadesOrdenadas() {
       return [...this.habilidades].sort((a, b) => a.nome.localeCompare(b.nome))
+    },
+    cargosOrdenados() {
+      return [...this.cargos].sort((a, b) => a.nome.localeCompare(b.nome))
     }
   },
   async mounted() {
@@ -142,10 +186,14 @@ export default {
     async carregarDados() {
       this.loading = true
       try {
-        const response = await axios.get('/api/habilidades')
-        this.habilidades = response.data
+        const [habilidadesRes, cargosRes] = await Promise.all([
+          axios.get('/api/habilidades', { params: this.cargoSelecionado ? { cargo_id: this.cargoSelecionado } : {} }),
+          axios.get('/api/cargos')
+        ])
+        this.habilidades = habilidadesRes.data
+        this.cargos = cargosRes.data
       } catch (error) {
-        console.error('Erro ao carregar habilidades:', error)
+        console.error('Erro ao carregar dados:', error)
       } finally {
         this.loading = false
       }
@@ -154,6 +202,7 @@ export default {
     iniciarEdicao(habilidade) {
       this.editando = habilidade.id
       this.nomeEditando = habilidade.nome
+      this.cargoEditando = habilidade.cargo.id
       this.$nextTick(() => {
         this.$refs.inputEdit?.[0]?.focus()
       })
@@ -162,15 +211,19 @@ export default {
     cancelarEdicao() {
       this.editando = null
       this.nomeEditando = ''
+      this.cargoEditando = ''
     },
     
     async salvarEdicao(habilidade) {
-      if (!this.nomeEditando.trim()) {
+      if (!this.nomeEditando.trim() || !this.cargoEditando) {
         this.cancelarEdicao()
         return
       }
       try {
-        const response = await axios.put(`/api/habilidades/${habilidade.id}`, { nome: this.nomeEditando.trim() })
+        const response = await axios.put(`/api/habilidades/${habilidade.id}`, { 
+          nome: this.nomeEditando.trim(),
+          cargo_id: this.cargoEditando
+        })
         const index = this.habilidades.findIndex(h => h.id === habilidade.id)
         if (index !== -1) {
           this.habilidades[index] = response.data
@@ -183,11 +236,15 @@ export default {
     },
     
     async adicionarHabilidade() {
-      if (!this.novaHabilidade.trim()) return
+      if (!this.novaHabilidade.trim() || !this.novoCargoId) return
       try {
-        const response = await axios.post('/api/habilidades', { nome: this.novaHabilidade.trim() })
+        const response = await axios.post('/api/habilidades', { 
+          nome: this.novaHabilidade.trim(),
+          cargo_id: this.novoCargoId
+        })
         this.habilidades.push(response.data)
         this.novaHabilidade = ''
+        this.novoCargoId = ''
       } catch (error) {
         console.error('Erro ao adicionar habilidade:', error)
       }

@@ -228,6 +228,7 @@
                           <HabilidadesSelect 
                             v-model="etapa.habilidades_necessarias"
                             :habilidades="habilidadesOrdenadas"
+                            :cargo-id="etapa.cargo_necessario_id"
                           />
                         </div>
                       </td>

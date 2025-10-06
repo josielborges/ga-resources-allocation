@@ -136,7 +136,9 @@ async def get_projetos():
     return projetos
 
 @app.get("/api/habilidades", response_model=List[schemas.Habilidade])
-async def get_habilidades(db: Session = Depends(get_db)):
+async def get_habilidades(cargo_id: int = None, db: Session = Depends(get_db)):
+    if cargo_id:
+        return crud.get_habilidades_by_cargo(db, cargo_id)
     return crud.get_habilidades(db)
 
 @app.get("/api/cargos", response_model=List[schemas.Cargo])

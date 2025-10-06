@@ -4,15 +4,10 @@ from datetime import date
 
 class HabilidadeBase(BaseModel):
     nome: str
+    cargo_id: int
 
 class HabilidadeCreate(HabilidadeBase):
     pass
-
-class Habilidade(HabilidadeBase):
-    id: int
-    
-    class Config:
-        from_attributes = True
 
 class CargoBase(BaseModel):
     nome: str
@@ -22,6 +17,13 @@ class CargoCreate(CargoBase):
 
 class Cargo(CargoBase):
     id: int
+    
+    class Config:
+        from_attributes = True
+
+class Habilidade(HabilidadeBase):
+    id: int
+    cargo: Cargo
     
     class Config:
         from_attributes = True

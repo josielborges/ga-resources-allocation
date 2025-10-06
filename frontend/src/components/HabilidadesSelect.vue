@@ -34,7 +34,7 @@
     >
       <div class="grid grid-cols-3 gap-0.5">
         <div 
-          v-for="habilidade in habilidades" 
+          v-for="habilidade in filteredHabilidades" 
           :key="habilidade.id" 
           class="text-xs px-1 py-0.5 rounded cursor-pointer transition-colors text-center truncate"
           :class="selectedHabilidades.includes(habilidade.nome) ? 'bg-green-100 text-green-800 font-medium' : 'hover:bg-gray-50 text-gray-700'"
@@ -69,6 +69,10 @@ export default {
     habilidades: {
       type: Array,
       default: () => []
+    },
+    cargoId: {
+      type: [Number, String],
+      default: null
     }
   },
   emits: ['update:modelValue'],
@@ -81,6 +85,11 @@ export default {
   computed: {
     selectedHabilidades() {
       return this.modelValue || []
+    },
+    
+    filteredHabilidades() {
+      if (!this.cargoId) return this.habilidades
+      return this.habilidades.filter(h => h.cargo_id == this.cargoId)
     },
 
     modalPosition() {

@@ -31,7 +31,10 @@ class Habilidade(Base):
     __tablename__ = "habilidades"
     
     id = Column(Integer, primary_key=True, index=True)
-    nome = Column(String, unique=True, index=True)
+    nome = Column(String, index=True)
+    cargo_id = Column(Integer, ForeignKey("cargos.id", ondelete="RESTRICT"), nullable=False)
+    
+    cargo = relationship("Cargo")
 
 class Cargo(Base):
     __tablename__ = "cargos"

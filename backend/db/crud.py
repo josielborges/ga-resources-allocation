@@ -155,7 +155,7 @@ def get_cargos(db: Session) -> List[models.Cargo]:
 def get_etapas(db: Session) -> List[models.Etapa]:
     return db.query(models.Etapa).all()
 def create_habilidade(db: Session, habilidade: schemas.HabilidadeCreate):
-    db_habilidade = models.Habilidade(nome=habilidade.nome)
+    db_habilidade = models.Habilidade(nome=habilidade.nome, cargo_id=habilidade.cargo_id)
     db.add(db_habilidade)
     db.commit()
     db.refresh(db_habilidade)
@@ -166,9 +166,13 @@ def update_habilidade(db: Session, habilidade_id: int, habilidade: schemas.Habil
     if not db_habilidade:
         return None
     db_habilidade.nome = habilidade.nome
+    db_habilidade.cargo_id = habilidade.cargo_id
     db.commit()
     db.refresh(db_habilidade)
     return db_habilidade
+
+def get_habilidades_by_cargo(db: Session, cargo_id: int) -> List[models.Habilidade]:
+    return db.query(models.Habilidade).filter(models.Habilidade.cargo_id == cargo_id).all()
 
 def delete_habilidade(db: Session, habilidade_id: int):
     from sqlalchemy.exc import IntegrityError
