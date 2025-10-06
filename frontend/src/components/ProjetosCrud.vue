@@ -223,8 +223,8 @@
                           </div>
                         </div>
                       </td>
-                      <td class="sheets-cell habilidades-cell w-48" @mousedown.stop @click.stop>
-                        <div @click.stop class="h-full pl-1 pr-1 mt-1">
+                      <td class="sheets-cell habilidades-cell w-48" @mousedown.stop>
+                        <div class="h-full pl-1 pr-1 mt-1">
                           <HabilidadesSelect 
                             v-model="etapa.habilidades_necessarias"
                             :habilidades="habilidadesOrdenadas"

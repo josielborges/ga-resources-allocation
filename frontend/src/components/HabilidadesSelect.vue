@@ -1,5 +1,5 @@
 <template>
-  <div class="relative">
+  <div class="relative" ref="componentRef">
     <div class="habilidades-container">
       <!-- Selected habilidades as pills -->
       <div v-if="selectedHabilidades.length > 0" class="selected-tags">
@@ -136,7 +136,7 @@ export default {
       this.showModal = false
     },
     handleClickOutside(event) {
-      if (this.showModal && this.$el && !this.$el.contains(event.target)) {
+      if (this.showModal && this.$refs.componentRef && !this.$refs.componentRef.contains(event.target)) {
         this.showModal = false
       }
     }
