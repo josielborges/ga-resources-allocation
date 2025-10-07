@@ -83,6 +83,7 @@ class Etapa(EtapaBase):
 class ProjetoBase(BaseModel):
     nome: str
     color: str
+    termino: Optional[date] = None
 
 class ProjetoCreate(ProjetoBase):
     etapas: List[EtapaCreate] = []

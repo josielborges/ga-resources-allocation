@@ -68,6 +68,7 @@ class Projeto(Base):
     id = Column(Integer, primary_key=True, index=True)
     nome = Column(String, index=True)
     color = Column(String)
+    termino = Column(Date, nullable=True)
     
     etapas = relationship("Etapa", back_populates="projeto")
 

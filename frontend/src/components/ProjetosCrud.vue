@@ -92,13 +92,22 @@
         <div class="flex-1 overflow-y-auto px-4 py-3">
           <div class="space-y-4">
             <!-- Dados do Projeto -->
-            <div class="grid grid-cols-3 gap-4">
+            <div class="grid grid-cols-4 gap-4">
               <div class="col-span-2">
                 <label class="block text-sm font-medium mb-1">Nome do Projeto</label>
                 <input 
                   v-model="form.nome" 
                   type="text" 
                   required
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-primary-main"
+                />
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium mb-1">Data de Término Limite (Opcional)</label>
+                <input 
+                  v-model="form.termino" 
+                  type="date" 
                   class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-primary-main"
                 />
               </div>
@@ -318,6 +327,7 @@ export default {
       form: {
         nome: '',
         color: '#3B82F6',
+        termino: null,
         etapas: []
       },
       showConfirmModal: false,
@@ -390,6 +400,7 @@ export default {
         this.form = {
           nome: projeto.nome,
           color: projeto.color,
+          termino: projeto.termino || null,
           etapas: projeto.etapas
             .sort((a, b) => (a.ordem || 0) - (b.ordem || 0))
             .map((etapa, index) => {
@@ -420,6 +431,7 @@ export default {
         this.form = {
           nome: '',
           color: '#3B82F6',
+          termino: null,
           etapas: []
         }
       }
