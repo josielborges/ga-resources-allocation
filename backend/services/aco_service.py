@@ -43,6 +43,7 @@ class ACOService:
             projetos.append({
                 "nome": proj.nome,
                 "color": proj.color,
+                "termino": proj.termino,
                 "etapas": etapas
             })
         
@@ -119,6 +120,13 @@ class ACOService:
         colaboradores = self.convert_absences(colaboradores, ref_date)
         tarefas_globais = self.build_global_tasks(projetos)
         
+        # Build project deadlines dict
+        project_deadlines = {}
+        for proj in projetos:
+            if proj.get("termino"):
+                delta = proj["termino"] - ref_date
+                project_deadlines[proj["nome"]] = delta.days
+        
         # Create ACO with custom parameters
         alpha = params.get("alpha", 1.0)
         beta = params.get("beta", 2.0)
@@ -132,7 +140,7 @@ class ACOService:
         
         # Run ACO algorithm
         best_solution, best_fitness, fitness_history, penalties, violations = self.aco.run(
-            num_ants, max_iterations, tarefas_globais, colaboradores
+            num_ants, max_iterations, tarefas_globais, colaboradores, project_deadlines
         )
         
         # Build schedule

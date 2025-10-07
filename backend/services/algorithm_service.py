@@ -43,6 +43,7 @@ class AlgorithmService:
             projetos.append({
                 "nome": proj.nome,
                 "color": proj.color,
+                "termino": proj.termino,
                 "etapas": etapas
             })
         
@@ -152,10 +153,17 @@ class AlgorithmService:
         colaboradores = self.convert_absences(colaboradores, ref_date)
         tarefas_globais = self.build_global_tasks(projetos)
         
+        # Build project deadlines dict
+        project_deadlines = {}
+        for proj in projetos:
+            if proj.get("termino"):
+                delta = proj["termino"] - ref_date
+                project_deadlines[proj["nome"]] = delta.days
+        
         # Run genetic algorithm
         best_solution, best_fitness, fitness_history, penalties, violations = self.ga.run(
             params["tam_pop"], params["n_gen"], params["pc"], params["pm"], 
-            tarefas_globais, colaboradores
+            tarefas_globais, colaboradores, project_deadlines
         )
         
         # Build schedule

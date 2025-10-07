@@ -10,7 +10,7 @@ class SolutionEvaluator:
         self.validator = ConstraintValidator()
     
     def evaluate(self, solution: List[int], tasks: List[Dict], 
-                collaborators: List[Dict]) -> Tuple[float, Dict, Dict]:
+                collaborators: List[Dict], project_deadlines: Dict[str, int] = None) -> Tuple[float, Dict, Dict]:
         """Evaluate a solution and return fitness, penalties, and violations"""
         
         allocations = {col["id"]: [] for col in collaborators}
@@ -24,7 +24,8 @@ class SolutionEvaluator:
             "sobreposicoes_colaborador": 0,
             "resource_idle_time": 0,
             "gaps_projeto": 0,
-            "makespan": 0
+            "makespan": 0,
+            "deadline_violation": 0
         }
         
         violations_details = {
@@ -33,7 +34,8 @@ class SolutionEvaluator:
             "ausencias": [],
             "sobreposicoes_colaborador": [],
             "resource_idle_time": [],
-            "gaps_projeto": []
+            "gaps_projeto": [],
+            "deadline_violation": []
         }
         
         makespan = 0
@@ -132,6 +134,26 @@ class SolutionEvaluator:
         
         # Add makespan penalty
         penalties["makespan"] = makespan * self.makespan_weight
+        
+        # Check project deadlines
+        if project_deadlines:
+            project_completion = {}
+            for i, task in enumerate(tasks):
+                project = task["projeto"]
+                if task["task_id"] in task_completions:
+                    project_completion[project] = max(
+                        project_completion.get(project, 0),
+                        task_completions[task["task_id"]]
+                    )
+            
+            for project, end_day in project_completion.items():
+                if project in project_deadlines:
+                    deadline_violations = self.validator.validate_deadline(
+                        project, end_day, project_deadlines[project]
+                    )
+                    for violation in deadline_violations:
+                        penalties["deadline_violation"] += violation.penalty
+                        violations_details["deadline_violation"].append(violation.details)
         
         # Calculate total fitness
         fitness = sum(penalties.values())

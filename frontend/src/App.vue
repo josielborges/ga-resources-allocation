@@ -399,9 +399,9 @@
               
               <div class="p-4">
                 <DadosTab v-if="activeTab === 'dados'" :colaboradores="colaboradores" :projetos="projetos" />
-                <FitnessTab v-if="activeTab === 'fitness'" :historico="resultado.historico_fitness" :melhor="resultado.melhor_fitness" />
+                <FitnessTab v-if="activeTab === 'fitness'" :historico="resultado.historico_fitness" :melhor="resultado.melhor_fitness" :ocorrencias="resultado.ocorrencias_penalidades" />
                 <ConflitosTab v-if="activeTab === 'conflitos'" :penalidades="resultado.penalidades" :ocorrencias="resultado.ocorrencias_penalidades" />
-                <GanttTab v-if="activeTab === 'gantt'" :tarefas="resultado.tarefas" />
+                <GanttTab v-if="activeTab === 'gantt'" :tarefas="resultado.tarefas" :penalidades="resultado.penalidades" :ocorrencias="resultado.ocorrencias_penalidades" />
                 <CalendarioTab v-if="activeTab === 'calendario'" :tarefas="resultado.tarefas" :projetos="projetos" />
                 <MapaAlocacaoTab v-if="activeTab === 'mapa'" :tarefas="resultado.tarefas" :projetos="projetos" :colaboradores="colaboradores" />
                 <div v-if="activeTab === 'comparacao'" class="space-y-4">

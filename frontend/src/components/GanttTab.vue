@@ -1,8 +1,65 @@
 <template>
   <div class="space-y-6">
     <div class="flex justify-between items-center">
-      <h3 class="text-lg font-semibold text-text-primary">Cronograma Gantt</h3>
+      <div class="flex items-center gap-3">
+        <h3 class="text-lg font-semibold text-text-primary">Cronograma Gantt</h3>
+        <button 
+          v-if="totalViolacoes > 0"
+          @click="showViolationsModal = true"
+          class="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 border border-red-300 rounded-md hover:bg-red-100 transition-colors"
+          title="Clique para ver detalhes das violações"
+        >
+          <svg class="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+          </svg>
+          <span class="text-xs font-semibold text-red-700">{{ totalViolacoes }} {{ totalViolacoes === 1 ? 'Violação' : 'Violações' }}</span>
+        </button>
+      </div>
       <span class="text-sm text-gray-600 font-medium">{{ dataFinalCronograma }}</span>
+    </div>
+    
+    <!-- Violations Modal -->
+    <div v-if="showViolationsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" @click="showViolationsModal = false">
+      <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden" @click.stop>
+        <div class="bg-red-50 border-b border-red-200 px-4 py-3 flex justify-between items-center">
+          <h4 class="text-lg font-semibold text-red-800 flex items-center gap-2">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+            </svg>
+            Violações de Restrições
+          </h4>
+          <button @click="showViolationsModal = false" class="text-gray-500 hover:text-gray-700">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        <div class="p-4 overflow-y-auto max-h-[calc(80vh-60px)]">
+          <div v-for="(tipo, key) in violacoesRelevantes" :key="key" class="mb-4">
+            <div class="bg-orange-50 border-l-4 border-orange-400 p-3 mb-2">
+              <h5 class="text-sm font-semibold text-orange-800">{{ translatePenalty(key) }} ({{ tipo.count }})</h5>
+            </div>
+            <div v-if="tipo.details && tipo.details.length > 0" class="bg-white border rounded-md overflow-hidden">
+              <table class="min-w-full divide-y divide-gray-200 text-xs">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th v-for="(value, colKey) in tipo.details[0]" :key="colKey" class="px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase">
+                      {{ colKey }}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                  <tr v-for="(item, idx) in tipo.details" :key="idx" class="hover:bg-gray-50">
+                    <td v-for="(value, colKey) in item" :key="colKey" class="px-2 py-1.5 text-xs">
+                      {{ value }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
     
     <!-- Tabs -->
@@ -187,11 +244,20 @@ export default {
     tarefas: {
       type: Array,
       default: () => []
+    },
+    penalidades: {
+      type: Object,
+      default: () => ({})
+    },
+    ocorrencias: {
+      type: Object,
+      default: () => ({})
     }
   },
   data() {
     return {
-      activeTab: 'projetos'
+      activeTab: 'projetos',
+      showViolationsModal: false
     }
   },
 
@@ -227,18 +293,22 @@ export default {
         grupos[tarefa.projeto].fim_dias = Math.max(grupos[tarefa.projeto].fim_dias, tarefa.fim_dias)
       })
       
-      return Object.values(grupos).map(grupo => ({
-        ...grupo,
-        total_tarefas: grupo.tarefas.length,
-        duracao_total: grupo.fim_dias - grupo.inicio_dias + 1,
-        data_inicio: grupo.tarefas.reduce((earliest, t) => t.data_inicio < earliest ? t.data_inicio : earliest, grupo.tarefas[0]?.data_inicio || ''),
-        data_fim: grupo.tarefas.reduce((latest, t) => t.data_fim > latest ? t.data_fim : latest, grupo.tarefas[0]?.data_fim || '')
-      })).sort((a, b) => a.fim_dias - b.fim_dias)
+      return Object.values(grupos).map(grupo => {
+        const tarefaInicio = grupo.tarefas.find(t => t.inicio_dias === grupo.inicio_dias)
+        const tarefaFim = grupo.tarefas.find(t => t.fim_dias === grupo.fim_dias)
+        return {
+          ...grupo,
+          total_tarefas: grupo.tarefas.length,
+          duracao_total: grupo.fim_dias - grupo.inicio_dias + 1,
+          data_inicio: tarefaInicio?.data_inicio || '',
+          data_fim: tarefaFim?.data_fim || ''
+        }
+      }).sort((a, b) => a.fim_dias - b.fim_dias)
     },
     dataFinalCronograma() {
       if (!this.tarefas || this.tarefas.length === 0) return ''
-      const dataFinal = this.tarefas.reduce((latest, t) => t.data_fim > latest ? t.data_fim : latest, this.tarefas[0]?.data_fim || '')
-      return `Fim: ${dataFinal}`
+      const tarefaFinal = this.tarefas.reduce((latest, t) => t.fim_dias > latest.fim_dias ? t : latest, this.tarefas[0])
+      return `Fim: ${tarefaFinal.data_fim}`
     },
     projetosComIntervalos() {
       const grupos = {}
@@ -248,14 +318,14 @@ export default {
           grupos[tarefa.projeto] = {
             nome: tarefa.projeto,
             tarefas: [],
-            data_inicio: tarefa.data_inicio,
-            data_fim: tarefa.data_fim
+            inicio_dias: tarefa.inicio_dias,
+            fim_dias: tarefa.fim_dias
           }
         }
         
         grupos[tarefa.projeto].tarefas.push(tarefa)
-        grupos[tarefa.projeto].data_inicio = grupos[tarefa.projeto].data_inicio < tarefa.data_inicio ? grupos[tarefa.projeto].data_inicio : tarefa.data_inicio
-        grupos[tarefa.projeto].data_fim = grupos[tarefa.projeto].data_fim > tarefa.data_fim ? grupos[tarefa.projeto].data_fim : tarefa.data_fim
+        grupos[tarefa.projeto].inicio_dias = Math.min(grupos[tarefa.projeto].inicio_dias, tarefa.inicio_dias)
+        grupos[tarefa.projeto].fim_dias = Math.max(grupos[tarefa.projeto].fim_dias, tarefa.fim_dias)
       })
       
       return Object.values(grupos).map(grupo => {
@@ -285,10 +355,15 @@ export default {
           duracao: fimAtual - inicioAtual + 1
         })
         
+        const tarefaInicio = grupo.tarefas.find(t => t.inicio_dias === grupo.inicio_dias)
+        const tarefaFim = grupo.tarefas.find(t => t.fim_dias === grupo.fim_dias)
+        
         return {
           ...grupo,
           intervalos,
-          duracao_total: intervalos.reduce((total, int) => total + int.duracao, 0)
+          duracao_total: intervalos.reduce((total, int) => total + int.duracao, 0),
+          data_inicio: tarefaInicio?.data_inicio || '',
+          data_fim: tarefaFim?.data_fim || ''
         }
       }).sort((a, b) => {
         const maxFimA = Math.max(...a.tarefas.map(t => t.fim_dias))
@@ -306,9 +381,41 @@ export default {
         const endDayB = projectEndDays[b.projeto] || b.fim_dias
         return endDayA - endDayB
       })
+    },
+    violacoesRelevantes() {
+      const relevantes = {}
+      const ignorar = ['gaps_projeto', 'makespan', 'resource_idle_time']
+      
+      Object.keys(this.ocorrencias || {}).forEach(key => {
+        if (!ignorar.includes(key) && this.ocorrencias[key] && this.ocorrencias[key].length > 0) {
+          relevantes[key] = {
+            count: this.ocorrencias[key].length,
+            details: this.ocorrencias[key]
+          }
+        }
+      })
+      
+      return relevantes
+    },
+    totalViolacoes() {
+      return Object.values(this.violacoesRelevantes).reduce((sum, v) => sum + v.count, 0)
     }
   },
   methods: {
+    translatePenalty(key) {
+      const translations = {
+        'habilidades_incorretas': 'Habilidades Incorretas',
+        'cargo_incorreto': 'Cargo Incorreto',
+        'ausencias': 'Ausências',
+        'sobreposicoes_colaborador': 'Sobreposições de Colaborador',
+        'sobreposicoes_projeto': 'Sobreposições de Projeto',
+        'gaps_projeto': 'Intervalos entre Tarefas',
+        'resource_idle_time': 'Tempo Ocioso de Recursos',
+        'deadline_violation': 'Violação de Prazo',
+        'makespan': 'Duração Total do Projeto'
+      }
+      return translations[key] || key
+    },
     getGanttStyle(tarefa) {
       if (!tarefa || this.duracaoMaxima === 0) {
         return { display: 'none' }

@@ -83,7 +83,10 @@ export default {
         'ausencias': 'Ausências',
         'sobreposicoes_colaborador': 'Sobreposições de Colaborador',
         'sobreposicoes_projeto': 'Sobreposições de Projeto',
-        'makespan': 'Makespan'
+        'gaps_projeto': 'Intervalos entre Tarefas',
+        'resource_idle_time': 'Tempo Ocioso de Recursos',
+        'deadline_violation': 'Violação de Prazo',
+        'makespan': 'Duração Total do Projeto'
       }
       return translations[key] || key
     }

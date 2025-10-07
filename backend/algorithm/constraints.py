@@ -18,7 +18,8 @@ class ConstraintValidator:
         "project_overlap": 1000,
         "makespan": 200,
         "resource_idle_time": 100,
-        "bottleneck_delay": 300
+        "bottleneck_delay": 300,
+        "deadline_violation": 1000
     }
     
     @classmethod
@@ -128,4 +129,22 @@ class ConstraintValidator:
                         }
                     ))
         
+        return violations
+
+    @classmethod
+    def validate_deadline(cls, project_name: str, project_end: int, deadline: int) -> List[ConstraintViolation]:
+        """Validate project deadline constraint"""
+        violations = []
+        if deadline is not None and project_end > deadline:
+            days_late = project_end - deadline
+            violations.append(ConstraintViolation(
+                type="deadline_violation",
+                penalty=cls.PENALTIES["deadline_violation"] * days_late,
+                details={
+                    "projeto": project_name,
+                    "dias_atraso": days_late,
+                    "termino_planejado": deadline,
+                    "termino_real": project_end
+                }
+            ))
         return violations
