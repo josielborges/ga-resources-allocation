@@ -28,6 +28,7 @@
             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Projeto</th>
             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Etapas</th>
             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duração Total</th>
+            <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Deadline</th>
             <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
           </tr>
         </thead>
@@ -47,6 +48,9 @@
             </td>
             <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
               {{ projeto.etapas.reduce((total, etapa) => total + etapa.duracao_dias, 0) }} dias
+            </td>
+            <td class="px-4 py-2 text-center whitespace-nowrap text-sm text-gray-600">
+              {{ projeto.termino ? formatarData(projeto.termino) : '-' }}
             </td>
             <td class="px-4 py-2 whitespace-nowrap text-right text-sm font-medium">
               <div class="flex justify-end space-x-2">
@@ -635,6 +639,12 @@ export default {
           }
         })
       }
+    },
+    
+    formatarData(data) {
+      if (!data) return '-'
+      const [ano, mes, dia] = data.split('-')
+      return `${dia}/${mes}/${ano}`
     }
   }
 }
