@@ -253,7 +253,7 @@
                   <input 
                     v-model="params.ref_date" 
                     type="date" 
-                    class="form-input"
+                    class="form-input text-sm"
                   />
                 </div>
                 
