@@ -155,6 +155,12 @@ def get_cargos(db: Session) -> List[models.Cargo]:
 
 def get_etapas(db: Session) -> List[models.Etapa]:
     return db.query(models.Etapa).all()
+
+def get_cargo(db: Session, cargo_id: int):
+    return db.query(models.Cargo).filter(models.Cargo.id == cargo_id).first()
+
+def get_habilidade(db: Session, habilidade_id: int):
+    return db.query(models.Habilidade).filter(models.Habilidade.id == habilidade_id).first()
 def create_habilidade(db: Session, habilidade: schemas.HabilidadeCreate):
     db_habilidade = models.Habilidade(nome=habilidade.nome, cargo_id=habilidade.cargo_id)
     db.add(db_habilidade)

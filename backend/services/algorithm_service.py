@@ -158,6 +158,19 @@ class AlgorithmService:
             colaborador_ids=params.get("colaborador_ids"),
             projeto_ids=params.get("projeto_ids")
         )
+        
+        # Add simulated members
+        simulated_members = params.get("simulated_members", [])
+        for sim_member in simulated_members:
+            cargo = crud.get_cargo(db, sim_member["cargo_id"])
+            colaboradores.append({
+                "id": f"sim_{sim_member['nome']}",
+                "nome": sim_member["nome"],
+                "cargo": cargo.nome if cargo else "Unknown",
+                "habilidades": sim_member.get("habilidade_names", []),
+                "ausencias": []
+            })
+        
         ref_date = datetime.datetime.strptime(params["ref_date"], "%Y-%m-%d").date()
         
         colaboradores = self.convert_absences(colaboradores, ref_date)

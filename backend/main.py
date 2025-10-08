@@ -164,7 +164,8 @@ async def executar_algoritmo(params: AlgoritmoParams, db: Session = Depends(get_
             "pc": params.pc,
             "pm": params.pm,
             "projeto_ids": params.projeto_ids,
-            "colaborador_ids": params.colaborador_ids
+            "colaborador_ids": params.colaborador_ids,
+            "simulated_members": [m.dict() for m in params.simulated_members] if params.simulated_members else []
         }, db)
         
         return ResultadoAlgoritmo(
@@ -188,7 +189,8 @@ async def executar_aco(params: AlgoritmoParams, db: Session = Depends(get_db)):
             "pc": params.pc,
             "pm": params.pm,
             "projeto_ids": params.projeto_ids,
-            "colaborador_ids": params.colaborador_ids
+            "colaborador_ids": params.colaborador_ids,
+            "simulated_members": [m.dict() for m in params.simulated_members] if params.simulated_members else []
         }, db)
         
         return ResultadoAlgoritmo(

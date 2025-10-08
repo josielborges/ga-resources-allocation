@@ -415,7 +415,7 @@
                 <ConflitosTab v-if="activeTab === 'conflitos'" :penalidades="resultado.penalidades" :ocorrencias="resultado.ocorrencias_penalidades" :ref-date="params.ref_date" />
                 <GanttTab v-if="activeTab === 'gantt'" :tarefas="resultado.tarefas" :penalidades="resultado.penalidades" :ocorrencias="resultado.ocorrencias_penalidades" :projetos="projetos" :ref-date="params.ref_date" />
                 <CalendarioTab v-if="activeTab === 'calendario'" :tarefas="resultado.tarefas" :projetos="projetos" />
-                <MapaAlocacaoTab v-if="activeTab === 'mapa'" :tarefas="resultado.tarefas" :projetos="projetos" :colaboradores="colaboradores" />
+                <MapaAlocacaoTab v-if="activeTab === 'mapa'" :tarefas="resultado.tarefas" :projetos="projetos" :colaboradores="allColaboradores" />
                 <div v-if="activeTab === 'comparacao'" class="space-y-4">
                   <div v-if="!comparacaoResultado" class="text-center py-8">
                     <p class="text-text-secondary">Use o botão "Comparar GA vs ACO" para ver a análise comparativa dos algoritmos.</p>
@@ -540,7 +540,7 @@
             </div>
           </div>
           
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <!-- Projetos -->
             <div>
               <div class="flex justify-between items-center mb-2">
@@ -562,13 +562,18 @@
                       <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                     </svg>
                   </div>
-                  <div class="flex-1 min-w-0">
-                    <div class="font-medium text-xs truncate mb-1">{{ projeto.nome }}</div>
-                    <div v-if="getProjectSkills(projeto).length > 0" class="flex flex-wrap gap-1">
-                      <span v-for="skill in getProjectSkills(projeto)" :key="skill" class="inline-block px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">
-                        {{ skill }}
-                      </span>
-                    </div>
+                  <div class="flex-1 min-w-0 flex items-center justify-between gap-2">
+                    <div class="font-medium text-xs truncate">{{ projeto.nome }}</div>
+                    <span 
+                      v-if="getProjectSkills(projeto).length > 0"
+                      :title="getProjectSkills(projeto).join(', ')"
+                      class="flex-shrink-0 inline-flex items-center justify-center w-5 h-5 bg-blue-100 hover:bg-blue-200 transition-colors cursor-help"
+                      style="border-radius: 6px;"
+                    >
+                      <svg class="w-3 h-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </span>
                   </div>
                 </div>
               </div>
@@ -608,12 +613,66 @@
                 </div>
               </div>
             </div>
+            
+            <!-- Simular Membros -->
+            <div class="flex flex-col">
+              <div class="flex justify-between items-center mb-2">
+                <h4 class="text-sm font-medium text-text-primary">Simular Membros ({{ simulatedMembers.length }})</h4>
+              </div>
+              <div class="border rounded p-2 flex flex-col" style="height: 400px;">
+                <div class="flex-1 overflow-y-auto mb-2">
+                  <div v-if="simulatedMembers.length > 0" class="space-y-1">
+                    <div v-for="member in simulatedMembers" :key="member.id" class="flex items-center gap-2 bg-purple-50 p-1.5 rounded border border-purple-200">
+                      <div class="flex-1 min-w-0">
+                        <div class="font-medium text-xs truncate mb-1">
+                          {{ member.nome }} <span class="text-text-secondary font-normal">({{ member.cargo.nome }})</span>
+                        </div>
+                        <div class="flex flex-wrap gap-1">
+                          <span v-for="hab in member.habilidades" :key="hab.id" class="inline-block px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded text-xs">
+                            {{ hab.nome }}
+                          </span>
+                        </div>
+                      </div>
+                      <button @click="removeSimulatedMember(member.id)" class="text-red-600 hover:text-red-800 flex-shrink-0">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  <div v-else class="text-xs text-text-secondary text-center py-4">
+                    Nenhum membro simulado
+                  </div>
+                </div>
+                <div class="space-y-2 border-t pt-2">
+                  <select v-model="newMember.cargo_id" class="w-full px-2 py-1 border rounded text-xs">
+                    <option :value="null">Cargo</option>
+                    <option v-for="cargo in cargos" :key="cargo.id" :value="cargo.id">{{ cargo.nome }}</option>
+                  </select>
+                  <div class="w-full min-h-[32px] border rounded px-2 py-1 flex flex-wrap gap-1 items-center">
+                    <span 
+                      v-for="hab in filteredHabilidadesForCargo" 
+                      :key="hab.id"
+                      @click="toggleSkill(hab.nome)"
+                      class="text-xs px-2 py-0.5 rounded cursor-pointer transition-colors"
+                      :class="newMember.habilidade_names.includes(hab.nome) ? 'bg-purple-100 text-purple-700 font-medium' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+                    >
+                      {{ hab.nome }}
+                    </span>
+                    <span v-if="!newMember.cargo_id" class="text-xs text-gray-400">Selecione um cargo</span>
+                    <span v-else-if="filteredHabilidadesForCargo.length === 0" class="text-xs text-gray-400">Sem habilidades</span>
+                  </div>
+                  <button @click="addSimulatedMember" class="w-full px-2 py-1 bg-purple-600 text-white rounded text-xs hover:bg-purple-700">Adicionar</button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         
         <div class="px-4 py-3 border-t flex justify-between items-center bg-gray-50">
           <div class="text-xs text-text-secondary">
-            {{ selectedProjects.length }} projeto(s), {{ selectedCollaborators.length }} colaborador(es)
+            {{ selectedProjects.length }} projeto(s), {{ selectedCollaborators.length + simulatedMembers.length }} colaborador(es)
+            <span v-if="simulatedMembers.length > 0" class="text-purple-600">(+{{ simulatedMembers.length }} simulados)</span>
           </div>
           <div class="flex gap-2">
             <button 
@@ -678,6 +737,10 @@ export default {
       showSelectionModal: false,
       selectedProjects: [],
       selectedCollaborators: [],
+      simulatedMembers: [],
+      newMember: { cargo_id: null, habilidade_names: [] },
+      cargos: [],
+      habilidades: [],
       params: {
         algorithm: 'ga',
         tam_pop: 50,
@@ -738,6 +801,13 @@ export default {
     }
   },
   computed: {
+    allColaboradores() {
+      return [...this.colaboradores, ...this.simulatedMembers]
+    },
+    filteredHabilidadesForCargo() {
+      if (!this.newMember.cargo_id) return []
+      return this.habilidades.filter(h => h.cargo_id == this.newMember.cargo_id)
+    },
     missingSkills() {
       const requiredSkills = new Set()
       const availableSkills = new Set()
@@ -777,6 +847,7 @@ export default {
   },
   async mounted() {
     await this.carregarDados()
+    await this.carregarCargosHabilidades()
     this.initializeSelections()
   },
   watch: {
@@ -844,6 +915,49 @@ export default {
         console.error('Erro ao carregar dados:', error.message)
       }
     },
+    async carregarCargosHabilidades() {
+      try {
+        const [cargosRes, habilidadesRes] = await Promise.all([
+          axios.get('/api/cargos'),
+          axios.get('/api/habilidades')
+        ])
+        this.cargos = cargosRes.data
+        this.habilidades = habilidadesRes.data
+      } catch (error) {
+        console.error('Erro ao carregar cargos e habilidades:', error)
+      }
+    },
+    addSimulatedMember() {
+      if (!this.newMember.cargo_id || this.newMember.habilidade_names.length === 0) return
+      
+      const cargo = this.cargos.find(c => c.id === this.newMember.cargo_id)
+      const habilidades = this.habilidades.filter(h => this.newMember.habilidade_names.includes(h.nome))
+      const cargoSimCount = this.simulatedMembers.filter(m => m.cargo.id === cargo.id).length + 1
+      
+      this.simulatedMembers.push({
+        id: `sim_${Date.now()}`,
+        nome: `${cargo.nome} Simulado ${cargoSimCount}`,
+        cargo: cargo,
+        habilidades: habilidades,
+        simulated: true
+      })
+      
+      this.newMember = { cargo_id: null, habilidade_names: [] }
+    },
+    removeSimulatedMember(id) {
+      const index = this.simulatedMembers.findIndex(m => m.id === id)
+      if (index > -1) {
+        this.simulatedMembers.splice(index, 1)
+      }
+    },
+    toggleSkill(skillName) {
+      const index = this.newMember.habilidade_names.indexOf(skillName)
+      if (index > -1) {
+        this.newMember.habilidade_names.splice(index, 1)
+      } else {
+        this.newMember.habilidade_names.push(skillName)
+      }
+    },
     prepareExecution() {
       if (this.customizeExecution) {
         this.showSelectionModal = true
@@ -861,7 +975,12 @@ export default {
         const payload = {
           ...this.params,
           projeto_ids: this.selectedProjects,
-          colaborador_ids: this.selectedCollaborators
+          colaborador_ids: this.selectedCollaborators,
+          simulated_members: this.simulatedMembers.map(m => ({
+            nome: m.nome,
+            cargo_id: m.cargo.id,
+            habilidade_names: m.habilidades.map(h => h.nome)
+          }))
         }
         const response = await axios.post(endpoint, payload)
         this.resultado = response.data

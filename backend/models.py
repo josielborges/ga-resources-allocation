@@ -21,6 +21,11 @@ class Projeto(BaseModel):
     color: str
     etapas: List[Etapa]
 
+class SimulatedMember(BaseModel):
+    nome: str
+    cargo_id: int
+    habilidade_names: List[str]
+
 class AlgoritmoParams(BaseModel):
     tam_pop: int = 20
     n_gen: int = 100
@@ -29,6 +34,7 @@ class AlgoritmoParams(BaseModel):
     ref_date: str = "2025-01-01"
     projeto_ids: Optional[List[int]] = None
     colaborador_ids: Optional[List[int]] = None
+    simulated_members: Optional[List[SimulatedMember]] = None
 
 class ResultadoTarefa(BaseModel):
     projeto: str
