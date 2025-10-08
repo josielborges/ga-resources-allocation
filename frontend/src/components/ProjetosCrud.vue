@@ -302,12 +302,21 @@
       @confirm="executarExclusao"
       @cancel="cancelarExclusao"
     />
+    
+    <!-- Modal de alerta -->
+    <AlertModal 
+      :show="showAlertModal"
+      :title="alertTitle"
+      :message="alertMessage"
+      @close="fecharAlerta"
+    />
   </div>
 </template>
 
 <script>
 import axios from 'axios'
 import ConfirmModal from './ConfirmModal.vue'
+import AlertModal from './AlertModal.vue'
 import HabilidadesSelect from './HabilidadesSelect.vue'
 import EtapasFlowchartDagre from './EtapasFlowchartDagre.vue'
 import Sortable from 'sortablejs'
@@ -316,6 +325,7 @@ export default {
   name: 'ProjetosCrud',
   components: {
     ConfirmModal,
+    AlertModal,
     HabilidadesSelect,
     EtapasFlowchartDagre
   },
@@ -337,7 +347,10 @@ export default {
       showConfirmModal: false,
       itemParaExcluir: null,
       draggedIndex: null,
-      dragOverIndex: null
+      dragOverIndex: null,
+      showAlertModal: false,
+      alertTitle: 'Atenção',
+      alertMessage: ''
     }
   },
   computed: {
@@ -471,7 +484,59 @@ export default {
       this.form.etapas.splice(index, 1)
     },
     
+    mostrarAlerta(titulo, mensagem) {
+      this.alertTitle = titulo
+      this.alertMessage = mensagem
+      this.showAlertModal = true
+    },
+    
+    fecharAlerta() {
+      this.showAlertModal = false
+    },
+    
+    validarFormulario() {
+      // Validar nome do projeto
+      if (!this.form.nome || this.form.nome.trim() === '') {
+        this.mostrarAlerta('Validação', 'Por favor, informe o nome do projeto.')
+        return false
+      }
+      
+      // Validar se há pelo menos uma etapa
+      if (!this.form.etapas || this.form.etapas.length === 0) {
+        this.mostrarAlerta('Validação', 'O projeto deve ter pelo menos uma etapa.')
+        return false
+      }
+      
+      // Validar cada etapa
+      for (let i = 0; i < this.form.etapas.length; i++) {
+        const etapa = this.form.etapas[i]
+        const etapaNum = i + 1
+        
+        if (!etapa.nome || etapa.nome.trim() === '') {
+          this.mostrarAlerta('Validação', `Por favor, informe o nome da etapa ${etapaNum}.`)
+          return false
+        }
+        
+        if (!etapa.duracao_dias || etapa.duracao_dias < 1) {
+          this.mostrarAlerta('Validação', `A etapa ${etapaNum} (${etapa.nome}) deve ter duração de pelo menos 1 dia.`)
+          return false
+        }
+        
+        if (!etapa.cargo_necessario_id || etapa.cargo_necessario_id === '') {
+          this.mostrarAlerta('Validação', `Por favor, selecione o cargo necessário para a etapa ${etapaNum} (${etapa.nome}).`)
+          return false
+        }
+      }
+      
+      return true
+    },
+    
     async salvarProjeto() {
+      // Validar formulário antes de salvar
+      if (!this.validarFormulario()) {
+        return
+      }
+      
       this.salvando = true
       try {
         const formData = {
@@ -513,11 +578,11 @@ export default {
       } catch (error) {
         console.error('Erro ao salvar projeto:', error)
         if (error.response?.status === 404) {
-          alert('Projeto não encontrado. Recarregando dados...')
+          this.mostrarAlerta('Erro', 'Projeto não encontrado. Recarregando dados...')
           await this.carregarDados()
           this.fecharModal()
         } else {
-          alert('Erro ao salvar projeto. Verifique os dados e tente novamente.')
+          this.mostrarAlerta('Erro', 'Erro ao salvar projeto. Verifique os dados e tente novamente.')
         }
       } finally {
         this.salvando = false
