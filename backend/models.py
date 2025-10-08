@@ -27,6 +27,8 @@ class AlgoritmoParams(BaseModel):
     pc: float = 0.7
     pm: float = 0.3
     ref_date: str = "2025-01-01"
+    projeto_ids: Optional[List[int]] = None
+    colaborador_ids: Optional[List[int]] = None
 
 class ResultadoTarefa(BaseModel):
     projeto: str

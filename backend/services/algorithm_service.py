@@ -12,10 +12,16 @@ class AlgorithmService:
         self.ga = GeneticAlgorithm()
         self.scheduler = TaskScheduler()
     
-    def load_data_from_db(self, db: Session) -> Tuple[List[Dict], List[Dict]]:
-        """Load and format data from database"""
+    def load_data_from_db(self, db: Session, colaborador_ids: List[int] = None, projeto_ids: List[int] = None) -> Tuple[List[Dict], List[Dict]]:
+        """Load and format data from database with optional filtering"""
         colaboradores_db = crud.get_colaboradores(db)
         projetos_db = crud.get_projetos(db)
+        
+        # Filter if IDs provided
+        if colaborador_ids:
+            colaboradores_db = [c for c in colaboradores_db if c.id in colaborador_ids]
+        if projeto_ids:
+            projetos_db = [p for p in projetos_db if p.id in projeto_ids]
         
         colaboradores = []
         for colab in colaboradores_db:
@@ -147,7 +153,11 @@ class AlgorithmService:
     
     def execute_algorithm(self, params: Dict, db: Session) -> Dict:
         """Execute genetic algorithm with given parameters"""
-        colaboradores, projetos = self.load_data_from_db(db)
+        colaboradores, projetos = self.load_data_from_db(
+            db, 
+            colaborador_ids=params.get("colaborador_ids"),
+            projeto_ids=params.get("projeto_ids")
+        )
         ref_date = datetime.datetime.strptime(params["ref_date"], "%Y-%m-%d").date()
         
         colaboradores = self.convert_absences(colaboradores, ref_date)

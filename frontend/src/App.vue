@@ -257,9 +257,21 @@
                   />
                 </div>
                 
+                <div class="border-t pt-3 mt-3">
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input 
+                      v-model="customizeExecution" 
+                      type="checkbox" 
+                      class="w-4 h-4 text-primary-main rounded"
+                    />
+                    <span class="text-sm text-text-primary">Personalizar execução</span>
+                  </label>
+                  <p class="text-xs text-text-secondary mt-1 ml-6">Selecione projetos e colaboradores específicos</p>
+                </div>
+                
                 <div class="space-y-2">
                   <button 
-                    @click="executarAlgoritmo" 
+                    @click="prepareExecution" 
                     :disabled="loading" 
                     class="bg-primary-main text-white px-4 py-2 rounded-sm text-sm font-medium w-full disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary-light transition-colors"
                     type="button"
@@ -496,6 +508,131 @@
         </div>
       </div>
     </div>
+    
+    <!-- Modal de Seleção -->
+    <div v-if="showSelectionModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" @click.self="showSelectionModal = false">
+      <div class="bg-white rounded-lg shadow-xl max-w-5xl w-full mx-4 max-h-[90vh] flex flex-col">
+        <div class="px-6 py-3 border-b flex justify-between items-center">
+          <h3 class="text-base font-semibold text-text-primary">Personalizar Execução</h3>
+          <button @click="showSelectionModal = false" class="text-text-secondary hover:text-text-primary">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        
+        <div class="flex-1 overflow-y-auto p-4">
+          <!-- Skill Coverage Warning -->
+          <div v-if="missingSkills.length > 0" class="mb-4 bg-yellow-50 border border-yellow-300 rounded p-3">
+            <div class="flex items-start gap-2">
+              <svg class="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+              </svg>
+              <div class="flex-1">
+                <p class="text-sm font-medium text-yellow-800">Habilidades não cobertas</p>
+                <p class="text-xs text-yellow-700 mt-1">Os projetos selecionados requerem habilidades que nenhum colaborador selecionado possui:</p>
+                <div class="flex flex-wrap gap-1 mt-2">
+                  <span v-for="skill in missingSkills" :key="skill" class="inline-block px-2 py-0.5 bg-yellow-200 text-yellow-800 rounded text-xs font-medium">
+                    {{ skill }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Projetos -->
+            <div>
+              <div class="flex justify-between items-center mb-2">
+                <h4 class="text-sm font-medium text-text-primary">Projetos ({{ selectedProjects.length }}/{{ projetos.length }})</h4>
+                <button @click="toggleAllProjects" class="text-xs text-primary-main hover:underline">
+                  {{ selectedProjects.length === projetos.length ? 'Desmarcar' : 'Selecionar' }} todos
+                </button>
+              </div>
+              <div class="space-y-1 max-h-[400px] overflow-y-auto border rounded p-2">
+                <div 
+                  v-for="projeto in projetos" 
+                  :key="projeto.id" 
+                  @click="toggleProject(projeto.id)"
+                  class="flex items-center gap-2 cursor-pointer p-1.5 rounded transition-colors border"
+                  :class="selectedProjects.includes(projeto.id) ? 'bg-blue-100 border-blue-300' : 'hover:bg-gray-50 border-transparent'"
+                >
+                  <div class="flex items-center justify-center w-7 h-7 rounded flex-shrink-0" :style="{ backgroundColor: projeto.color || '#3B82F6' }">
+                    <svg v-if="selectedProjects.includes(projeto.id)" class="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <div class="font-medium text-xs truncate mb-1">{{ projeto.nome }}</div>
+                    <div v-if="getProjectSkills(projeto).length > 0" class="flex flex-wrap gap-1">
+                      <span v-for="skill in getProjectSkills(projeto)" :key="skill" class="inline-block px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">
+                        {{ skill }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Colaboradores -->
+            <div>
+              <div class="flex justify-between items-center mb-2">
+                <h4 class="text-sm font-medium text-text-primary">Colaboradores ({{ selectedCollaborators.length }}/{{ colaboradores.length }})</h4>
+                <button @click="toggleAllCollaborators" class="text-xs text-primary-main hover:underline">
+                  {{ selectedCollaborators.length === colaboradores.length ? 'Desmarcar' : 'Selecionar' }} todos
+                </button>
+              </div>
+              <div class="space-y-1 max-h-[400px] overflow-y-auto border rounded p-2">
+                <div 
+                  v-for="colab in colaboradores" 
+                  :key="colab.id" 
+                  @click="toggleCollaborator(colab.id)"
+                  class="flex items-center gap-2 cursor-pointer p-1.5 rounded transition-colors border"
+                  :class="selectedCollaborators.includes(colab.id) ? 'bg-green-100 border-green-300' : 'hover:bg-gray-50 border-transparent'"
+                >
+                  <div class="flex items-center justify-center w-7 h-7 rounded flex-shrink-0 bg-gray-200">
+                    <svg v-if="selectedCollaborators.includes(colab.id)" class="w-3.5 h-3.5 text-gray-700" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <div class="font-medium text-xs truncate mb-1">
+                      {{ colab.nome }} <span class="text-text-secondary font-normal">({{ colab.cargo?.nome || colab.cargo }})</span>
+                    </div>
+                    <div v-if="getCollaboratorSkills(colab).length > 0" class="flex flex-wrap gap-1">
+                      <span v-for="skill in getCollaboratorSkills(colab)" :key="skill" class="inline-block px-1.5 py-0.5 bg-green-100 text-green-700 rounded text-xs">
+                        {{ skill }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="px-4 py-3 border-t flex justify-between items-center bg-gray-50">
+          <div class="text-xs text-text-secondary">
+            {{ selectedProjects.length }} projeto(s), {{ selectedCollaborators.length }} colaborador(es)
+          </div>
+          <div class="flex gap-2">
+            <button 
+              @click="showSelectionModal = false" 
+              class="px-3 py-1.5 text-xs border border-gray-300 rounded hover:bg-gray-100"
+            >
+              Cancelar
+            </button>
+            <button 
+              @click="executarAlgoritmo" 
+              :disabled="selectedProjects.length === 0 || selectedCollaborators.length === 0"
+              class="px-3 py-1.5 text-xs bg-primary-main text-white rounded hover:bg-primary-light disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Executar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -537,6 +674,10 @@ export default {
   data() {
     return {
       activeModule: 'roadmap',
+      customizeExecution: false,
+      showSelectionModal: false,
+      selectedProjects: [],
+      selectedCollaborators: [],
       params: {
         algorithm: 'ga',
         tam_pop: 50,
@@ -596,21 +737,96 @@ export default {
       comparacaoResultado: null
     }
   },
-  async mounted() {
-    await this.carregarDados()
-  },
-  watch: {
-    'params.algorithm'(newAlgorithm) {
-      if (newAlgorithm === 'ga') {
-        this.params.tam_pop = 50
-        this.params.n_gen = 100
-      } else if (newAlgorithm === 'aco') {
-        this.params.tam_pop = 30
-        this.params.n_gen = 15
-      }
+  computed: {
+    missingSkills() {
+      const requiredSkills = new Set()
+      const availableSkills = new Set()
+      
+      // Get required skills from selected projects
+      this.projetos
+        .filter(p => this.selectedProjects.includes(p.id))
+        .forEach(proj => {
+          proj.etapas?.forEach(etapa => {
+            etapa.habilidades_necessarias?.forEach(hab => {
+              const skillName = hab.nome || hab
+              requiredSkills.add(skillName)
+            })
+          })
+        })
+      
+      // Get available skills from selected collaborators
+      this.colaboradores
+        .filter(c => this.selectedCollaborators.includes(c.id))
+        .forEach(colab => {
+          colab.habilidades?.forEach(hab => {
+            const skillName = hab.nome || hab
+            availableSkills.add(skillName)
+          })
+        })
+      
+      // Find missing skills
+      const missing = []
+      requiredSkills.forEach(skill => {
+        if (!availableSkills.has(skill)) {
+          missing.push(skill)
+        }
+      })
+      
+      return missing.sort()
     }
   },
+  async mounted() {
+    await this.carregarDados()
+    this.initializeSelections()
+  },
+  watch: {
+    colaboradores() {
+      this.initializeSelections()
+    },
+    projetos() {
+      this.initializeSelections()
+    }
+  },
+
   methods: {
+    initializeSelections() {
+      if (this.colaboradores.length > 0 && this.selectedCollaborators.length === 0) {
+        this.selectedCollaborators = this.colaboradores.map(c => c.id)
+      }
+      if (this.projetos.length > 0 && this.selectedProjects.length === 0) {
+        this.selectedProjects = this.projetos.map(p => p.id)
+      }
+    },
+    toggleProject(id) {
+      const index = this.selectedProjects.indexOf(id)
+      if (index > -1) {
+        this.selectedProjects.splice(index, 1)
+      } else {
+        this.selectedProjects.push(id)
+      }
+    },
+    toggleCollaborator(id) {
+      const index = this.selectedCollaborators.indexOf(id)
+      if (index > -1) {
+        this.selectedCollaborators.splice(index, 1)
+      } else {
+        this.selectedCollaborators.push(id)
+      }
+    },
+    toggleAllProjects() {
+      if (this.selectedProjects.length === this.projetos.length) {
+        this.selectedProjects = []
+      } else {
+        this.selectedProjects = this.projetos.map(p => p.id)
+      }
+    },
+    toggleAllCollaborators() {
+      if (this.selectedCollaborators.length === this.colaboradores.length) {
+        this.selectedCollaborators = []
+      } else {
+        this.selectedCollaborators = this.colaboradores.map(c => c.id)
+      }
+    },
     async carregarDados() {
       try {
         console.log('Carregando dados...')
@@ -628,11 +844,26 @@ export default {
         console.error('Erro ao carregar dados:', error.message)
       }
     },
+    prepareExecution() {
+      if (this.customizeExecution) {
+        this.showSelectionModal = true
+      } else {
+        this.selectedProjects = this.projetos.map(p => p.id)
+        this.selectedCollaborators = this.colaboradores.map(c => c.id)
+        this.executarAlgoritmo()
+      }
+    },
     async executarAlgoritmo() {
+      this.showSelectionModal = false
       this.loading = true
       try {
         const endpoint = this.params.algorithm === 'aco' ? '/api/executar-aco' : '/api/executar-algoritmo'
-        const response = await axios.post(endpoint, this.params)
+        const payload = {
+          ...this.params,
+          projeto_ids: this.selectedProjects,
+          colaborador_ids: this.selectedCollaborators
+        }
+        const response = await axios.post(endpoint, payload)
         this.resultado = response.data
         this.activeTab = 'gantt'
         console.log(`${this.params.algorithm.toUpperCase()} executado com sucesso!`)
@@ -659,6 +890,20 @@ export default {
       } finally {
         this.loading = false
       }
+    },
+    getProjectSkills(projeto) {
+      const skills = new Set()
+      projeto.etapas?.forEach(etapa => {
+        etapa.habilidades_necessarias?.forEach(hab => {
+          const skillName = hab.nome || hab
+          skills.add(skillName)
+        })
+      })
+      return Array.from(skills).sort()
+    },
+    getCollaboratorSkills(colab) {
+      const skills = colab.habilidades?.map(hab => hab.nome || hab) || []
+      return skills.sort()
     },
     getModuleTitle() {
       const titles = {

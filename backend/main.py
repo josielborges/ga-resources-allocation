@@ -162,7 +162,9 @@ async def executar_algoritmo(params: AlgoritmoParams, db: Session = Depends(get_
             "tam_pop": params.tam_pop,
             "n_gen": params.n_gen,
             "pc": params.pc,
-            "pm": params.pm
+            "pm": params.pm,
+            "projeto_ids": params.projeto_ids,
+            "colaborador_ids": params.colaborador_ids
         }, db)
         
         return ResultadoAlgoritmo(
@@ -184,7 +186,9 @@ async def executar_aco(params: AlgoritmoParams, db: Session = Depends(get_db)):
             "tam_pop": params.tam_pop,
             "n_gen": params.n_gen,
             "pc": params.pc,
-            "pm": params.pm
+            "pm": params.pm,
+            "projeto_ids": params.projeto_ids,
+            "colaborador_ids": params.colaborador_ids
         }, db)
         
         return ResultadoAlgoritmo(
