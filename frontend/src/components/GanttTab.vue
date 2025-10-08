@@ -51,7 +51,7 @@
                 <tbody class="bg-white divide-y divide-gray-200">
                   <tr v-for="(item, idx) in tipo.details" :key="idx" class="hover:bg-gray-50">
                     <td v-for="(value, colKey) in item" :key="colKey" class="px-2 py-1.5 text-xs">
-                      {{ value }}
+                      {{ formatViolationValue(key, colKey, value) }}
                     </td>
                   </tr>
                 </tbody>
@@ -274,6 +274,10 @@ export default {
     projetos: {
       type: Array,
       default: () => []
+    },
+    refDate: {
+      type: String,
+      default: '2025-01-01'
     }
   },
   data() {
@@ -546,6 +550,15 @@ export default {
         backgroundColor: '#dc2626',
         zIndex: 10
       }
+    },
+    formatViolationValue(violationType, key, value) {
+      if (violationType === 'deadline_violation' && (key === 'termino_planejado' || key === 'termino_real')) {
+        const refDate = new Date(this.refDate)
+        const targetDate = new Date(refDate)
+        targetDate.setDate(targetDate.getDate() + value)
+        return targetDate.toLocaleDateString('pt-BR')
+      }
+      return value
     }
   }
 }

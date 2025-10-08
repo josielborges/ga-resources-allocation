@@ -49,7 +49,7 @@
             <tbody class="bg-white divide-y divide-gray-200">
               <tr v-for="(item, index) in ocorrencias" :key="index" class="hover:bg-gray-50">
                 <td v-for="(value, key) in item" :key="key" class="px-3 py-1.5 text-sm">
-                  {{ value }}
+                  {{ formatValue(key, value, tipo) }}
                 </td>
               </tr>
             </tbody>
@@ -65,7 +65,8 @@ export default {
   name: 'ConflitosTab',
   props: {
     penalidades: Object,
-    ocorrencias: Object
+    ocorrencias: Object,
+    refDate: String
   },
   computed: {
     penalityData() {
@@ -89,6 +90,15 @@ export default {
         'makespan': 'Duração Total do Projeto'
       }
       return translations[key] || key
+    },
+    formatValue(key, value, tipo) {
+      if (tipo === 'deadline_violation' && (key === 'termino_planejado' || key === 'termino_real') && this.refDate) {
+        const refDate = new Date(this.refDate)
+        const targetDate = new Date(refDate)
+        targetDate.setDate(targetDate.getDate() + value)
+        return `${targetDate.toLocaleDateString('pt-BR')} (${value} dias)`
+      }
+      return value
     }
   }
 }
