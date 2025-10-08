@@ -138,18 +138,24 @@ class SolutionEvaluator:
         # Check project deadlines
         if project_deadlines:
             project_completion = {}
-            for i, task in enumerate(tasks):
-                project = task["projeto"]
-                if task["task_id"] in task_completions:
+            for task_id, end_day in task_completions.items():
+                # Find the task to get its project
+                task = next((t for t in tasks if t["task_id"] == task_id), None)
+                if task:
+                    project = task["projeto"]
                     project_completion[project] = max(
                         project_completion.get(project, 0),
-                        task_completions[task["task_id"]]
+                        end_day
                     )
             
-            for project, end_day in project_completion.items():
-                if project in project_deadlines:
+            # Check all projects with deadlines
+            for project_name, deadline_day in project_deadlines.items():
+                if project_name in project_completion:
+                    end_day = project_completion[project_name]
+                    # end_day is the day AFTER completion, so subtract 1 for actual completion day
+                    actual_completion_day = end_day - 1
                     deadline_violations = self.validator.validate_deadline(
-                        project, end_day, project_deadlines[project]
+                        project_name, actual_completion_day, deadline_day
                     )
                     for violation in deadline_violations:
                         penalties["deadline_violation"] += violation.penalty

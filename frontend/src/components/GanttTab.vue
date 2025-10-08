@@ -139,6 +139,12 @@
                   >
                     <span class="gantt-text-compact">{{ projeto.duracao_total }}d</span>
                   </div>
+                  <div 
+                    v-if="projetosComDeadline[projeto.nome]"
+                    :style="getDeadlineStyle(projetosComDeadline[projeto.nome].deadline_dias)"
+                    :title="`Prazo: ${projetosComDeadline[projeto.nome].deadline}`"
+                    class="deadline-marker"
+                  ></div>
                 </div>
               </td>
             </tr>
@@ -182,6 +188,12 @@
                   >
                     <span class="gantt-interval-text">{{ intervalo.duracao }}d</span>
                   </div>
+                  <div 
+                    v-if="projetosComDeadline[projeto.nome]"
+                    :style="getDeadlineStyle(projetosComDeadline[projeto.nome].deadline_dias)"
+                    :title="`Prazo: ${projetosComDeadline[projeto.nome].deadline}`"
+                    class="deadline-marker"
+                  ></div>
                 </div>
               </td>
             </tr>
@@ -227,6 +239,12 @@
                   >
                     <span class="gantt-text-compact">{{ tarefa.duracao_dias }}d</span>
                   </div>
+                  <div 
+                    v-if="projetosComDeadline[tarefa.projeto]"
+                    :style="getDeadlineStyle(projetosComDeadline[tarefa.projeto].deadline_dias)"
+                    :title="`Prazo: ${projetosComDeadline[tarefa.projeto].deadline}`"
+                    class="deadline-marker"
+                  ></div>
                 </div>
               </td>
             </tr>
@@ -252,6 +270,10 @@ export default {
     ocorrencias: {
       type: Object,
       default: () => ({})
+    },
+    projetos: {
+      type: Array,
+      default: () => []
     }
   },
   data() {
@@ -399,6 +421,18 @@ export default {
     },
     totalViolacoes() {
       return Object.values(this.violacoesRelevantes).reduce((sum, v) => sum + v.count, 0)
+    },
+    projetosComDeadline() {
+      const map = {}
+      this.projetos.forEach(p => {
+        if (p.termino) {
+          map[p.nome] = {
+            deadline: p.termino,
+            deadline_dias: this.calcularDiasDesdeReferencia(p.termino)
+          }
+        }
+      })
+      return map
     }
   },
   methods: {
@@ -491,6 +525,27 @@ export default {
         boxShadow: '0 1px 2px rgba(0,0,0,0.15)',
         border: '1px solid rgba(255,255,255,0.2)'
       }
+    },
+    calcularDiasDesdeReferencia(dataStr) {
+      if (!this.tarefas || this.tarefas.length === 0) return 0
+      const primeiraData = this.tarefas[0].data_inicio
+      const [diaRef, mesRef, anoRef] = primeiraData.split('/')
+      const dataRef = new Date(anoRef, mesRef - 1, diaRef)
+      const [ano, mes, dia] = dataStr.split('-')
+      const dataDeadline = new Date(ano, mes - 1, dia)
+      return Math.floor((dataDeadline - dataRef) / (1000 * 60 * 60 * 24))
+    },
+    getDeadlineStyle(deadlineDias) {
+      const proporcao = (deadlineDias / this.duracaoMaxima) * 100
+      return {
+        left: `${Math.max(0, proporcao)}%`,
+        position: 'absolute',
+        top: '0',
+        bottom: '0',
+        width: '2px',
+        backgroundColor: '#dc2626',
+        zIndex: 10
+      }
     }
   }
 }
@@ -561,5 +616,27 @@ export default {
   font-weight: 600;
   color: white;
   text-shadow: 0 1px 1px rgba(0,0,0,0.4);
+}
+
+.deadline-marker {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background-color: #dc2626;
+  z-index: 10;
+  cursor: help;
+}
+
+.deadline-marker::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: -3px;
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 6px solid #dc2626;
 }
 </style>

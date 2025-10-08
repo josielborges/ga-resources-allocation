@@ -171,10 +171,35 @@ class AlgorithmService:
             best_solution, tarefas_globais, colaboradores, ref_date
         )
         
+        # Recalculate deadline violations from the actual schedule
+        from algorithm.constraints import ConstraintValidator
+        validator = ConstraintValidator()
+        
+        # Find actual project completion days from schedule
+        project_completion = {}
+        for task_schedule in schedule:
+            project = task_schedule["projeto"]
+            end_day = task_schedule["fim_dias"]
+            project_completion[project] = max(project_completion.get(project, 0), end_day)
+        
+        # Recalculate deadline violations
+        final_penalties = dict(penalties)
+        final_violations = {k: list(v) for k, v in violations.items()}
+        final_penalties["deadline_violation"] = 0
+        final_violations["deadline_violation"] = []
+        
+        for project_name, deadline_day in project_deadlines.items():
+            if project_name in project_completion:
+                actual_end = project_completion[project_name]
+                deadline_violations = validator.validate_deadline(project_name, actual_end, deadline_day)
+                for violation in deadline_violations:
+                    final_penalties["deadline_violation"] += violation.penalty
+                    final_violations["deadline_violation"].append(violation.details)
+        
         return {
             "tarefas": schedule,
             "melhor_fitness": best_fitness,
             "historico_fitness": fitness_history,
-            "penalidades": penalties,
-            "ocorrencias_penalidades": violations
+            "penalidades": final_penalties,
+            "ocorrencias_penalidades": final_violations
         }
