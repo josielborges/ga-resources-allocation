@@ -151,11 +151,12 @@ class ACOService:
                 project_deadlines[proj["nome"]] = delta.days
         
         # Create ACO with custom parameters
-        alpha = params.get("alpha", 1.0)
-        beta = params.get("beta", 2.0)
-        rho = params.get("rho", 0.5)
+        alpha = params.get("alpha", 0.5)
+        beta = params.get("beta", 3.0)
+        rho = params.get("rho", 0.05)
+        q0 = params.get("q0", 0.5)
         
-        self.aco = AntColonyOptimization(alpha=alpha, beta=beta, rho=rho)
+        self.aco = AntColonyOptimization(alpha=alpha, beta=beta, rho=rho, q0=q0)
         
         # Map parameters
         num_ants = params.get("tam_pop", 50)

@@ -5,14 +5,14 @@ from algorithm.evaluator import SolutionEvaluator
 from algorithm.scheduler import TaskScheduler
 
 class AntColonyOptimization:
-    def __init__(self, makespan_weight: int = 150, alpha: float = 1.0, beta: float = 2.0, 
-                 rho: float = 0.5, q0: float = 0.9):
+    def __init__(self, makespan_weight: int = 150, alpha: float = 0.5, beta: float = 3.0, 
+                 rho: float = 0.05, q0: float = 0.5):
         self.evaluator = SolutionEvaluator(makespan_weight)
         self.scheduler = TaskScheduler()
-        self.alpha = alpha  # Pheromone importance
-        self.beta = beta    # Heuristic importance
-        self.rho = rho      # Evaporation rate
-        self.q0 = q0        # Exploitation vs exploration
+        self.alpha = alpha  # Pheromone importance (reduced)
+        self.beta = beta    # Heuristic importance (increased)
+        self.rho = rho      # Evaporation rate (very low for slow convergence)
+        self.q0 = q0        # Exploitation vs exploration (balanced 50/50)
         
     def initialize_pheromones(self, num_tasks: int, collaborator_ids: List[int]) -> Dict:
         """Initialize pheromone matrix"""
@@ -122,21 +122,20 @@ class AntColonyOptimization:
             for collab_id in pheromones[task_idx]:
                 pheromones[task_idx][collab_id] *= (1.0 - self.rho)
         
-        # Reinforcement
-        best_fitness = min(fitnesses)
-        for i, (solution, fitness) in enumerate(zip(solutions, fitnesses)):
-            # Calculate deposit amount (better solutions deposit more)
-            if fitness > 0:
-                deposit = 1.0 / fitness
-                # Bonus for best solution
-                if fitness == best_fitness:
-                    deposit *= 2.0
-            else:
-                deposit = 1.0
-            
-            # Deposit pheromones
-            for task_idx, collab_id in enumerate(solution):
-                pheromones[task_idx][collab_id] += deposit
+        # Reinforcement - only best solution deposits (elitist strategy)
+        best_idx = fitnesses.index(min(fitnesses))
+        best_solution = solutions[best_idx]
+        best_fitness = fitnesses[best_idx]
+        
+        # Small deposit to prevent premature convergence
+        if best_fitness > 0:
+            deposit = 0.1 / best_fitness  # Very small deposit
+        else:
+            deposit = 0.1
+        
+        # Deposit pheromones only for best solution
+        for task_idx, collab_id in enumerate(best_solution):
+            pheromones[task_idx][collab_id] += deposit
     
     def local_search(self, solution: List[int], tasks: List[Dict], 
                     collaborators: List[Dict], project_deadlines: Dict[str, int] = None) -> List[int]:
@@ -191,8 +190,9 @@ class AntColonyOptimization:
             for ant in range(num_ants):
                 solution = self.construct_solution(tasks, collaborators, pheromones)
                 
-                # Apply local search occasionally
-                if random.random() < 0.3:
+                # Apply local search with decreasing probability
+                local_search_prob = 0.5 * (1.0 - iteration / max_iterations)
+                if random.random() < local_search_prob:
                     solution = self.local_search(solution, tasks, collaborators, project_deadlines)
                 
                 fitness, penalties, violations = self.evaluator.evaluate(solution, tasks, collaborators, project_deadlines)
@@ -214,8 +214,10 @@ class AntColonyOptimization:
             
             fitness_history.append(best_fitness)
             
-            # Early stopping if no improvement
-            if iteration > 50 and len(set(fitness_history[-10:])) == 1:
-                break
+            # Early stopping only after significant iterations with minimal improvement
+            if iteration >= max_iterations * 0.5 and len(fitness_history) >= 30:
+                recent_improvement = fitness_history[-30] - fitness_history[-1]
+                if recent_improvement < 0.001 * abs(fitness_history[-30]):  # Less than 0.1% improvement
+                    break
         
         return best_solution, best_fitness, fitness_history, best_penalties, best_violations

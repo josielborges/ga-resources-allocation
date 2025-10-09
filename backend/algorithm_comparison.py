@@ -26,12 +26,13 @@ class AlgorithmComparison:
         # ACO parameters
         aco_pop_size = aco_params.get('tam_pop', 50) if aco_params else 50
         aco_generations = aco_params.get('n_gen', 100) if aco_params else 100
-        alpha = aco_params.get('alpha', 1.0) if aco_params else 1.0
-        beta = aco_params.get('beta', 2.0) if aco_params else 2.0
-        rho = aco_params.get('rho', 0.5) if aco_params else 0.5
+        alpha = aco_params.get('alpha', 0.5) if aco_params else 0.5
+        beta = aco_params.get('beta', 3.0) if aco_params else 3.0
+        rho = aco_params.get('rho', 0.05) if aco_params else 0.05
+        q0 = aco_params.get('q0', 0.5) if aco_params else 0.5
         
         # Create ACO with custom parameters
-        self.aco = AntColonyOptimization(alpha=alpha, beta=beta, rho=rho)
+        self.aco = AntColonyOptimization(alpha=alpha, beta=beta, rho=rho, q0=q0)
         
         print(f"Running comparison with {runs} runs each...")
         
