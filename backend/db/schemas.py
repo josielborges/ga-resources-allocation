@@ -102,6 +102,7 @@ class ResultadoSalvoBase(BaseModel):
     nome: str
     algoritmo: str
     melhor_fitness: float
+    roadmap_end_date: Optional[date] = None
     tarefas: List[Dict[str, Any]]
     historico_fitness: List[float]
     penalidades: Dict[str, Any]

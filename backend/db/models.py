@@ -113,6 +113,7 @@ class ResultadoSalvo(Base):
     algoritmo = Column(String, nullable=False)
     data_execucao = Column(DateTime, default=datetime.utcnow)
     melhor_fitness = Column(Float)
+    roadmap_end_date = Column(Date, nullable=True)
     tarefas = Column(JSON)
     historico_fitness = Column(JSON)
     penalidades = Column(JSON)

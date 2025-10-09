@@ -4,7 +4,7 @@
       <!-- Menu Lateral -->
       <div class="w-64 bg-gradient-to-b from-cyan-600 to-green-400 text-white overflow-y-auto">
         <div class="p-4">
-          <h2 class="text-lg font-semibold mb-6">Roadmaps & Estimativas</h2>
+          <h2 class="text-lg font-semibold mb-6 cursor-pointer hover:text-white/90 transition-colors" @click="reloadApp">Roadmaps & Estimativas</h2>
           <nav class="space-y-1">
             <template v-for="item in menuItems" :key="item.id">
               <!-- Item normal -->
@@ -380,8 +380,8 @@
           
           <!-- Conteúdo principal -->
           <div class="flex-1 p-4 overflow-y-auto">
-            <div v-if="!resultado" class="mt-6">
-              <div class="bg-semantic-info-light border border-semantic-info-main rounded-md p-3 mb-4">
+            <div v-if="!resultado" class="mt-6 space-y-4">
+              <div class="bg-semantic-info-light border border-semantic-info-main rounded-md p-3">
                 <div class="flex items-center">
                   <svg class="w-4 h-4 text-semantic-info-main mr-2" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
@@ -389,11 +389,89 @@
                   <span class="text-semantic-info-main text-sm">Configure os parâmetros e execute o algoritmo</span>
                 </div>
               </div>
+              
+              <div v-if="resultadosSalvos.length > 0">
+                <h4 class="text-base font-semibold text-gray-900 mb-3">Últimas Execuções Salvas</h4>
+                <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
+                  <div 
+                    v-for="resultado in resultadosSalvos.slice(0, 6)" 
+                    :key="resultado.id" 
+                    @click="carregarResultado(resultado.id)"
+                    class="bg-white border rounded-lg p-4 hover:shadow-md transition-all cursor-pointer group"
+                  >
+                    <div class="flex items-start justify-between mb-2">
+                      <h5 class="font-semibold text-gray-900 text-sm group-hover:text-primary-main transition-colors line-clamp-2">{{ resultado.nome }}</h5>
+                      <span class="text-xs px-2 py-0.5 rounded flex-shrink-0 ml-2" :class="resultado.algoritmo === 'ga' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'">{{ resultado.algoritmo.toUpperCase() }}</span>
+                    </div>
+                    <div class="text-xs text-gray-600 space-y-1">
+                      <p><span class="font-medium">Fitness:</span> {{ resultado.melhor_fitness.toFixed(2) }}</p>
+                      <p v-if="resultado.parametros?.projeto_ids" class="flex items-center gap-1">
+                        <span class="font-medium">Projetos:</span> {{ resultado.parametros.projeto_ids.length }}
+                      </p>
+                      <p v-if="getRoadmapEndDate(resultado)">
+                        <span class="font-medium">Término:</span> {{ getRoadmapEndDate(resultado) }}
+                      </p>
+                      <p><span class="font-medium">Salvo em:</span> {{ new Date(resultado.data_execucao).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) }}</p>
+                    </div>
+                  </div>
+                </div>
+                <button 
+                  v-if="resultadosSalvos.length > 6"
+                  @click="showLoadModal = true" 
+                  class="mt-3 text-sm text-primary-main hover:underline"
+                >
+                  Ver todos ({{ resultadosSalvos.length }})
+                </button>
+              </div>
+              
               <div class="bg-white rounded-md shadow-sm p-4">
-                <h4 class="text-base font-medium text-text-primary mb-2">Dados:</h4>
-                <div class="text-sm text-text-secondary space-y-1">
-                  <p>Colaboradores: {{ colaboradores.length }}</p>
-                  <p>Projetos: {{ projetos.length }}</p>
+                <h4 class="text-base font-semibold text-gray-900 mb-3">Dados do Sistema</h4>
+                <div class="grid grid-cols-2 gap-3">
+                  <div @click="activeModule = 'colaboradores'" class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-3 border border-blue-200 cursor-pointer hover:shadow-md transition-all">
+                    <div class="flex items-center justify-between">
+                      <div>
+                        <p class="text-xs text-blue-600 font-medium mb-1">Colaboradores</p>
+                        <p class="text-2xl font-bold text-blue-700">{{ colaboradores.length }}</p>
+                      </div>
+                      <svg class="w-8 h-8 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
+                      </svg>
+                    </div>
+                  </div>
+                  <div @click="activeModule = 'projetos'" class="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-3 border border-green-200 cursor-pointer hover:shadow-md transition-all">
+                    <div class="flex items-center justify-between">
+                      <div>
+                        <p class="text-xs text-green-600 font-medium mb-1">Projetos</p>
+                        <p class="text-2xl font-bold text-green-700">{{ projetos.length }}</p>
+                      </div>
+                      <svg class="w-8 h-8 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"/>
+                      </svg>
+                    </div>
+                  </div>
+                  <div @click="activeModule = 'cargos'" class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-3 border border-purple-200 cursor-pointer hover:shadow-md transition-all">
+                    <div class="flex items-center justify-between">
+                      <div>
+                        <p class="text-xs text-purple-600 font-medium mb-1">Cargos</p>
+                        <p class="text-2xl font-bold text-purple-700">{{ cargos.length }}</p>
+                      </div>
+                      <svg class="w-8 h-8 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clip-rule="evenodd"/>
+                        <path d="M2 13.692V16a2 2 0 002 2h12a2 2 0 002-2v-2.308A24.974 24.974 0 0110 15c-2.796 0-5.487-.46-8-1.308z"/>
+                      </svg>
+                    </div>
+                  </div>
+                  <div @click="activeModule = 'habilidades'" class="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-3 border border-orange-200 cursor-pointer hover:shadow-md transition-all">
+                    <div class="flex items-center justify-between">
+                      <div>
+                        <p class="text-xs text-orange-600 font-medium mb-1">Habilidades</p>
+                        <p class="text-2xl font-bold text-orange-700">{{ habilidades.length }}</p>
+                      </div>
+                      <svg class="w-8 h-8 text-orange-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                      </svg>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1145,8 +1223,20 @@ export default {
     async salvarResultado() {
       if (!this.saveResultName.trim()) return
       try {
+        // Get end date from tasks
+        let roadmapEndDate = null
+        if (this.resultado?.tarefas?.length) {
+          const tarefaFinal = this.resultado.tarefas.reduce((latest, t) => 
+            t.fim_dias > latest.fim_dias ? t : latest, this.resultado.tarefas[0])
+          if (tarefaFinal?.data_fim) {
+            const [dia, mes, ano] = tarefaFinal.data_fim.split('/')
+            roadmapEndDate = `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`
+          }
+        }
+        
         const paramsToSave = {
           ...this.params,
+          roadmap_end_date: roadmapEndDate,
           saved_colaboradores: this.colaboradores.filter(c => this.selectedCollaborators.includes(c.id)),
           simulated_members: this.simulatedMembers.map(m => ({
             nome: m.nome,
@@ -1161,6 +1251,7 @@ export default {
           nome: this.saveResultName,
           algoritmo: this.params.algorithm,
           melhor_fitness: this.resultado.melhor_fitness,
+          roadmap_end_date: roadmapEndDate,
           tarefas: this.resultado.tarefas,
           historico_fitness: this.resultado.historico_fitness,
           penalidades: this.resultado.penalidades,
@@ -1222,6 +1313,21 @@ export default {
       } catch (error) {
         console.error('Erro ao deletar resultado:', error)
       }
+    },
+    getRoadmapEndDate(resultado) {
+      try {
+        if (resultado?.roadmap_end_date) {
+          const [year, month, day] = resultado.roadmap_end_date.split('-').map(Number)
+          const date = new Date(year, month - 1, day)
+          return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+        }
+        return null
+      } catch (e) {
+        return null
+      }
+    },
+    reloadApp() {
+      window.location.reload()
     },
     getModuleTitle() {
       const titles = {
