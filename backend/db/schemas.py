@@ -1,6 +1,6 @@
 from pydantic import BaseModel
-from typing import List, Optional
-from datetime import date
+from typing import List, Optional, Dict, Any
+from datetime import date, datetime
 
 class HabilidadeBase(BaseModel):
     nome: str
@@ -94,6 +94,26 @@ class ProjetoUpdate(ProjetoBase):
 class Projeto(ProjetoBase):
     id: int
     etapas: List[Etapa] = []
+    
+    class Config:
+        from_attributes = True
+
+class ResultadoSalvoBase(BaseModel):
+    nome: str
+    algoritmo: str
+    melhor_fitness: float
+    tarefas: List[Dict[str, Any]]
+    historico_fitness: List[float]
+    penalidades: Dict[str, Any]
+    ocorrencias_penalidades: Dict[str, Any]
+    parametros: Dict[str, Any]
+
+class ResultadoSalvoCreate(ResultadoSalvoBase):
+    pass
+
+class ResultadoSalvo(ResultadoSalvoBase):
+    id: int
+    data_execucao: datetime
     
     class Config:
         from_attributes = True

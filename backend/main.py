@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 import json
 import datetime
-from typing import List
+from typing import List, Dict, Any
 from models import *
 from services.algorithm_service import AlgorithmService
 from services.aco_service import ACOService
@@ -224,6 +224,27 @@ async def comparar_algoritmos(request: dict, db: Session = Depends(get_db)):
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/resultados-salvos", response_model=schemas.ResultadoSalvo)
+async def salvar_resultado(resultado: schemas.ResultadoSalvoCreate, db: Session = Depends(get_db)):
+    return crud.create_resultado_salvo(db, resultado)
+
+@app.get("/api/resultados-salvos", response_model=List[schemas.ResultadoSalvo])
+async def listar_resultados_salvos(db: Session = Depends(get_db)):
+    return crud.get_resultados_salvos(db)
+
+@app.get("/api/resultados-salvos/{resultado_id}", response_model=schemas.ResultadoSalvo)
+async def obter_resultado_salvo(resultado_id: int, db: Session = Depends(get_db)):
+    resultado = crud.get_resultado_salvo(db, resultado_id)
+    if not resultado:
+        raise HTTPException(status_code=404, detail="Resultado não encontrado")
+    return resultado
+
+@app.delete("/api/resultados-salvos/{resultado_id}")
+async def deletar_resultado_salvo(resultado_id: int, db: Session = Depends(get_db)):
+    if not crud.delete_resultado_salvo(db, resultado_id):
+        raise HTTPException(status_code=404, detail="Resultado não encontrado")
+    return {"message": "Resultado deletado com sucesso"}
 
 if __name__ == "__main__":
     import uvicorn

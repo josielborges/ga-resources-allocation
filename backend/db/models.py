@@ -1,6 +1,7 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Table, Date
+from sqlalchemy import Column, Integer, String, ForeignKey, Table, Date, DateTime, Text, Float
 from sqlalchemy.orm import relationship
-from sqlalchemy.dialects.postgresql import ARRAY
+from sqlalchemy.dialects.postgresql import ARRAY, JSON
+from datetime import datetime
 from .database import Base
 
 # Association table for many-to-many relationship between colaboradores and habilidades
@@ -103,3 +104,17 @@ class Etapa(Base):
 # Add back_populates to Habilidade
 Habilidade.colaboradores = relationship("Colaborador", secondary=colaborador_habilidade, back_populates="habilidades")
 Habilidade.etapas = relationship("Etapa", secondary=etapa_habilidade, back_populates="habilidades_necessarias")
+
+class ResultadoSalvo(Base):
+    __tablename__ = "resultados_salvos"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    nome = Column(String, nullable=False)
+    algoritmo = Column(String, nullable=False)
+    data_execucao = Column(DateTime, default=datetime.utcnow)
+    melhor_fitness = Column(Float)
+    tarefas = Column(JSON)
+    historico_fitness = Column(JSON)
+    penalidades = Column(JSON)
+    ocorrencias_penalidades = Column(JSON)
+    parametros = Column(JSON)

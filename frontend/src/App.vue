@@ -287,6 +287,14 @@
                   </button>
                   
                   <button 
+                    @click="showLoadModal = true" 
+                    class="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium w-full hover:bg-blue-700 transition-colors shadow-sm"
+                    type="button"
+                  >
+                    Carregar Resultado
+                  </button>
+                  
+                  <button 
                     @click="showComparisonParams = !showComparisonParams" 
                     class="bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium w-full hover:bg-green-700 transition-colors shadow-sm"
                     type="button"
@@ -392,21 +400,29 @@
 
             <div v-if="resultado" class="bg-white rounded-md shadow-sm">
               <div class="border-b border-divider px-4">
-                <nav class="flex space-x-6">
+                <div class="flex justify-between items-center">
+                  <nav class="flex space-x-6">
+                    <button 
+                      v-for="tab in tabs" 
+                      :key="tab.name"
+                      @click="activeTab = tab.name"
+                      :class="[
+                        'py-3 px-1 border-b-2 font-medium text-sm transition-colors',
+                        activeTab === tab.name 
+                          ? 'border-primary-main text-primary-main' 
+                          : 'border-transparent text-text-secondary hover:text-text-primary hover:border-gray-300'
+                      ]"
+                    >
+                      {{ tab.label }}
+                    </button>
+                  </nav>
                   <button 
-                    v-for="tab in tabs" 
-                    :key="tab.name"
-                    @click="activeTab = tab.name"
-                    :class="[
-                      'py-3 px-1 border-b-2 font-medium text-sm transition-colors',
-                      activeTab === tab.name 
-                        ? 'border-primary-main text-primary-main' 
-                        : 'border-transparent text-text-secondary hover:text-text-primary hover:border-gray-300'
-                    ]"
+                    @click="showSaveModal = true" 
+                    class="bg-green-600 text-white px-3 py-1.5 rounded-md text-sm font-medium hover:bg-green-700 transition-colors"
                   >
-                    {{ tab.label }}
+                    Salvar Resultado
                   </button>
-                </nav>
+                </div>
               </div>
               
               <div class="p-4">
@@ -692,6 +708,91 @@
         </div>
       </div>
     </div>
+    
+    <!-- Modal Salvar Resultado -->
+    <div v-if="showSaveModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" @click.self="showSaveModal = false">
+      <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+        <div class="px-6 py-4 border-b">
+          <h3 class="text-lg font-semibold">Salvar Resultado</h3>
+        </div>
+        <div class="p-6">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Nome do Resultado</label>
+          <input 
+            v-model="saveResultName" 
+            type="text" 
+            placeholder="Ex: Roadmap Q1 2025" 
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-main"
+            @keyup.enter="salvarResultado"
+          />
+        </div>
+        <div class="px-6 py-4 border-t flex justify-end gap-2">
+          <button 
+            @click="showSaveModal = false" 
+            class="px-4 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-100"
+          >
+            Cancelar
+          </button>
+          <button 
+            @click="salvarResultado" 
+            :disabled="!saveResultName.trim()"
+            class="px-4 py-2 text-sm bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Salvar
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Modal Carregar Resultado -->
+    <div v-if="showLoadModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" @click.self="showLoadModal = false">
+      <div class="bg-white rounded-lg shadow-xl max-w-3xl w-full mx-4 max-h-[80vh] flex flex-col">
+        <div class="px-6 py-4 border-b flex justify-between items-center">
+          <h3 class="text-lg font-semibold">Resultados Salvos</h3>
+          <button @click="showLoadModal = false" class="text-gray-500 hover:text-gray-700">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-6">
+          <div v-if="resultadosSalvos.length === 0" class="text-center py-8 text-gray-500">
+            Nenhum resultado salvo ainda
+          </div>
+          <div v-else class="space-y-3">
+            <div 
+              v-for="resultado in resultadosSalvos" 
+              :key="resultado.id" 
+              class="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
+            >
+              <div class="flex justify-between items-start">
+                <div class="flex-1">
+                  <h4 class="font-semibold text-gray-900">{{ resultado.nome }}</h4>
+                  <div class="text-sm text-gray-600 mt-1 space-y-1">
+                    <p><span class="font-medium">Algoritmo:</span> {{ resultado.algoritmo.toUpperCase() }}</p>
+                    <p><span class="font-medium">Fitness:</span> {{ resultado.melhor_fitness.toFixed(2) }}</p>
+                    <p><span class="font-medium">Data:</span> {{ new Date(resultado.data_execucao).toLocaleString('pt-BR') }}</p>
+                  </div>
+                </div>
+                <div class="flex gap-2">
+                  <button 
+                    @click="carregarResultado(resultado.id)" 
+                    class="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                  >
+                    Carregar
+                  </button>
+                  <button 
+                    @click="deletarResultado(resultado.id)" 
+                    class="px-3 py-1.5 text-sm bg-red-600 text-white rounded hover:bg-red-700"
+                  >
+                    Deletar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -735,6 +836,10 @@ export default {
       activeModule: 'roadmap',
       customizeExecution: false,
       showSelectionModal: false,
+      showSaveModal: false,
+      showLoadModal: false,
+      saveResultName: '',
+      resultadosSalvos: [],
       selectedProjects: [],
       selectedCollaborators: [],
       simulatedMembers: [],
@@ -848,6 +953,7 @@ export default {
   async mounted() {
     await this.carregarDados()
     await this.carregarCargosHabilidades()
+    await this.carregarResultadosSalvos()
     this.initializeSelections()
   },
   watch: {
@@ -1023,6 +1129,64 @@ export default {
     getCollaboratorSkills(colab) {
       const skills = colab.habilidades?.map(hab => hab.nome || hab) || []
       return skills.sort()
+    },
+    async carregarResultadosSalvos() {
+      try {
+        const response = await axios.get('/api/resultados-salvos')
+        this.resultadosSalvos = response.data
+      } catch (error) {
+        console.error('Erro ao carregar resultados salvos:', error)
+      }
+    },
+    async salvarResultado() {
+      if (!this.saveResultName.trim()) return
+      try {
+        await axios.post('/api/resultados-salvos', {
+          nome: this.saveResultName,
+          algoritmo: this.params.algorithm,
+          melhor_fitness: this.resultado.melhor_fitness,
+          tarefas: this.resultado.tarefas,
+          historico_fitness: this.resultado.historico_fitness,
+          penalidades: this.resultado.penalidades,
+          ocorrencias_penalidades: this.resultado.ocorrencias_penalidades,
+          parametros: this.params
+        })
+        this.showSaveModal = false
+        this.saveResultName = ''
+        await this.carregarResultadosSalvos()
+        console.log('Resultado salvo com sucesso!')
+      } catch (error) {
+        console.error('Erro ao salvar resultado:', error)
+      }
+    },
+    async carregarResultado(id) {
+      try {
+        const response = await axios.get(`/api/resultados-salvos/${id}`)
+        const saved = response.data
+        this.resultado = {
+          tarefas: saved.tarefas,
+          melhor_fitness: saved.melhor_fitness,
+          historico_fitness: saved.historico_fitness,
+          penalidades: saved.penalidades,
+          ocorrencias_penalidades: saved.ocorrencias_penalidades
+        }
+        this.params = saved.parametros
+        this.showLoadModal = false
+        this.activeTab = 'gantt'
+        console.log('Resultado carregado com sucesso!')
+      } catch (error) {
+        console.error('Erro ao carregar resultado:', error)
+      }
+    },
+    async deletarResultado(id) {
+      if (!confirm('Deseja realmente deletar este resultado?')) return
+      try {
+        await axios.delete(`/api/resultados-salvos/${id}`)
+        await this.carregarResultadosSalvos()
+        console.log('Resultado deletado com sucesso!')
+      } catch (error) {
+        console.error('Erro ao deletar resultado:', error)
+      }
     },
     getModuleTitle() {
       const titles = {

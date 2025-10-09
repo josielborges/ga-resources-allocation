@@ -276,3 +276,24 @@ def delete_colaborador(db: Session, colaborador_id: int):
         db.commit()
         return True
     return False
+
+def create_resultado_salvo(db: Session, resultado: schemas.ResultadoSalvoCreate):
+    db_resultado = models.ResultadoSalvo(**resultado.dict())
+    db.add(db_resultado)
+    db.commit()
+    db.refresh(db_resultado)
+    return db_resultado
+
+def get_resultados_salvos(db: Session) -> List[models.ResultadoSalvo]:
+    return db.query(models.ResultadoSalvo).order_by(models.ResultadoSalvo.data_execucao.desc()).all()
+
+def get_resultado_salvo(db: Session, resultado_id: int):
+    return db.query(models.ResultadoSalvo).filter(models.ResultadoSalvo.id == resultado_id).first()
+
+def delete_resultado_salvo(db: Session, resultado_id: int):
+    db_resultado = db.query(models.ResultadoSalvo).filter(models.ResultadoSalvo.id == resultado_id).first()
+    if db_resultado:
+        db.delete(db_resultado)
+        db.commit()
+        return True
+    return False
