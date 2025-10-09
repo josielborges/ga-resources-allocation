@@ -1,74 +1,81 @@
 <template>
   <div class="space-y-3">
-    <div class="flex justify-between items-center">
-      <h3 class="text-lg font-semibold text-text-primary">Mapa de Alocação dos Colaboradores por Mês</h3>
-      <div class="text-sm text-text-secondary">
-        {{ colaboradoresUnicos.length }} colaboradores • 12 meses • {{ tarefas.length }} tarefas
+    <div class="bg-white rounded-md shadow-sm border border-gray-200">
+      <div class="bg-purple-50 border-b border-purple-200 px-3 py-1.5 flex justify-between items-center">
+        <h3 class="flex items-center gap-1.5 text-xs font-semibold text-purple-800">
+          <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M2 6a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 100 4v2a2 2 0 01-2 2H4a2 2 0 01-2-2v-2a2 2 0 100-4V6z"></path>
+          </svg>
+          Mapa de Alocação por Mês
+        </h3>
+        <div class="text-xs text-purple-700">
+          {{ colaboradoresUnicos.length }} colab. • 12 meses • {{ tarefas.length }} tarefas
+        </div>
       </div>
-    </div>
-    
-    <div class="bg-white rounded-md border" style="max-height: 70vh; overflow-y: auto;">
-      <table class="w-full">
-        <thead class="bg-gray-50">
-          <tr>
-            <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase bg-gray-50 border-r" style="width: 180px; max-width: 180px;">
-              Colaborador
-            </th>
-            <th 
-              v-for="mes in mesesDoAno" 
-              :key="mes.numero"
-              class="px-1 py-2 text-center text-xs font-medium text-gray-500 uppercase border-l"
-              style="width: 80px;"
-            >
-              {{ mes.nome.substring(0, 3) }}
-            </th>
-          </tr>
-        </thead>
-        <tbody class="bg-white">
-          <tr v-for="colaborador in colaboradoresUnicos" :key="colaborador" class="hover:bg-gray-50 border-b border-gray-100">
-            <td class="px-2 py-2 text-sm font-medium text-gray-900 bg-white border-r truncate" style="width: 180px; max-width: 180px;" :title="colaborador">
-              {{ colaborador }}
-            </td>
-            <td 
-              v-for="mes in mesesDoAno" 
-              :key="mes.numero"
-              class="px-0.5 py-2 border-l border-gray-100 relative"
-              style="width: 80px; height: 40px;"
-            >
-              <div class="relative w-full h-6 bg-gray-100 rounded">
-                <div 
-                  v-for="alocacao in getAlocacoesMes(colaborador, mes.numero)" 
-                  :key="alocacao.id"
-                  class="absolute h-6 rounded"
-                  :style="{
-                    left: alocacao.left + '%',
-                    width: alocacao.width + '%',
-                    backgroundColor: alocacao.cor
-                  }"
-                  :title="alocacao.tooltip"
-                >
+      
+      <div style="max-height: 60vh; overflow-y: auto;">
+        <table class="w-full">
+          <thead class="bg-gray-50 sticky top-0">
+            <tr>
+              <th class="px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase bg-gray-50 border-r" style="width: 150px; max-width: 150px;">
+                Colaborador
+              </th>
+              <th 
+                v-for="mes in mesesDoAno" 
+                :key="mes.numero"
+                class="px-1 py-1.5 text-center text-xs font-medium text-gray-500 uppercase border-l"
+                style="width: 70px;"
+              >
+                {{ mes.nome.substring(0, 3) }}
+              </th>
+            </tr>
+          </thead>
+          <tbody class="bg-white">
+            <tr v-for="colaborador in colaboradoresUnicos" :key="colaborador" class="hover:bg-gray-50 border-b border-gray-100">
+              <td class="px-2 py-1.5 text-xs font-medium text-gray-900 bg-white border-r truncate" style="width: 150px; max-width: 150px;" :title="colaborador">
+                {{ colaborador }}
+              </td>
+              <td 
+                v-for="mes in mesesDoAno" 
+                :key="mes.numero"
+                class="px-0.5 py-1.5 border-l border-gray-100 relative"
+                style="width: 70px; height: 32px;"
+              >
+                <div class="relative w-full h-5 bg-gray-100 rounded">
+                  <div 
+                    v-for="alocacao in getAlocacoesMes(colaborador, mes.numero)" 
+                    :key="alocacao.id"
+                    class="absolute h-5 rounded"
+                    :style="{
+                      left: alocacao.left + '%',
+                      width: alocacao.width + '%',
+                      backgroundColor: alocacao.cor
+                    }"
+                    :title="alocacao.tooltip"
+                  >
+                  </div>
                 </div>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
-    <!-- Legenda -->
-    <div class="bg-gray-50 rounded-md p-3">
-      <h4 class="text-sm font-medium text-gray-900 mb-2">Legenda de Projetos</h4>
-      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-1">
-        <div 
-          v-for="projeto in projetosLegenda" 
-          :key="projeto.nome"
-          class="flex items-center space-x-1.5"
-        >
+      <!-- Legenda -->
+      <div class="bg-gray-50 border-t border-gray-200 p-2">
+        <h4 class="text-xs font-medium text-gray-900 mb-1.5">Legenda de Projetos</h4>
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-1">
           <div 
-            class="w-3 h-3 rounded"
-            :style="{ backgroundColor: projeto.color }"
-          ></div>
-          <span class="text-xs text-gray-700 truncate">{{ projeto.nome }}</span>
+            v-for="projeto in projetosLegenda" 
+            :key="projeto.nome"
+            class="flex items-center space-x-1"
+          >
+            <div 
+              class="w-2.5 h-2.5 rounded"
+              :style="{ backgroundColor: projeto.color }"
+            ></div>
+            <span class="text-xs text-gray-700 truncate">{{ projeto.nome }}</span>
+          </div>
         </div>
       </div>
     </div>

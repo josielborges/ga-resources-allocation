@@ -80,15 +80,15 @@
         <!-- Conteúdo do roadmap -->
         <div class="flex flex-1 overflow-hidden">
           <!-- Parâmetros Sidebar -->
-          <div class="w-72 bg-background-paper border-r border-divider flex-shrink-0 overflow-y-auto">
-            <div class="p-4">
+          <div class="w-72 bg-gray-50 border-r border-gray-200 flex-shrink-0 overflow-y-auto">
+            <div class="p-4 space-y-4">
             <div class="bg-white rounded-md shadow-sm p-4">
-              <h3 class="text-base font-semibold text-text-primary mb-4">Parâmetros do algoritmo</h3>
+              <h3 class="text-base font-semibold text-gray-900 mb-4">Parâmetros do Algoritmo</h3>
               
               <form class="space-y-4">
                 <div>
-                  <label class="caption block mb-2">Algoritmo</label>
-                  <select v-model="params.algorithm" class="form-input w-full text-sm">
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Algoritmo</label>
+                  <select v-model="params.algorithm" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-primary-main">
                     <option value="ga">Algoritmo Genético</option>
                     <option value="aco">Colônia de Formigas</option>
                   </select>
@@ -96,7 +96,7 @@
                 <!-- GA Parameters -->
                 <template v-if="params.algorithm === 'ga'">
                   <div>
-                    <label class="caption block mb-2">População</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">População</label>
                     <input 
                       v-model="params.tam_pop" 
                       type="range" 
@@ -112,7 +112,7 @@
                   </div>
                   
                   <div>
-                    <label class="caption block mb-2">Gerações</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Gerações</label>
                     <input 
                       v-model="params.n_gen" 
                       type="range" 
@@ -128,7 +128,7 @@
                   </div>
                   
                   <div>
-                    <label class="caption block mb-2">Crossover</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Crossover</label>
                     <input 
                       v-model="params.pc" 
                       type="range" 
@@ -145,7 +145,7 @@
                   </div>
                   
                   <div>
-                    <label class="caption block mb-2">Mutação</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Mutação</label>
                     <input 
                       v-model="params.pm" 
                       type="range" 
@@ -165,7 +165,7 @@
                 <!-- ACO Parameters -->
                 <template v-else>
                   <div>
-                    <label class="caption block mb-2">Número de Formigas</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Número de Formigas</label>
                     <input 
                       v-model="params.tam_pop" 
                       type="range" 
@@ -181,7 +181,7 @@
                   </div>
                   
                   <div>
-                    <label class="caption block mb-2">Iterações Máximas</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Iterações Máximas</label>
                     <input 
                       v-model="params.n_gen" 
                       type="range" 
@@ -197,7 +197,7 @@
                   </div>
                   
                   <div>
-                    <label class="caption block mb-2">Alpha (Importância do Feromônio)</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Alpha (Feromônio)</label>
                     <input 
                       v-model="params.alpha" 
                       type="range" 
@@ -214,7 +214,7 @@
                   </div>
                   
                   <div>
-                    <label class="caption block mb-2">Beta (Importância da Heurística)</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Beta (Heurística)</label>
                     <input 
                       v-model="params.beta" 
                       type="range" 
@@ -231,7 +231,7 @@
                   </div>
                   
                   <div>
-                    <label class="caption block mb-2">Rho (Taxa de Evaporação)</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Rho (Evaporação)</label>
                     <input 
                       v-model="params.rho" 
                       type="range" 
@@ -249,31 +249,31 @@
                 </template>
                 
                 <div>
-                  <label class="caption block mb-2">Data de Referência</label>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Data de Referência</label>
                   <input 
                     v-model="params.ref_date" 
                     type="date" 
-                    class="form-input text-sm"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-primary-main"
                   />
                 </div>
                 
-                <div class="border-t pt-3 mt-3">
+                <div class="border-t border-gray-200 pt-4 mt-4">
                   <label class="flex items-center gap-2 cursor-pointer">
                     <input 
                       v-model="customizeExecution" 
                       type="checkbox" 
-                      class="w-4 h-4 text-primary-main rounded"
+                      class="w-4 h-4 text-primary-main rounded border-gray-300 focus:ring-primary-main"
                     />
-                    <span class="text-sm text-text-primary">Personalizar execução</span>
+                    <span class="text-sm font-medium text-gray-700">Personalizar execução</span>
                   </label>
-                  <p class="text-xs text-text-secondary mt-1 ml-6">Selecione projetos e colaboradores específicos</p>
+                  <p class="text-xs text-gray-500 mt-1 ml-6">Selecione projetos e colaboradores específicos</p>
                 </div>
                 
-                <div class="space-y-2">
+                <div class="space-y-2 pt-2">
                   <button 
                     @click="prepareExecution" 
                     :disabled="loading" 
-                    class="bg-primary-main text-white px-4 py-2 rounded-sm text-sm font-medium w-full disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary-light transition-colors"
+                    class="bg-primary-main text-white px-4 py-2 rounded-md text-sm font-medium w-full disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary-light transition-colors shadow-sm"
                     type="button"
                   >
                     <span v-if="loading" class="flex items-center justify-center">
@@ -288,74 +288,75 @@
                   
                   <button 
                     @click="showComparisonParams = !showComparisonParams" 
-                    class="bg-green-600 text-white px-4 py-2 rounded-sm text-sm font-medium w-full hover:bg-green-700 transition-colors"
+                    class="bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium w-full hover:bg-green-700 transition-colors shadow-sm"
                     type="button"
                   >
                     {{ showComparisonParams ? 'Ocultar' : 'Configurar' }} Comparação
                   </button>
                 </div>
               </form>
-              
-              <!-- Comparison Parameters -->
-              <div v-if="showComparisonParams" class="mt-4 bg-gray-50 rounded-md p-4">
-                <h4 class="text-sm font-semibold mb-3">Parâmetros para Comparação</h4>
+            </div>
+            
+            <!-- Comparison Parameters -->
+            <div v-if="showComparisonParams" class="bg-white rounded-md shadow-sm p-4">
+              <h4 class="text-sm font-semibold text-gray-900 mb-3">Parâmetros para Comparação</h4>
                 
-                <!-- GA Parameters -->
-                <div class="mb-4">
-                  <h5 class="text-xs font-medium text-blue-600 mb-2">Algoritmo Genético</h5>
-                  <div class="grid grid-cols-2 gap-2 text-xs">
-                    <div>
-                      <label class="block mb-1">População</label>
-                      <input v-model="gaParams.tam_pop" type="number" min="10" max="100" class="w-full px-2 py-1 border rounded text-xs">
-                    </div>
-                    <div>
-                      <label class="block mb-1">Gerações</label>
-                      <input v-model="gaParams.n_gen" type="number" min="10" max="500" class="w-full px-2 py-1 border rounded text-xs">
-                    </div>
-                    <div>
-                      <label class="block mb-1">Crossover</label>
-                      <input v-model="gaParams.pc" type="number" min="0" max="1" step="0.1" class="w-full px-2 py-1 border rounded text-xs">
-                    </div>
-                    <div>
-                      <label class="block mb-1">Mutação</label>
-                      <input v-model="gaParams.pm" type="number" min="0" max="1" step="0.1" class="w-full px-2 py-1 border rounded text-xs">
-                    </div>
+              <!-- GA Parameters -->
+              <div class="mb-4">
+                <h5 class="text-xs font-semibold text-blue-600 mb-2 uppercase tracking-wide">Algoritmo Genético</h5>
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">População</label>
+                    <input v-model="gaParams.tam_pop" type="number" min="10" max="100" class="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-500">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Gerações</label>
+                    <input v-model="gaParams.n_gen" type="number" min="10" max="500" class="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-500">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Crossover</label>
+                    <input v-model="gaParams.pc" type="number" min="0" max="1" step="0.1" class="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-500">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Mutação</label>
+                    <input v-model="gaParams.pm" type="number" min="0" max="1" step="0.1" class="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-500">
                   </div>
                 </div>
+              </div>
                 
-                <!-- ACO Parameters -->
-                <div class="mb-4">
-                  <h5 class="text-xs font-medium text-green-600 mb-2">Otimização por Colônia de Formigas</h5>
-                  <div class="grid grid-cols-2 gap-2 text-xs">
-                    <div>
-                      <label class="block mb-1">Formigas</label>
-                      <input v-model="acoParams.tam_pop" type="number" min="10" max="50" class="w-full px-2 py-1 border rounded text-xs">
-                    </div>
-                    <div>
-                      <label class="block mb-1">Iterações</label>
-                      <input v-model="acoParams.n_gen" type="number" min="5" max="50" class="w-full px-2 py-1 border rounded text-xs">
-                    </div>
-                    <div>
-                      <label class="block mb-1">Alpha</label>
-                      <input v-model="acoParams.alpha" type="number" min="0.1" max="3" step="0.1" class="w-full px-2 py-1 border rounded text-xs">
-                    </div>
-                    <div>
-                      <label class="block mb-1">Beta</label>
-                      <input v-model="acoParams.beta" type="number" min="0.1" max="5" step="0.1" class="w-full px-2 py-1 border rounded text-xs">
-                    </div>
-                    <div>
-                      <label class="block mb-1">Rho</label>
-                      <input v-model="acoParams.rho" type="number" min="0.1" max="0.9" step="0.1" class="w-full px-2 py-1 border rounded text-xs">
-                    </div>
+              <!-- ACO Parameters -->
+              <div class="mb-4">
+                <h5 class="text-xs font-semibold text-green-600 mb-2 uppercase tracking-wide">Colônia de Formigas</h5>
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Formigas</label>
+                    <input v-model="acoParams.tam_pop" type="number" min="10" max="50" class="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-green-500">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Iterações</label>
+                    <input v-model="acoParams.n_gen" type="number" min="5" max="50" class="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-green-500">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Alpha</label>
+                    <input v-model="acoParams.alpha" type="number" min="0.1" max="3" step="0.1" class="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-green-500">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Beta</label>
+                    <input v-model="acoParams.beta" type="number" min="0.1" max="5" step="0.1" class="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-green-500">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Rho</label>
+                    <input v-model="acoParams.rho" type="number" min="0.1" max="0.9" step="0.1" class="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-green-500">
                   </div>
                 </div>
+              </div>
                 
-                <button 
-                  @click="compararAlgoritmos" 
-                  :disabled="loading" 
-                  class="bg-purple-600 text-white px-4 py-2 rounded-sm text-sm font-medium w-full disabled:opacity-50 disabled:cursor-not-allowed hover:bg-purple-700 transition-colors"
-                  type="button"
-                >
+              <button 
+                @click="compararAlgoritmos" 
+                :disabled="loading" 
+                class="bg-purple-600 text-white px-4 py-2 rounded-md text-sm font-medium w-full disabled:opacity-50 disabled:cursor-not-allowed hover:bg-purple-700 transition-colors shadow-sm"
+                type="button"
+              >
                   <span v-if="loading" class="flex items-center justify-center">
                     <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -363,9 +364,8 @@
                     </svg>
                     Comparando...
                   </span>
-                  <span v-else>Executar Comparação</span>
-                </button>
-              </div>
+                <span v-else>Executar Comparação</span>
+              </button>
             </div>
             </div>
           </div>
