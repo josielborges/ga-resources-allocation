@@ -1070,6 +1070,7 @@ export default {
       } else {
         this.selectedProjects = this.projetos.map(p => p.id)
         this.selectedCollaborators = this.colaboradores.map(c => c.id)
+        this.simulatedMembers = []
         this.executarAlgoritmo()
       }
     },
@@ -1077,6 +1078,9 @@ export default {
       this.showSelectionModal = false
       this.loading = true
       try {
+        // Reload data to get latest collaborators
+        await this.carregarDados()
+        
         const endpoint = this.params.algorithm === 'aco' ? '/api/executar-aco' : '/api/executar-algoritmo'
         const payload = {
           ...this.params,
@@ -1141,6 +1145,18 @@ export default {
     async salvarResultado() {
       if (!this.saveResultName.trim()) return
       try {
+        const paramsToSave = {
+          ...this.params,
+          saved_colaboradores: this.colaboradores.filter(c => this.selectedCollaborators.includes(c.id)),
+          simulated_members: this.simulatedMembers.map(m => ({
+            nome: m.nome,
+            cargo_id: m.cargo.id,
+            cargo: m.cargo,
+            habilidade_names: m.habilidades.map(h => h.nome),
+            habilidades: m.habilidades
+          }))
+        }
+        
         await axios.post('/api/resultados-salvos', {
           nome: this.saveResultName,
           algoritmo: this.params.algorithm,
@@ -1149,7 +1165,7 @@ export default {
           historico_fitness: this.resultado.historico_fitness,
           penalidades: this.resultado.penalidades,
           ocorrencias_penalidades: this.resultado.ocorrencias_penalidades,
-          parametros: this.params
+          parametros: paramsToSave
         })
         this.showSaveModal = false
         this.saveResultName = ''
@@ -1171,6 +1187,25 @@ export default {
           ocorrencias_penalidades: saved.ocorrencias_penalidades
         }
         this.params = saved.parametros
+        
+        // Restore saved collaborators (including deleted ones)
+        if (saved.parametros.saved_colaboradores) {
+          this.colaboradores = saved.parametros.saved_colaboradores
+        }
+        
+        // Restore simulated members if they exist
+        if (saved.parametros.simulated_members && saved.parametros.simulated_members.length > 0) {
+          this.simulatedMembers = saved.parametros.simulated_members.map((m, idx) => ({
+            id: `sim_${Date.now()}_${idx}`,
+            nome: m.nome,
+            cargo: m.cargo || this.cargos.find(c => c.id === m.cargo_id),
+            habilidades: m.habilidades || this.habilidades.filter(h => m.habilidade_names.includes(h.nome)),
+            simulated: true
+          }))
+        } else {
+          this.simulatedMembers = []
+        }
+        
         this.showLoadModal = false
         this.activeTab = 'gantt'
         console.log('Resultado carregado com sucesso!')
