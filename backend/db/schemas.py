@@ -114,6 +114,7 @@ class ProjetoBase(BaseModel):
     nome: str
     color: str
     termino: Optional[date] = None
+    squad_id: Optional[int] = None
 
 class ProjetoCreate(ProjetoBase):
     etapas: List[EtapaCreate] = []
@@ -123,6 +124,7 @@ class ProjetoUpdate(ProjetoBase):
 
 class Projeto(ProjetoBase):
     id: int
+    squad: Optional[Squad] = None
     etapas: List[Etapa] = []
     
     class Config:

@@ -26,6 +26,7 @@
         <thead class="bg-gray-50">
           <tr>
             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Projeto</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Squad</th>
             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Etapas</th>
             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duração Total</th>
             <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Deadline</th>
@@ -39,6 +40,9 @@
                 <div class="w-3 h-3 rounded-full mr-2" :style="{ backgroundColor: projeto.color }"></div>
                 <div class="text-sm font-medium text-gray-900">{{ projeto.nome }}</div>
               </div>
+            </td>
+            <td class="px-4 py-2 whitespace-nowrap">
+              <div class="text-sm text-gray-900">{{ projeto.squad?.nome || '-' }}</div>
             </td>
             <td class="px-4 py-2 whitespace-nowrap">
               <div class="text-sm text-gray-900">{{ projeto.etapas.length }} etapas</div>
@@ -96,8 +100,8 @@
         <div class="flex-1 overflow-y-auto px-4 py-3">
           <div class="space-y-4">
             <!-- Dados do Projeto -->
-            <div class="grid grid-cols-4 gap-4">
-              <div class="col-span-2">
+            <div class="grid grid-cols-12 gap-4">
+              <div class="col-span-5">
                 <label class="block text-sm font-medium mb-1">Nome do Projeto</label>
                 <input 
                   v-model="form.nome" 
@@ -107,8 +111,21 @@
                 />
               </div>
               
-              <div>
-                <label class="block text-sm font-medium mb-1">Data de Término Limite (Opcional)</label>
+              <div class="col-span-3">
+                <label class="block text-sm font-medium mb-1">Squad</label>
+                <select 
+                  v-model="form.squad_id" 
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-primary-main"
+                >
+                  <option :value="null">Selecionar squad</option>
+                  <option v-for="squad in squads" :key="squad.id" :value="squad.id">
+                    {{ squad.nome }}
+                  </option>
+                </select>
+              </div>
+              
+              <div class="col-span-3">
+                <label class="block text-sm font-medium mb-1">Deadline (Opcional)</label>
                 <input 
                   v-model="form.termino" 
                   type="date" 
@@ -116,7 +133,7 @@
                 />
               </div>
               
-              <div>
+              <div class="col-span-1">
                 <label class="block text-sm font-medium mb-1">Cor</label>
                 <input 
                   v-model="form.color" 
@@ -334,6 +351,7 @@ export default {
       projetos: [],
       cargos: [],
       habilidades: [],
+      squads: [],
       loading: false,
       salvando: false,
       showModal: false,
@@ -342,6 +360,7 @@ export default {
         nome: '',
         color: '#3B82F6',
         termino: null,
+        squad_id: null,
         etapas: []
       },
       showConfirmModal: false,
@@ -396,14 +415,16 @@ export default {
     async carregarDados() {
       this.loading = true
       try {
-        const [projetosRes, cargosRes, habilidadesRes] = await Promise.all([
+        const [projetosRes, cargosRes, habilidadesRes, squadsRes] = await Promise.all([
           axios.get('/api/projetos'),
           axios.get('/api/cargos'),
-          axios.get('/api/habilidades')
+          axios.get('/api/habilidades'),
+          axios.get('/api/squads')
         ])
         this.projetos = projetosRes.data
         this.cargos = cargosRes.data
         this.habilidades = habilidadesRes.data
+        this.squads = squadsRes.data
       } catch (error) {
         console.error('Erro ao carregar dados:', error)
       } finally {
@@ -418,6 +439,7 @@ export default {
           nome: projeto.nome,
           color: projeto.color,
           termino: projeto.termino || null,
+          squad_id: projeto.squad_id || null,
           etapas: projeto.etapas
             .sort((a, b) => (a.ordem || 0) - (b.ordem || 0))
             .map((etapa, index) => {
@@ -449,6 +471,7 @@ export default {
           nome: '',
           color: '#3B82F6',
           termino: null,
+          squad_id: null,
           etapas: []
         }
       }

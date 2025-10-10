@@ -88,7 +88,9 @@ class Projeto(Base):
     nome = Column(String, index=True)
     color = Column(String)
     termino = Column(Date, nullable=True)
+    squad_id = Column(Integer, ForeignKey("squads.id", ondelete="RESTRICT"), nullable=True)
     
+    squad = relationship("Squad")
     etapas = relationship("Etapa", back_populates="projeto")
 
 class Etapa(Base):
