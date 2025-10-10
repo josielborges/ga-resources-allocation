@@ -21,6 +21,32 @@ class Cargo(CargoBase):
     class Config:
         from_attributes = True
 
+class TriboBase(BaseModel):
+    nome: str
+
+class TriboCreate(TriboBase):
+    pass
+
+class Tribo(TriboBase):
+    id: int
+    
+    class Config:
+        from_attributes = True
+
+class SquadBase(BaseModel):
+    nome: str
+    tribo_id: int
+
+class SquadCreate(SquadBase):
+    pass
+
+class Squad(SquadBase):
+    id: int
+    tribo: Tribo
+    
+    class Config:
+        from_attributes = True
+
 class Habilidade(HabilidadeBase):
     id: int
     cargo: Cargo
@@ -46,12 +72,16 @@ class ColaboradorBase(BaseModel):
 
 class ColaboradorCreate(ColaboradorBase):
     cargo_id: int
+    squad_id: Optional[int] = None
+    transversal: bool = False
     habilidades_ids: List[int] = []
     ausencias: List[dict] = []
 
 class Colaborador(ColaboradorBase):
     id: int
     cargo: Cargo
+    squad: Optional[Squad] = None
+    transversal: bool = False
     habilidades: List[Habilidade] = []
     ausencias: List[Ausencia] = []
     

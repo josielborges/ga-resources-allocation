@@ -224,9 +224,90 @@ def delete_cargo(db: Session, cargo_id: int):
             return "in_use"
     return False
 
+# CRUD Tribos
+def get_tribos(db: Session) -> List[models.Tribo]:
+    return db.query(models.Tribo).all()
+
+def get_tribo(db: Session, tribo_id: int):
+    return db.query(models.Tribo).filter(models.Tribo.id == tribo_id).first()
+
+def create_tribo(db: Session, tribo: schemas.TriboCreate):
+    db_tribo = models.Tribo(nome=tribo.nome)
+    db.add(db_tribo)
+    db.commit()
+    db.refresh(db_tribo)
+    return db_tribo
+
+def update_tribo(db: Session, tribo_id: int, tribo: schemas.TriboCreate):
+    db_tribo = db.query(models.Tribo).filter(models.Tribo.id == tribo_id).first()
+    if not db_tribo:
+        return None
+    db_tribo.nome = tribo.nome
+    db.commit()
+    db.refresh(db_tribo)
+    return db_tribo
+
+def delete_tribo(db: Session, tribo_id: int):
+    from sqlalchemy.exc import IntegrityError
+    db_tribo = db.query(models.Tribo).filter(models.Tribo.id == tribo_id).first()
+    if db_tribo:
+        try:
+            db.delete(db_tribo)
+            db.commit()
+            return True
+        except IntegrityError:
+            db.rollback()
+            return "in_use"
+    return False
+
+# CRUD Squads
+def get_squads(db: Session) -> List[models.Squad]:
+    return db.query(models.Squad).all()
+
+def get_squad(db: Session, squad_id: int):
+    return db.query(models.Squad).filter(models.Squad.id == squad_id).first()
+
+def get_squads_by_tribo(db: Session, tribo_id: int) -> List[models.Squad]:
+    return db.query(models.Squad).filter(models.Squad.tribo_id == tribo_id).all()
+
+def create_squad(db: Session, squad: schemas.SquadCreate):
+    db_squad = models.Squad(nome=squad.nome, tribo_id=squad.tribo_id)
+    db.add(db_squad)
+    db.commit()
+    db.refresh(db_squad)
+    return db_squad
+
+def update_squad(db: Session, squad_id: int, squad: schemas.SquadCreate):
+    db_squad = db.query(models.Squad).filter(models.Squad.id == squad_id).first()
+    if not db_squad:
+        return None
+    db_squad.nome = squad.nome
+    db_squad.tribo_id = squad.tribo_id
+    db.commit()
+    db.refresh(db_squad)
+    return db_squad
+
+def delete_squad(db: Session, squad_id: int):
+    from sqlalchemy.exc import IntegrityError
+    db_squad = db.query(models.Squad).filter(models.Squad.id == squad_id).first()
+    if db_squad:
+        try:
+            db.delete(db_squad)
+            db.commit()
+            return True
+        except IntegrityError:
+            db.rollback()
+            return "in_use"
+    return False
+
 
 def create_colaborador(db: Session, colaborador: schemas.ColaboradorCreate):
-    db_colaborador = models.Colaborador(nome=colaborador.nome, cargo_id=colaborador.cargo_id)
+    db_colaborador = models.Colaborador(
+        nome=colaborador.nome, 
+        cargo_id=colaborador.cargo_id, 
+        squad_id=colaborador.squad_id if not colaborador.transversal else None,
+        transversal=1 if colaborador.transversal else 0
+    )
     db.add(db_colaborador)
     db.commit()
     db.refresh(db_colaborador)
@@ -251,6 +332,8 @@ def update_colaborador(db: Session, colaborador_id: int, colaborador: schemas.Co
     
     db_colaborador.nome = colaborador.nome
     db_colaborador.cargo_id = colaborador.cargo_id
+    db_colaborador.squad_id = colaborador.squad_id if not colaborador.transversal else None
+    db_colaborador.transversal = 1 if colaborador.transversal else 0
     
     db_colaborador.habilidades.clear()
     

@@ -43,14 +43,32 @@ class Cargo(Base):
     id = Column(Integer, primary_key=True, index=True)
     nome = Column(String, unique=True, index=True)
 
+class Tribo(Base):
+    __tablename__ = "tribos"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    nome = Column(String, unique=True, index=True)
+
+class Squad(Base):
+    __tablename__ = "squads"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    nome = Column(String, index=True)
+    tribo_id = Column(Integer, ForeignKey("tribos.id", ondelete="RESTRICT"), nullable=False)
+    
+    tribo = relationship("Tribo")
+
 class Colaborador(Base):
     __tablename__ = "colaboradores"
     
     id = Column(Integer, primary_key=True, index=True)
     nome = Column(String, index=True)
     cargo_id = Column(Integer, ForeignKey("cargos.id", ondelete="RESTRICT"))
+    squad_id = Column(Integer, ForeignKey("squads.id", ondelete="RESTRICT"), nullable=True)
+    transversal = Column(Integer, default=0)
     
     cargo = relationship("Cargo")
+    squad = relationship("Squad")
     habilidades = relationship("Habilidade", secondary=colaborador_habilidade, back_populates="colaboradores")
     ausencias = relationship("Ausencia", back_populates="colaborador")
 

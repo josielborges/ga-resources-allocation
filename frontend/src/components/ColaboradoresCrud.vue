@@ -27,6 +27,7 @@
           <tr>
             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cargo</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Squad</th>
             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Habilidades</th>
             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ausências</th>
             <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
@@ -41,6 +42,15 @@
               <span class="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
                 {{ colaborador.cargo.nome }}
               </span>
+            </td>
+            <td class="px-4 py-2 whitespace-nowrap">
+              <span v-if="colaborador.transversal" class="px-2 py-0.5 text-xs font-medium bg-purple-100 text-purple-800 rounded-full">
+                Transversal
+              </span>
+              <span v-else-if="colaborador.squad" class="px-2 py-0.5 text-xs font-medium bg-orange-100 text-orange-800 rounded-full">
+                {{ colaborador.squad.nome }}
+              </span>
+              <span v-else class="text-xs text-gray-400">-</span>
             </td>
             <td class="px-4 py-2">
               <div class="flex flex-wrap gap-1">
@@ -98,47 +108,78 @@
         
         <!-- Content -->
         <div class="flex-1 overflow-y-auto p-4">
-          <form @submit.prevent="salvarColaborador" class="space-y-4">
-            <!-- Nome -->
-            <div>
-              <label class="block text-sm font-medium text-text-primary mb-1">Nome</label>
-              <input 
-                v-model="form.nome" 
-                type="text" 
-                required
-                class="w-full px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-main"
-              />
+          <form @submit.prevent="salvarColaborador" class="space-y-3">
+            <!-- Nome e Cargo -->
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm font-medium text-text-primary mb-1">Nome</label>
+                <input 
+                  v-model="form.nome" 
+                  type="text" 
+                  required
+                  class="w-full px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-main"
+                />
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-text-primary mb-1">Cargo</label>
+                <select 
+                  v-model="form.cargo_id" 
+                  required
+                  class="w-full px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-main"
+                >
+                  <option value="">Selecionar cargo</option>
+                  <option v-for="cargo in cargos" :key="cargo.id" :value="cargo.id">
+                    {{ cargo.nome }}
+                  </option>
+                </select>
+              </div>
             </div>
             
-            <!-- Cargo -->
-            <div>
-              <label class="block text-sm font-medium text-text-primary mb-1">Cargo</label>
-              <select 
-                v-model="form.cargo_id" 
-                required
-                class="w-full px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-main"
-              >
-                <option value="">Selecionar cargo</option>
-                <option v-for="cargo in cargos" :key="cargo.id" :value="cargo.id">
-                  {{ cargo.nome }}
-                </option>
-              </select>
+            <!-- Transversal e Squad -->
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm font-medium text-text-primary mb-1">Tipo</label>
+                <label class="flex items-center space-x-2 cursor-pointer px-3 py-1.5 border border-gray-300 rounded-md hover:bg-gray-50">
+                  <input 
+                    type="checkbox" 
+                    v-model="form.transversal"
+                    @change="onTransversalChange"
+                    class="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500"
+                  />
+                  <span class="text-sm">Transversal</span>
+                </label>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-text-primary mb-1">Squad</label>
+                <select 
+                  v-model="form.squad_id" 
+                  :disabled="form.transversal"
+                  class="w-full px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-main disabled:bg-gray-100 disabled:cursor-not-allowed"
+                >
+                  <option :value="null">Selecionar squad</option>
+                  <option v-for="squad in squads" :key="squad.id" :value="squad.id">
+                    {{ squad.nome }} ({{ squad.tribo.nome }})
+                  </option>
+                </select>
+              </div>
             </div>
             
             <!-- Habilidades -->
             <div>
-              <label class="block text-sm font-medium text-text-primary mb-1">Habilidades</label>
-              <div class="border border-gray-200 rounded-md p-2 bg-white">
-                <div class="grid grid-cols-2 gap-1">
-                  <label v-for="habilidade in habilidadesOrdenadas" :key="habilidade.id" class="flex items-center text-xs hover:bg-gray-50 p-1 rounded">
-                    <input 
-                      type="checkbox" 
-                      :value="habilidade.id"
-                      v-model="form.habilidades_ids"
-                      class="mr-1.5 text-primary-main"
-                    />
-                    <span>{{ habilidade.nome }}</span>
-                  </label>
+              <label class="block text-sm font-medium text-text-primary mb-1">Habilidades ({{ form.habilidades_ids.length }} selecionadas)</label>
+              <div class="border border-gray-200 rounded-md p-2 bg-white min-h-[80px] max-h-[120px] overflow-y-auto">
+                <div class="flex flex-wrap gap-1">
+                  <span 
+                    v-for="habilidade in habilidadesOrdenadas" 
+                    :key="habilidade.id"
+                    @click="toggleHabilidade(habilidade.id)"
+                    class="text-xs px-2 py-1 rounded cursor-pointer transition-colors"
+                    :class="form.habilidades_ids.includes(habilidade.id) ? 'bg-green-100 text-green-700 font-medium' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+                  >
+                    {{ habilidade.nome }}
+                  </span>
                 </div>
               </div>
             </div>
@@ -228,6 +269,7 @@ export default {
       colaboradores: [],
       cargos: [],
       habilidades: [],
+      squads: [],
       loading: false,
       salvando: false,
       showModal: false,
@@ -235,6 +277,8 @@ export default {
       form: {
         nome: '',
         cargo_id: '',
+        squad_id: null,
+        transversal: false,
         habilidades_ids: [],
         ausencias: []
       },
@@ -267,14 +311,16 @@ export default {
     async carregarDados() {
       this.loading = true
       try {
-        const [colaboradoresRes, cargosRes, habilidadesRes] = await Promise.all([
+        const [colaboradoresRes, cargosRes, habilidadesRes, squadsRes] = await Promise.all([
           axios.get('/api/colaboradores'),
           axios.get('/api/cargos'),
-          axios.get('/api/habilidades')
+          axios.get('/api/habilidades'),
+          axios.get('/api/squads')
         ])
         this.colaboradores = colaboradoresRes.data
         this.cargos = cargosRes.data
         this.habilidades = habilidadesRes.data
+        this.squads = squadsRes.data
       } catch (error) {
         console.error('Erro ao carregar dados:', error)
       } finally {
@@ -288,6 +334,8 @@ export default {
         this.form = {
           nome: colaborador.nome,
           cargo_id: colaborador.cargo.id,
+          squad_id: colaborador.squad?.id || null,
+          transversal: colaborador.transversal || false,
           habilidades_ids: colaborador.habilidades.map(h => h.id),
           ausencias: colaborador.ausencias.map(a => ({ data: a.data }))
         }
@@ -295,6 +343,8 @@ export default {
         this.form = {
           nome: '',
           cargo_id: '',
+          squad_id: null,
+          transversal: false,
           habilidades_ids: [],
           ausencias: []
         }
@@ -346,6 +396,21 @@ export default {
       } catch (error) {
         console.error('Erro ao excluir colaborador:', error)
         this.cancelarExclusao()
+      }
+    },
+    
+    toggleHabilidade(habilidadeId) {
+      const index = this.form.habilidades_ids.indexOf(habilidadeId)
+      if (index > -1) {
+        this.form.habilidades_ids.splice(index, 1)
+      } else {
+        this.form.habilidades_ids.push(habilidadeId)
+      }
+    },
+    
+    onTransversalChange() {
+      if (this.form.transversal) {
+        this.form.squad_id = null
       }
     },
     

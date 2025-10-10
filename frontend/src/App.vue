@@ -595,6 +595,16 @@
             <HabilidadesCrud />
           </div>
 
+          <!-- Módulo Tribos -->
+          <div v-if="activeModule === 'tribos'">
+            <TribosCrud />
+          </div>
+
+          <!-- Módulo Squads -->
+          <div v-if="activeModule === 'squads'">
+            <SquadsCrud />
+          </div>
+
           <!-- Módulo Relatórios -->
           <div v-if="activeModule === 'relatorios'" class="bg-white rounded-md shadow-sm p-6">
             <p class="text-text-secondary">Módulo de relatórios em desenvolvimento...</p>
@@ -887,6 +897,8 @@ import ProjetosCrud from './components/ProjetosCrud.vue'
 import ColaboradoresCrud from './components/ColaboradoresCrud.vue'
 import HabilidadesCrud from './components/HabilidadesCrud.vue'
 import CargosCrud from './components/CargosCrud.vue'
+import TribosCrud from './components/TribosCrud.vue'
+import SquadsCrud from './components/SquadsCrud.vue'
 
 export default {
   name: 'App',
@@ -901,6 +913,8 @@ export default {
     ColaboradoresCrud,
     HabilidadesCrud,
     CargosCrud,
+    TribosCrud,
+    SquadsCrud,
     CpuChipIcon,
     FolderIcon,
     UserGroupIcon,
@@ -966,7 +980,9 @@ export default {
           expanded: false,
           submenu: [
             { id: 'cargos', label: 'Cargos', icon: 'BriefcaseIcon' },
-            { id: 'habilidades', label: 'Habilidades', icon: 'AcademicCapIcon' }
+            { id: 'habilidades', label: 'Habilidades', icon: 'AcademicCapIcon' },
+            { id: 'tribos', label: 'Tribos', icon: 'UserGroupIcon' },
+            { id: 'squads', label: 'Squads', icon: 'UserGroupIcon' }
           ]
         },
         // { id: 'relatorios', label: 'Relatórios', icon: 'DocumentChartBarIcon' }
@@ -1337,6 +1353,8 @@ export default {
         'colaboradores': 'Gerenciamento de Colaboradores',
         'cargos': 'Gerenciamento de Cargos',
         'habilidades': 'Gerenciamento de Habilidades',
+        'tribos': 'Gerenciamento de Tribos',
+        'squads': 'Gerenciamento de Squads',
         'relatorios': 'Relatórios e Análises'
       }
       return titles[this.activeModule] || 'Sistema de Alocação'

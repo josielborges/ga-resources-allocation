@@ -136,6 +136,58 @@ async def delete_cargo(cargo_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Cargo não encontrado")
     return {"message": "Cargo deletado com sucesso"}
 
+# CRUD Tribos
+@app.get("/api/tribos", response_model=List[schemas.Tribo])
+async def get_tribos(db: Session = Depends(get_db)):
+    return crud.get_tribos(db)
+
+@app.post("/api/tribos", response_model=schemas.Tribo)
+async def create_tribo(tribo: schemas.TriboCreate, db: Session = Depends(get_db)):
+    return crud.create_tribo(db, tribo)
+
+@app.put("/api/tribos/{tribo_id}", response_model=schemas.Tribo)
+async def update_tribo(tribo_id: int, tribo: schemas.TriboCreate, db: Session = Depends(get_db)):
+    updated_tribo = crud.update_tribo(db, tribo_id, tribo)
+    if not updated_tribo:
+        raise HTTPException(status_code=404, detail="Tribo não encontrada")
+    return updated_tribo
+
+@app.delete("/api/tribos/{tribo_id}")
+async def delete_tribo(tribo_id: int, db: Session = Depends(get_db)):
+    result = crud.delete_tribo(db, tribo_id)
+    if result == "in_use":
+        raise HTTPException(status_code=400, detail="Não é possível excluir esta tribo pois ela está sendo utilizada por squads")
+    elif not result:
+        raise HTTPException(status_code=404, detail="Tribo não encontrada")
+    return {"message": "Tribo deletada com sucesso"}
+
+# CRUD Squads
+@app.get("/api/squads", response_model=List[schemas.Squad])
+async def get_squads(tribo_id: int = None, db: Session = Depends(get_db)):
+    if tribo_id:
+        return crud.get_squads_by_tribo(db, tribo_id)
+    return crud.get_squads(db)
+
+@app.post("/api/squads", response_model=schemas.Squad)
+async def create_squad(squad: schemas.SquadCreate, db: Session = Depends(get_db)):
+    return crud.create_squad(db, squad)
+
+@app.put("/api/squads/{squad_id}", response_model=schemas.Squad)
+async def update_squad(squad_id: int, squad: schemas.SquadCreate, db: Session = Depends(get_db)):
+    updated_squad = crud.update_squad(db, squad_id, squad)
+    if not updated_squad:
+        raise HTTPException(status_code=404, detail="Squad não encontrada")
+    return updated_squad
+
+@app.delete("/api/squads/{squad_id}")
+async def delete_squad(squad_id: int, db: Session = Depends(get_db)):
+    result = crud.delete_squad(db, squad_id)
+    if result == "in_use":
+        raise HTTPException(status_code=400, detail="Não é possível excluir esta squad pois ela está sendo utilizada por colaboradores")
+    elif not result:
+        raise HTTPException(status_code=404, detail="Squad não encontrada")
+    return {"message": "Squad deletada com sucesso"}
+
 # CRUD Colaboradores
 @app.post("/api/colaboradores", response_model=schemas.Colaborador)
 async def create_colaborador(colaborador: schemas.ColaboradorCreate, db: Session = Depends(get_db)):
