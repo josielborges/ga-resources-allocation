@@ -151,11 +151,9 @@ class SolutionEvaluator:
             # Check all projects with deadlines
             for project_name, deadline_day in project_deadlines.items():
                 if project_name in project_completion:
-                    end_day = project_completion[project_name]
-                    # end_day is the day AFTER completion, so subtract 1 for actual completion day
-                    actual_completion_day = end_day - 1
+                    actual_end_day = project_completion[project_name]
                     deadline_violations = self.validator.validate_deadline(
-                        project_name, actual_completion_day, deadline_day
+                        project_name, actual_end_day, deadline_day
                     )
                     for violation in deadline_violations:
                         penalties["deadline_violation"] += violation.penalty
