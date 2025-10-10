@@ -90,16 +90,25 @@
 
       <!-- Squads Section -->
       <div class="bg-white rounded-md shadow-sm overflow-hidden">
-        <div class="bg-gradient-to-r from-orange-500 to-orange-600 px-3 py-2">
+        <div class="bg-gradient-to-r from-orange-500 to-orange-600 px-3 py-2 flex justify-between items-center">
           <h3 class="text-white font-medium text-sm">
             Squads
             <span v-if="triboSelecionada" class="text-orange-100 text-xs ml-2">
               - {{ triboSelecionada.nome }}
             </span>
+            <span v-else-if="mostrarTodas" class="text-orange-100 text-xs ml-2">
+              - Todas
+            </span>
           </h3>
+          <button 
+            @click="toggleMostrarTodas"
+            class="text-white text-xs px-2 py-0.5 rounded bg-white bg-opacity-20 hover:bg-opacity-30 transition-colors"
+          >
+            {{ mostrarTodas ? 'Ocultar' : 'Ver Todas' }}
+          </button>
         </div>
         
-        <div v-if="!triboSelecionada" class="p-6 text-center text-gray-500">
+        <div v-if="!triboSelecionada && !mostrarTodas" class="p-6 text-center text-gray-500">
           <svg class="w-10 h-10 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
           </svg>
@@ -133,7 +142,10 @@
             </div>
             
             <div v-else class="flex items-center justify-between">
-              <div class="font-medium text-sm text-gray-900">{{ squad.nome }}</div>
+              <div class="flex-1">
+                <div class="font-medium text-sm text-gray-900">{{ squad.nome }}</div>
+                <div v-if="mostrarTodas" class="text-xs text-gray-500 mt-0.5">{{ squad.tribo.nome }}</div>
+              </div>
               <div class="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button @click="iniciarEdicaoSquad(squad)" class="text-blue-600 hover:text-blue-800 p-1" title="Editar">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -150,7 +162,7 @@
           </div>
           
           <!-- Add Squad -->
-          <div class="p-2 border-2 border-dashed border-orange-300 rounded-md bg-orange-50">
+          <div v-if="triboSelecionada" class="p-2 border-2 border-dashed border-orange-300 rounded-md bg-orange-50">
             <div class="flex items-center space-x-2">
               <svg class="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
@@ -208,6 +220,7 @@ export default {
       squads: [],
       loading: false,
       triboSelecionada: null,
+      mostrarTodas: false,
       editandoTribo: null,
       nomeEditandoTribo: '',
       editandoSquad: null,
@@ -229,6 +242,9 @@ export default {
       return [...this.tribos].sort((a, b) => a.nome.localeCompare(b.nome))
     },
     squadsFiltradasOrdenadas() {
+      if (this.mostrarTodas) {
+        return [...this.squads].sort((a, b) => a.nome.localeCompare(b.nome))
+      }
       if (!this.triboSelecionada) return []
       return [...this.squads]
         .filter(s => s.tribo.id === this.triboSelecionada.id)
@@ -265,6 +281,14 @@ export default {
     
     selecionarTribo(tribo) {
       this.triboSelecionada = tribo
+      this.mostrarTodas = false
+    },
+    
+    toggleMostrarTodas() {
+      this.mostrarTodas = !this.mostrarTodas
+      if (this.mostrarTodas) {
+        this.triboSelecionada = null
+      }
     },
     
     // Tribo methods

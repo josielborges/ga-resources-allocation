@@ -90,16 +90,25 @@
 
       <!-- Habilidades Section -->
       <div class="bg-white rounded-md shadow-sm overflow-hidden">
-        <div class="bg-gradient-to-r from-green-500 to-green-600 px-3 py-2">
+        <div class="bg-gradient-to-r from-green-500 to-green-600 px-3 py-2 flex justify-between items-center">
           <h3 class="text-white font-medium text-sm">
             Habilidades
             <span v-if="cargoSelecionado" class="text-green-100 text-xs ml-2">
               - {{ cargoSelecionado.nome }}
             </span>
+            <span v-else-if="mostrarTodas" class="text-green-100 text-xs ml-2">
+              - Todas
+            </span>
           </h3>
+          <button 
+            @click="toggleMostrarTodas"
+            class="text-white text-xs px-2 py-0.5 rounded bg-white bg-opacity-20 hover:bg-opacity-30 transition-colors"
+          >
+            {{ mostrarTodas ? 'Ocultar' : 'Ver Todas' }}
+          </button>
         </div>
         
-        <div v-if="!cargoSelecionado" class="p-6 text-center text-gray-500">
+        <div v-if="!cargoSelecionado && !mostrarTodas" class="p-6 text-center text-gray-500">
           <svg class="w-10 h-10 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
           </svg>
@@ -133,7 +142,10 @@
             </div>
             
             <div v-else class="flex items-center justify-between">
-              <div class="font-medium text-sm text-gray-900">{{ habilidade.nome }}</div>
+              <div class="flex-1">
+                <div class="font-medium text-sm text-gray-900">{{ habilidade.nome }}</div>
+                <div v-if="mostrarTodas" class="text-xs text-gray-500 mt-0.5">{{ habilidade.cargo.nome }}</div>
+              </div>
               <div class="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button @click="iniciarEdicaoHabilidade(habilidade)" class="text-blue-600 hover:text-blue-800 p-1" title="Editar">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -150,7 +162,7 @@
           </div>
           
           <!-- Add Habilidade -->
-          <div class="p-2 border-2 border-dashed border-green-300 rounded-md bg-green-50">
+          <div v-if="cargoSelecionado" class="p-2 border-2 border-dashed border-green-300 rounded-md bg-green-50">
             <div class="flex items-center space-x-2">
               <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
@@ -208,6 +220,7 @@ export default {
       habilidades: [],
       loading: false,
       cargoSelecionado: null,
+      mostrarTodas: false,
       editandoCargo: null,
       nomeEditandoCargo: '',
       editandoHabilidade: null,
@@ -229,6 +242,9 @@ export default {
       return [...this.cargos].sort((a, b) => a.nome.localeCompare(b.nome))
     },
     habilidadesFiltradasOrdenadas() {
+      if (this.mostrarTodas) {
+        return [...this.habilidades].sort((a, b) => a.nome.localeCompare(b.nome))
+      }
       if (!this.cargoSelecionado) return []
       return [...this.habilidades]
         .filter(h => h.cargo.id === this.cargoSelecionado.id)
@@ -265,6 +281,14 @@ export default {
     
     selecionarCargo(cargo) {
       this.cargoSelecionado = cargo
+      this.mostrarTodas = false
+    },
+    
+    toggleMostrarTodas() {
+      this.mostrarTodas = !this.mostrarTodas
+      if (this.mostrarTodas) {
+        this.cargoSelecionado = null
+      }
     },
     
     // Cargo methods
