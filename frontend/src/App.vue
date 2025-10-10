@@ -585,24 +585,14 @@
             <ColaboradoresCrud />
           </div>
 
-          <!-- Módulo Cargos -->
-          <div v-if="activeModule === 'cargos'">
-            <CargosCrud />
+          <!-- Módulo Cargos & Habilidades -->
+          <div v-if="activeModule === 'cargos-habilidades'">
+            <CargosHabilidadesCrud />
           </div>
 
-          <!-- Módulo Habilidades -->
-          <div v-if="activeModule === 'habilidades'">
-            <HabilidadesCrud />
-          </div>
-
-          <!-- Módulo Tribos -->
-          <div v-if="activeModule === 'tribos'">
-            <TribosCrud />
-          </div>
-
-          <!-- Módulo Squads -->
-          <div v-if="activeModule === 'squads'">
-            <SquadsCrud />
+          <!-- Módulo Tribos & Squads -->
+          <div v-if="activeModule === 'tribos-squads'">
+            <TribosSquadsCrud />
           </div>
 
           <!-- Módulo Relatórios -->
@@ -895,10 +885,8 @@ import CalendarioTab from './components/CalendarioTab.vue'
 import MapaAlocacaoTab from './components/MapaAlocacaoTab.vue'
 import ProjetosCrud from './components/ProjetosCrud.vue'
 import ColaboradoresCrud from './components/ColaboradoresCrud.vue'
-import HabilidadesCrud from './components/HabilidadesCrud.vue'
-import CargosCrud from './components/CargosCrud.vue'
-import TribosCrud from './components/TribosCrud.vue'
-import SquadsCrud from './components/SquadsCrud.vue'
+import CargosHabilidadesCrud from './components/CargosHabilidadesCrud.vue'
+import TribosSquadsCrud from './components/TribosSquadsCrud.vue'
 
 export default {
   name: 'App',
@@ -911,10 +899,8 @@ export default {
     MapaAlocacaoTab,
     ProjetosCrud,
     ColaboradoresCrud,
-    HabilidadesCrud,
-    CargosCrud,
-    TribosCrud,
-    SquadsCrud,
+    CargosHabilidadesCrud,
+    TribosSquadsCrud,
     CpuChipIcon,
     FolderIcon,
     UserGroupIcon,
@@ -973,18 +959,18 @@ export default {
         // { id: 'estimativa', label: 'Gerador de Estimativa', icon: 'CpuChipIcon' },
         { id: 'projetos', label: 'Projetos', icon: 'FolderIcon' },
         { id: 'colaboradores', label: 'Colaboradores', icon: 'UserGroupIcon' },
-        { 
-          id: 'configuracoes', 
-          label: 'Configurações', 
-          icon: 'CogIcon',
-          expanded: false,
-          submenu: [
-            { id: 'cargos', label: 'Cargos', icon: 'BriefcaseIcon' },
-            { id: 'habilidades', label: 'Habilidades', icon: 'AcademicCapIcon' },
-            { id: 'tribos', label: 'Tribos', icon: 'UserGroupIcon' },
-            { id: 'squads', label: 'Squads', icon: 'UserGroupIcon' }
-          ]
-        },
+        { id: 'tribos-squads', label: 'Tribos e Squads', icon: 'UserGroupIcon' },
+        { id: 'cargos-habilidades', label: 'Cargos e Habilidades', icon: 'BriefcaseIcon' },
+        // { 
+        //   id: 'configuracoes', 
+        //   label: 'Configurações', 
+        //   icon: 'CogIcon',
+        //   expanded: false,
+        //   submenu: [
+        //     { id: 'cargos-habilidades', label: 'Cargos e Habilidades', icon: 'BriefcaseIcon' },
+        //     { id: 'tribos-squads', label: 'Tribos e Squads', icon: 'UserGroupIcon' }
+        //   ]
+        // },
         // { id: 'relatorios', label: 'Relatórios', icon: 'DocumentChartBarIcon' }
       ],
       tabs: [
@@ -1351,10 +1337,8 @@ export default {
         'estimativa': 'Gerador de Estimativa',
         'projetos': 'Gerenciamento de Projetos',
         'colaboradores': 'Gerenciamento de Colaboradores',
-        'cargos': 'Gerenciamento de Cargos',
-        'habilidades': 'Gerenciamento de Habilidades',
-        'tribos': 'Gerenciamento de Tribos',
-        'squads': 'Gerenciamento de Squads',
+        'cargos-habilidades': 'Gerenciamento de Cargos & Habilidades',
+        'tribos-squads': 'Gerenciamento de Tribos & Squads',
         'relatorios': 'Relatórios e Análises'
       }
       return titles[this.activeModule] || 'Sistema de Alocação'
