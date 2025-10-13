@@ -11,30 +11,64 @@
       </button>
     </div>
 
-    <!-- Tabela de colaboradores -->
+    <!-- Tabs -->
     <div class="bg-white rounded-md shadow-sm overflow-hidden">
-      <div v-if="loading" class="p-8 text-center">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-main mx-auto"></div>
-        <p class="mt-2 text-text-secondary">Carregando colaboradores...</p>
+      <div class="border-b border-gray-200">
+        <nav class="flex space-x-4 px-4">
+          <button
+            v-if="selectedSquadId"
+            @click="activeTab = 'squad'"
+            :class="[
+              'py-3 px-1 border-b-2 font-medium text-sm transition-colors',
+              activeTab === 'squad'
+                ? 'border-orange-500 text-orange-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            ]"
+          >
+            Membros do Squad ({{ squadMembers.length }})
+          </button>
+          <button
+            @click="activeTab = 'transversal'"
+            :class="[
+              'py-3 px-1 border-b-2 font-medium text-sm transition-colors',
+              activeTab === 'transversal'
+                ? 'border-purple-500 text-purple-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            ]"
+          >
+            Transversais ({{ transversalMembers.length }})
+          </button>
+          <button
+            @click="activeTab = 'others'"
+            :class="[
+              'py-3 px-1 border-b-2 font-medium text-sm transition-colors',
+              activeTab === 'others'
+                ? 'border-gray-500 text-gray-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            ]"
+          >
+            Outros ({{ otherMembers.length }})
+          </button>
+        </nav>
       </div>
-      
-      <div v-else-if="colaboradores.length === 0" class="p-8 text-center text-text-secondary">
-        Nenhum colaborador encontrado
+
+      <!-- Squad Members Table -->
+      <div v-if="activeTab === 'squad' && selectedSquadId">
+      <div v-if="squadMembers.length === 0" class="p-8 text-center text-text-secondary">
+        Nenhum membro encontrado para este squad
       </div>
-      
-      <table v-else class="min-w-full divide-y divide-gray-200">
+      <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
           <tr>
             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cargo</th>
-            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Squad</th>
             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Habilidades</th>
             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ausências</th>
             <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
-          <tr v-for="colaborador in colaboradoresOrdenados" :key="colaborador.id" class="hover:bg-gray-50">
+          <tr v-for="colaborador in squadMembers" :key="colaborador.id" class="hover:bg-gray-50">
             <td class="px-4 py-2 whitespace-nowrap">
               <div class="text-sm font-medium text-gray-900">{{ colaborador.nome }}</div>
             </td>
@@ -42,15 +76,6 @@
               <span class="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
                 {{ colaborador.cargo.nome }}
               </span>
-            </td>
-            <td class="px-4 py-2 whitespace-nowrap">
-              <span v-if="colaborador.transversal" class="px-2 py-0.5 text-xs font-medium bg-purple-100 text-purple-800 rounded-full">
-                Transversal
-              </span>
-              <span v-else-if="colaborador.squad" class="px-2 py-0.5 text-xs font-medium bg-orange-100 text-orange-800 rounded-full">
-                {{ colaborador.squad.nome }}
-              </span>
-              <span v-else class="text-xs text-gray-400">-</span>
             </td>
             <td class="px-4 py-2">
               <div class="flex flex-wrap gap-1">
@@ -64,7 +89,7 @@
               </div>
             </td>
             <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
-              {{ colaborador.ausencias.length }} ausências
+              {{ colaborador.ausencias.length }}
             </td>
             <td class="px-4 py-2 whitespace-nowrap text-right text-sm font-medium">
               <div class="flex justify-end space-x-2">
@@ -91,6 +116,181 @@
           </tr>
         </tbody>
       </table>
+      </div>
+
+      <!-- Transversal Members Table -->
+      <div v-if="activeTab === 'transversal'">
+
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cargo</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Habilidades</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ausências</th>
+            <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <tr v-for="colaborador in transversalMembers" :key="colaborador.id" class="hover:bg-gray-50">
+            <td class="px-4 py-2 whitespace-nowrap">
+              <div class="text-sm font-medium text-gray-900">{{ colaborador.nome }}</div>
+            </td>
+            <td class="px-4 py-2 whitespace-nowrap">
+              <span class="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                {{ colaborador.cargo.nome }}
+              </span>
+            </td>
+            <td class="px-4 py-2">
+              <div class="flex flex-wrap gap-1">
+                <span 
+                  v-for="habilidade in colaborador.habilidades" 
+                  :key="habilidade.id"
+                  class="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-800 rounded-full"
+                >
+                  {{ habilidade.nome }}
+                </span>
+              </div>
+            </td>
+            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
+              {{ colaborador.ausencias.length }}
+            </td>
+            <td class="px-4 py-2 whitespace-nowrap text-right text-sm font-medium">
+              <div class="flex justify-end space-x-2">
+                <button 
+                  @click="abrirModal(colaborador)" 
+                  class="text-indigo-600 hover:text-indigo-900 p-1"
+                  title="Editar"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                  </svg>
+                </button>
+                <button 
+                  @click="confirmarExclusao(colaborador)" 
+                  class="text-red-600 hover:text-red-900 p-1"
+                  title="Excluir"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      </div>
+
+      <!-- Other Members Table -->
+      <div v-if="activeTab === 'others'">
+      <div class="bg-gray-50 px-4 py-3 border-b border-gray-200">
+        <div class="flex items-center justify-end mb-2">
+          <button 
+            v-if="filterSquadId || filterHabilidades.length > 0"
+            @click="clearFilters" 
+            class="text-xs text-primary-main hover:underline"
+          >
+            Limpar filtros
+          </button>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <select 
+              v-model="filterSquadId" 
+              class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-primary-main"
+            >
+              <option :value="null">Todos os squads</option>
+              <option v-for="squad in squads" :key="squad.id" :value="squad.id">
+                {{ squad.nome }}
+              </option>
+            </select>
+          </div>
+          <div class="border border-gray-300 rounded px-2 py-1 bg-white max-h-[60px] overflow-y-auto">
+            <div class="flex flex-wrap gap-1">
+              <span 
+                v-for="habilidade in habilidadesOrdenadas" 
+                :key="habilidade.id"
+                @click="toggleFilterHabilidade(habilidade.id)"
+                class="text-xs px-1.5 py-0.5 rounded cursor-pointer transition-colors"
+                :class="filterHabilidades.includes(habilidade.id) ? 'bg-green-100 text-green-700 font-medium' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+              >
+                {{ habilidade.nome }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cargo</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Squad</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Habilidades</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ausências</th>
+            <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <tr v-for="colaborador in otherMembers" :key="colaborador.id" class="hover:bg-gray-50">
+            <td class="px-4 py-2 whitespace-nowrap">
+              <div class="text-sm font-medium text-gray-900">{{ colaborador.nome }}</div>
+            </td>
+            <td class="px-4 py-2 whitespace-nowrap">
+              <span class="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                {{ colaborador.cargo.nome }}
+              </span>
+            </td>
+            <td class="px-4 py-2 whitespace-nowrap">
+              <span v-if="colaborador.squad" class="px-2 py-0.5 text-xs font-medium bg-orange-100 text-orange-800 rounded-full">
+                {{ colaborador.squad.nome }}
+              </span>
+              <span v-else class="text-xs text-gray-400">-</span>
+            </td>
+            <td class="px-4 py-2">
+              <div class="flex flex-wrap gap-1">
+                <span 
+                  v-for="habilidade in colaborador.habilidades" 
+                  :key="habilidade.id"
+                  class="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-800 rounded-full"
+                >
+                  {{ habilidade.nome }}
+                </span>
+              </div>
+            </td>
+            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
+              {{ colaborador.ausencias.length }}
+            </td>
+            <td class="px-4 py-2 whitespace-nowrap text-right text-sm font-medium">
+              <div class="flex justify-end space-x-2">
+                <button 
+                  @click="abrirModal(colaborador)" 
+                  class="text-indigo-600 hover:text-indigo-900 p-1"
+                  title="Editar"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                  </svg>
+                </button>
+                <button 
+                  @click="confirmarExclusao(colaborador)" 
+                  class="text-red-600 hover:text-red-900 p-1"
+                  title="Excluir"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div v-if="otherMembers.length === 0" class="p-8 text-center text-text-secondary">
+        Nenhum colaborador encontrado com os filtros aplicados
+      </div>
+      </div>
     </div>
 
     <!-- Modal de edição/criação -->
@@ -264,9 +464,18 @@ export default {
   components: {
     ConfirmModal
   },
+  props: {
+    selectedSquadId: {
+      type: Number,
+      default: null
+    },
+    allColaboradores: {
+      type: Array,
+      default: () => []
+    }
+  },
   data() {
     return {
-      colaboradores: [],
       cargos: [],
       habilidades: [],
       squads: [],
@@ -283,12 +492,45 @@ export default {
         ausencias: []
       },
       showConfirmModal: false,
-      itemParaExcluir: null
+      itemParaExcluir: null,
+      filterSquadId: null,
+      filterHabilidades: [],
+      activeTab: 'squad'
     }
   },
   computed: {
-    colaboradoresOrdenados() {
-      return [...this.colaboradores].sort((a, b) => a.nome.localeCompare(b.nome))
+    squadMembers() {
+      if (!this.selectedSquadId) return []
+      return this.allColaboradores
+        .filter(c => !c.transversal && c.squad?.id == this.selectedSquadId)
+        .sort((a, b) => a.nome.localeCompare(b.nome))
+    },
+    transversalMembers() {
+      return this.allColaboradores
+        .filter(c => c.transversal)
+        .sort((a, b) => a.nome.localeCompare(b.nome))
+    },
+    otherMembers() {
+      let filtered = this.allColaboradores
+        .filter(c => {
+          if (c.transversal) return false
+          if (this.selectedSquadId && c.squad?.id === this.selectedSquadId) return false
+          return true
+        })
+      
+      if (this.filterSquadId) {
+        filtered = filtered.filter(c => c.squad?.id === this.filterSquadId)
+      }
+      
+      if (this.filterHabilidades.length > 0) {
+        filtered = filtered.filter(c => 
+          this.filterHabilidades.every(habId => 
+            c.habilidades.some(h => h.id === habId)
+          )
+        )
+      }
+      
+      return filtered.sort((a, b) => a.nome.localeCompare(b.nome))
     },
     habilidadesOrdenadas() {
       return [...this.habilidades].sort((a, b) => a.nome.localeCompare(b.nome))
@@ -305,19 +547,20 @@ export default {
       } else {
         document.removeEventListener('keydown', this.handleEscKey)
       }
+    },
+    selectedSquadId() {
+      this.clearFilters()
     }
   },
   methods: {
     async carregarDados() {
       this.loading = true
       try {
-        const [colaboradoresRes, cargosRes, habilidadesRes, squadsRes] = await Promise.all([
-          axios.get('/api/colaboradores'),
+        const [cargosRes, habilidadesRes, squadsRes] = await Promise.all([
           axios.get('/api/cargos'),
           axios.get('/api/habilidades'),
           axios.get('/api/squads')
         ])
-        this.colaboradores = colaboradoresRes.data
         this.cargos = cargosRes.data
         this.habilidades = habilidadesRes.data
         this.squads = squadsRes.data
@@ -326,6 +569,9 @@ export default {
       } finally {
         this.loading = false
       }
+    },
+    reloadColaboradores() {
+      this.$emit('reload')
     },
     
     abrirModal(colaborador = null) {
@@ -373,7 +619,7 @@ export default {
         } else {
           await axios.post('/api/colaboradores', this.form)
         }
-        await this.carregarDados()
+        this.reloadColaboradores()
         this.fecharModal()
       } catch (error) {
         console.error('Erro ao salvar colaborador:', error)
@@ -391,7 +637,7 @@ export default {
     async executarExclusao() {
       try {
         await axios.delete(`/api/colaboradores/${this.itemParaExcluir.id}`)
-        await this.carregarDados()
+        this.reloadColaboradores()
         this.cancelarExclusao()
       } catch (error) {
         console.error('Erro ao excluir colaborador:', error)
@@ -406,6 +652,18 @@ export default {
       } else {
         this.form.habilidades_ids.push(habilidadeId)
       }
+    },
+    toggleFilterHabilidade(habilidadeId) {
+      const index = this.filterHabilidades.indexOf(habilidadeId)
+      if (index > -1) {
+        this.filterHabilidades.splice(index, 1)
+      } else {
+        this.filterHabilidades.push(habilidadeId)
+      }
+    },
+    clearFilters() {
+      this.filterSquadId = null
+      this.filterHabilidades = []
     },
     
     onTransversalChange() {

@@ -2,14 +2,17 @@
   <div class="h-screen bg-background-default font-sans overflow-hidden">
     <div class="flex h-full">
       <!-- Menu Lateral -->
-      <div class="w-64 bg-gradient-to-b from-cyan-600 to-green-400 text-white overflow-y-auto">
-        <div class="p-4">
+      <div class="w-64 bg-gradient-to-b from-cyan-600 to-green-400 text-white overflow-y-auto flex flex-col">
+        <div class="p-4 flex-1">
           <h2 class="text-lg font-semibold mb-6 cursor-pointer hover:text-white/90 transition-colors" @click="reloadApp">Roadmaps & Estimativas</h2>
-          <nav class="space-y-1">
-            <template v-for="item in menuItems" :key="item.id">
-              <!-- Item normal -->
+          <nav class="space-y-6">
+            <div v-for="section in menuSections" :key="section.title" class="space-y-1">
+              <div class="text-xs font-semibold text-white text-opacity-60 uppercase tracking-wider px-3 mb-2">
+                {{ section.title }}
+              </div>
               <button 
-                v-if="!item.submenu"
+                v-for="item in section.items" 
+                :key="item.id"
                 @click="activeModule = item.id"
                 :class="[
                   'w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors',
@@ -21,51 +24,7 @@
                 <component :is="item.icon" class="w-5 h-5" />
                 {{ item.label }}
               </button>
-              
-              <!-- Item com submenu -->
-              <div v-else>
-                <button 
-                  @click="item.expanded = !item.expanded"
-                  :class="[
-                    'w-full flex items-center justify-between gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors',
-                    item.submenu.some(sub => activeModule === sub.id)
-                      ? 'bg-white bg-opacity-20 text-white shadow-md' 
-                      : 'text-white hover:bg-white hover:bg-opacity-15'
-                  ]"
-                >
-                  <div class="flex items-center gap-3">
-                    <component :is="item.icon" class="w-5 h-5" />
-                    {{ item.label }}
-                  </div>
-                  <svg 
-                    :class="['w-4 h-4 transition-transform', item.expanded ? 'rotate-180' : '']"
-                    fill="none" 
-                    stroke="currentColor" 
-                    viewBox="0 0 24 24"
-                  >
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-                
-                <!-- Submenu -->
-                <div v-if="item.expanded" class="ml-8 mt-1 space-y-1">
-                  <button 
-                    v-for="subItem in item.submenu" 
-                    :key="subItem.id"
-                    @click="activeModule = subItem.id"
-                    :class="[
-                      'w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors',
-                      activeModule === subItem.id 
-                        ? 'bg-white bg-opacity-20 text-white shadow-md' 
-                        : 'text-white hover:bg-white hover:bg-opacity-15'
-                    ]"
-                  >
-                    <component :is="subItem.icon" class="w-4 h-4" />
-                    {{ subItem.label }}
-                  </button>
-                </div>
-              </div>
-            </template>
+            </div>
           </nav>
         </div>
       </div>
@@ -73,8 +32,9 @@
       <!-- Área do Roadmap com header estendido -->
       <div v-if="activeModule === 'roadmap'" class="flex-1 flex flex-col">
         <!-- Header estendido -->
-        <div class="text-white px-6 py-4 shadow-sm flex-shrink-0" style="background: linear-gradient(to bottom, #0891B2, #0C94AD);">
+        <div class="text-white px-6 py-4 shadow-sm flex-shrink-0 flex items-center justify-between" style="background: linear-gradient(to bottom, #0891B2, #0C94AD);">
           <h1 class="text-xl font-semibold">{{ getModuleTitle() }}</h1>
+          <SquadSelector v-model="selectedSquadId" :squads="squads" @update:modelValue="applySquadFilter" />
         </div>
         
         <!-- Conteúdo do roadmap -->
@@ -509,7 +469,7 @@
                 <ConflitosTab v-if="activeTab === 'conflitos'" :penalidades="resultado.penalidades" :ocorrencias="resultado.ocorrencias_penalidades" :ref-date="params.ref_date" />
                 <GanttTab v-if="activeTab === 'gantt'" :tarefas="resultado.tarefas" :penalidades="resultado.penalidades" :ocorrencias="resultado.ocorrencias_penalidades" :projetos="projetos" :ref-date="params.ref_date" />
                 <CalendarioTab v-if="activeTab === 'calendario'" :tarefas="resultado.tarefas" :projetos="projetos" />
-                <MapaAlocacaoTab v-if="activeTab === 'mapa'" :tarefas="resultado.tarefas" :projetos="projetos" :colaboradores="allColaboradores" />
+                <MapaAlocacaoTab v-if="activeTab === 'mapa'" :tarefas="resultado.tarefas" :projetos="projetos" :colaboradores="allColaboradoresWithSimulated" />
                 <div v-if="activeTab === 'comparacao'" class="space-y-4">
                   <div v-if="!comparacaoResultado" class="text-center py-8">
                     <p class="text-text-secondary">Use o botão "Comparar GA vs ACO" para ver a análise comparativa dos algoritmos.</p>
@@ -569,20 +529,21 @@
       <!-- Main Content (outros módulos) -->
       <div v-else class="flex-1 flex flex-col">
         <!-- Header (outros módulos) -->
-        <div class="text-white px-6 py-4 shadow-sm flex-shrink-0" style="background: linear-gradient(to bottom, #0891B2, #0C94AD);">
+        <div class="text-white px-6 py-4 shadow-sm flex-shrink-0 flex items-center justify-between" style="background: linear-gradient(to bottom, #0891B2, #0C94AD);">
           <h1 class="text-xl font-semibold">{{ getModuleTitle() }}</h1>
+          <SquadSelector v-model="selectedSquadId" :squads="squads" @update:modelValue="applySquadFilter" />
         </div>
         
         <!-- Content -->
         <div class="flex-1 p-4 overflow-y-auto">
           <!-- Módulo Projetos -->
           <div v-if="activeModule === 'projetos'">
-            <ProjetosCrud />
+            <ProjetosCrud :selectedSquadId="selectedSquadId" :allProjetos="allProjetos" @reload="carregarDados" />
           </div>
 
           <!-- Módulo Colaboradores -->
           <div v-if="activeModule === 'colaboradores'">
-            <ColaboradoresCrud />
+            <ColaboradoresCrud :key="selectedSquadId" :selectedSquadId="selectedSquadId" :allColaboradores="allColaboradores" @reload="carregarDados" />
           </div>
 
           <!-- Módulo Cargos & Habilidades -->
@@ -900,6 +861,7 @@ import ColaboradoresCrud from './components/ColaboradoresCrud.vue'
 import CargosHabilidadesCrud from './components/CargosHabilidadesCrud.vue'
 import TribosSquadsCrud from './components/TribosSquadsCrud.vue'
 import ConfirmModal from './components/ConfirmModal.vue'
+import SquadSelector from './components/SquadSelector.vue'
 
 export default {
   name: 'App',
@@ -915,6 +877,7 @@ export default {
     CargosHabilidadesCrud,
     TribosSquadsCrud,
     ConfirmModal,
+    SquadSelector,
     CpuChipIcon,
     FolderIcon,
     UserGroupIcon,
@@ -969,25 +932,27 @@ export default {
       activeTab: 'dados',
       resultado: null,
       colaboradores: [],
+      allColaboradores: [],
       projetos: [],
-      menuItems: [
-        { id: 'roadmap', label: 'Gerador de Roadmap', icon: 'CpuChipIcon' },
-        // { id: 'estimativa', label: 'Gerador de Estimativa', icon: 'CpuChipIcon' },
-        { id: 'projetos', label: 'Projetos', icon: 'FolderIcon' },
-        { id: 'colaboradores', label: 'Colaboradores', icon: 'UserGroupIcon' },
-        { id: 'tribos-squads', label: 'Tribos e Squads', icon: 'UserGroupIcon' },
-        { id: 'cargos-habilidades', label: 'Cargos e Habilidades', icon: 'BriefcaseIcon' },
-        // { 
-        //   id: 'configuracoes', 
-        //   label: 'Configurações', 
-        //   icon: 'CogIcon',
-        //   expanded: false,
-        //   submenu: [
-        //     { id: 'cargos-habilidades', label: 'Cargos e Habilidades', icon: 'BriefcaseIcon' },
-        //     { id: 'tribos-squads', label: 'Tribos e Squads', icon: 'UserGroupIcon' }
-        //   ]
-        // },
-        // { id: 'relatorios', label: 'Relatórios', icon: 'DocumentChartBarIcon' }
+      allProjetos: [],
+      squads: [],
+      selectedSquadId: null,
+      menuSections: [
+        {
+          title: 'Squad',
+          items: [
+            { id: 'roadmap', label: 'Gerador de Roadmap', icon: 'CpuChipIcon' },
+            { id: 'projetos', label: 'Projetos', icon: 'FolderIcon' },
+            { id: 'colaboradores', label: 'Colaboradores', icon: 'UserGroupIcon' }
+          ]
+        },
+        {
+          title: 'Geral',
+          items: [
+            { id: 'tribos-squads', label: 'Tribos e Squads', icon: 'UserGroupIcon' },
+            { id: 'cargos-habilidades', label: 'Cargos e Habilidades', icon: 'BriefcaseIcon' }
+          ]
+        }
       ],
       tabs: [
         { name: 'dados', label: 'Dados' },
@@ -1002,7 +967,7 @@ export default {
     }
   },
   computed: {
-    allColaboradores() {
+    allColaboradoresWithSimulated() {
       return [...this.colaboradores, ...this.simulatedMembers]
     },
     filteredHabilidadesForCargo() {
@@ -1103,19 +1068,48 @@ export default {
     async carregarDados() {
       try {
         console.log('Carregando dados...')
-        const [colabRes, projRes] = await Promise.all([
+        const [colabRes, projRes, squadsRes] = await Promise.all([
           axios.get('/api/colaboradores'),
-          axios.get('/api/projetos')
+          axios.get('/api/projetos'),
+          axios.get('/api/squads')
         ])
         console.log('Colaboradores:', colabRes.data)
         console.log('Projetos:', projRes.data)
-        this.colaboradores = colabRes.data
-        this.projetos = projRes.data
-        console.log(`Carregados ${this.colaboradores.length} colaboradores e ${this.projetos.length} projetos`)
+        this.allColaboradores = colabRes.data
+        this.allProjetos = projRes.data
+        this.squads = squadsRes.data
+        this.loadSavedSquad()
+        console.log(`Carregados ${this.allColaboradores.length} colaboradores e ${this.allProjetos.length} projetos`)
       } catch (error) {
         console.error('Erro ao carregar dados:', error)
         console.error('Erro ao carregar dados:', error.message)
       }
+    },
+    applySquadFilter() {
+      if (this.selectedSquadId) {
+        this.colaboradores = this.allColaboradores.filter(c => c.squad_id === this.selectedSquadId)
+        this.projetos = this.allProjetos.filter(p => p.squad_id === this.selectedSquadId)
+        localStorage.setItem('selectedSquadId', this.selectedSquadId.toString())
+      } else {
+        this.colaboradores = this.allColaboradores
+        this.projetos = this.allProjetos
+        localStorage.removeItem('selectedSquadId')
+      }
+      this.initializeSelections()
+    },
+    loadSavedSquad() {
+      const savedSquadId = localStorage.getItem('selectedSquadId')
+      if (savedSquadId && this.squads.length > 0) {
+        const squadId = parseInt(savedSquadId)
+        if (this.squads.some(s => s.id === squadId)) {
+          this.selectedSquadId = squadId
+        } else {
+          this.selectedSquadId = this.squads[0].id
+        }
+      } else if (this.squads.length > 0) {
+        this.selectedSquadId = this.squads[0].id
+      }
+      this.applySquadFilter()
     },
     async carregarCargosHabilidades() {
       try {

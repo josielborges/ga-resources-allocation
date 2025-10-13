@@ -115,7 +115,8 @@
                 <label class="block text-sm font-medium mb-1">Squad</label>
                 <select 
                   v-model="form.squad_id" 
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-primary-main"
+                  :disabled="!editandoProjeto && selectedSquadId !== null"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-primary-main disabled:bg-gray-100 disabled:cursor-not-allowed"
                 >
                   <option :value="null">Selecionar squad</option>
                   <option v-for="squad in squads" :key="squad.id" :value="squad.id">
@@ -340,6 +341,16 @@ import Sortable from 'sortablejs'
 
 export default {
   name: 'ProjetosCrud',
+  props: {
+    selectedSquadId: {
+      type: Number,
+      default: null
+    },
+    allProjetos: {
+      type: Array,
+      default: () => []
+    }
+  },
   components: {
     ConfirmModal,
     AlertModal,
@@ -348,7 +359,6 @@ export default {
   },
   data() {
     return {
-      projetos: [],
       cargos: [],
       habilidades: [],
       squads: [],
@@ -373,6 +383,12 @@ export default {
     }
   },
   computed: {
+    projetos() {
+      if (this.selectedSquadId) {
+        return this.allProjetos.filter(p => p.squad_id === this.selectedSquadId)
+      }
+      return this.allProjetos
+    },
     projetosOrdenados() {
       return [...this.projetos].sort((a, b) => a.nome.localeCompare(b.nome))
     },
@@ -415,13 +431,11 @@ export default {
     async carregarDados() {
       this.loading = true
       try {
-        const [projetosRes, cargosRes, habilidadesRes, squadsRes] = await Promise.all([
-          axios.get('/api/projetos'),
+        const [cargosRes, habilidadesRes, squadsRes] = await Promise.all([
           axios.get('/api/cargos'),
           axios.get('/api/habilidades'),
           axios.get('/api/squads')
         ])
-        this.projetos = projetosRes.data
         this.cargos = cargosRes.data
         this.habilidades = habilidadesRes.data
         this.squads = squadsRes.data
@@ -430,6 +444,9 @@ export default {
       } finally {
         this.loading = false
       }
+    },
+    reloadProjetos() {
+      this.$emit('reload')
     },
     
     abrirModal(projeto = null) {
@@ -471,7 +488,7 @@ export default {
           nome: '',
           color: '#3B82F6',
           termino: null,
-          squad_id: null,
+          squad_id: this.selectedSquadId,
           etapas: []
         }
       }
@@ -596,7 +613,7 @@ export default {
         } else {
           await axios.post('/api/projetos', formData)
         }
-        await this.carregarDados()
+        this.reloadProjetos()
         this.fecharModal()
       } catch (error) {
         console.error('Erro ao salvar projeto:', error)
@@ -620,7 +637,7 @@ export default {
     async executarExclusao() {
       try {
         await axios.delete(`/api/projetos/${this.itemParaExcluir.id}`)
-        await this.carregarDados()
+        this.reloadProjetos()
         this.cancelarExclusao()
       } catch (error) {
         console.error('Erro ao excluir projeto:', error)
