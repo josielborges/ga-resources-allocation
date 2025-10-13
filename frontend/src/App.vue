@@ -387,7 +387,7 @@
               <div class="bg-white rounded-md shadow-sm p-4">
                 <h4 class="text-base font-semibold text-gray-900 mb-3">Dados do Sistema</h4>
                 <div class="grid grid-cols-2 gap-3">
-                  <div @click="activeModule = 'colaboradores'" class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-3 border border-blue-200 cursor-pointer hover:shadow-md transition-all">
+                  <div @click="showColaboradoresModal = true" class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-3 border border-blue-200 cursor-pointer hover:shadow-md transition-all">
                     <div class="flex items-center justify-between">
                       <div>
                         <p class="text-xs text-blue-600 font-medium mb-1">Colaboradores</p>
@@ -398,7 +398,7 @@
                       </svg>
                     </div>
                   </div>
-                  <div @click="activeModule = 'projetos'" class="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-3 border border-green-200 cursor-pointer hover:shadow-md transition-all">
+                  <div @click="showProjetosModal = true" class="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-3 border border-green-200 cursor-pointer hover:shadow-md transition-all">
                     <div class="flex items-center justify-between">
                       <div>
                         <p class="text-xs text-green-600 font-medium mb-1">Projetos</p>
@@ -409,7 +409,7 @@
                       </svg>
                     </div>
                   </div>
-                  <div @click="activeModule = 'cargos'" class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-3 border border-purple-200 cursor-pointer hover:shadow-md transition-all">
+                  <div @click="showCargosModal = true" class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-3 border border-purple-200 cursor-pointer hover:shadow-md transition-all">
                     <div class="flex items-center justify-between">
                       <div>
                         <p class="text-xs text-purple-600 font-medium mb-1">Cargos</p>
@@ -421,7 +421,7 @@
                       </svg>
                     </div>
                   </div>
-                  <div @click="activeModule = 'habilidades'" class="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-3 border border-orange-200 cursor-pointer hover:shadow-md transition-all">
+                  <div @click="showHabilidadesModal = true" class="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-3 border border-orange-200 cursor-pointer hover:shadow-md transition-all">
                     <div class="flex items-center justify-between">
                       <div>
                         <p class="text-xs text-orange-600 font-medium mb-1">Habilidades</p>
@@ -844,6 +844,148 @@
       @confirm="deletarResultado"
       @cancel="cancelarDeletarResultado"
     />
+    
+    <!-- Colaboradores Modal -->
+    <div v-if="showColaboradoresModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" @click.self="showColaboradoresModal = false">
+      <div class="bg-white rounded-lg shadow-xl max-w-5xl w-full mx-4 max-h-[85vh] flex flex-col">
+        <div class="px-6 py-4 border-b flex justify-between items-center">
+          <h3 class="text-lg font-semibold">Colaboradores ({{ colaboradores.length }})</h3>
+          <button @click="showColaboradoresModal = false" class="text-gray-500 hover:text-gray-700">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div v-for="colab in colaboradores" :key="colab.id" class="bg-gray-50 border rounded-lg p-3">
+              <h4 class="font-semibold text-gray-900 text-sm mb-1">{{ colab.nome }}</h4>
+              <div class="text-xs text-gray-600 space-y-0.5">
+                <p>{{ colab.cargo?.nome || colab.cargo }}<span v-if="colab.squad"> • {{ colab.squad.nome }}</span></p>
+                <div v-if="colab.habilidades?.length" class="flex flex-wrap gap-0.5 mt-1">
+                  <span v-for="hab in colab.habilidades" :key="hab.id" class="px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">
+                    {{ hab.nome || hab }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Projetos Modal -->
+    <div v-if="showProjetosModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" @click.self="showProjetosModal = false">
+      <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[85vh] flex flex-col">
+        <div class="px-6 py-4 border-b flex justify-between items-center">
+          <h3 class="text-lg font-semibold">Projetos ({{ projetos.length }})</h3>
+          <button @click="showProjetosModal = false" class="text-gray-500 hover:text-gray-700">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-6">
+          <div class="space-y-2">
+            <div v-for="projeto in projetos" :key="projeto.id" class="border rounded-lg overflow-hidden">
+              <div 
+                @click="expandedProjects[projeto.id] = !expandedProjects[projeto.id]"
+                class="flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors"
+              >
+                <div class="flex items-center gap-2 flex-1">
+                  <div class="w-3 h-3 rounded flex-shrink-0" :style="{ backgroundColor: projeto.color || '#3B82F6' }"></div>
+                  <h4 class="font-semibold text-gray-900 text-sm">{{ projeto.nome }}</h4>
+                  <span class="text-xs text-gray-500">({{ projeto.etapas?.length || 0 }} etapas)</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span v-if="projeto.termino" class="text-xs text-gray-600">
+                    {{ new Date(projeto.termino).toLocaleDateString('pt-BR') }}
+                  </span>
+                  <svg 
+                    class="w-5 h-5 text-gray-500 transition-transform"
+                    :class="{ 'rotate-180': expandedProjects[projeto.id] }"
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
+              <div v-if="expandedProjects[projeto.id] && projeto.etapas?.length" class="p-3 bg-white border-t">
+                <div class="space-y-2">
+                  <div v-for="etapa in projeto.etapas" :key="etapa.id" class="bg-gray-50 border rounded p-2">
+                    <div class="font-medium text-gray-800 text-sm mb-1">{{ etapa.nome }}</div>
+                    <div class="text-xs text-gray-600 mb-1">
+                      <span class="font-medium">Duração:</span> {{ etapa.duracao_dias }} dias • 
+                      <span class="font-medium">Cargo:</span> {{ etapa.cargo_necessario?.nome || etapa.cargo_necessario || 'N/A' }}
+                    </div>
+                    <div v-if="etapa.habilidades_necessarias?.length" class="flex flex-wrap gap-1">
+                      <span v-for="hab in etapa.habilidades_necessarias" :key="hab.id" class="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs">
+                        {{ hab.nome || hab }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Cargos Modal -->
+    <div v-if="showCargosModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" @click.self="showCargosModal = false">
+      <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[85vh] flex flex-col">
+        <div class="px-6 py-4 border-b flex justify-between items-center">
+          <h3 class="text-lg font-semibold">Cargos ({{ cargos.length }})</h3>
+          <button @click="showCargosModal = false" class="text-gray-500 hover:text-gray-700">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div v-for="cargo in cargos" :key="cargo.id" class="bg-purple-50 border border-purple-200 rounded-lg p-3">
+              <h4 class="font-semibold text-purple-900">{{ cargo.nome }}</h4>
+              <div v-if="habilidades.filter(h => h.cargo_id === cargo.id).length" class="mt-2">
+                <p class="text-xs font-medium text-purple-700 mb-1">Habilidades associadas:</p>
+                <div class="flex flex-wrap gap-1">
+                  <span v-for="hab in habilidades.filter(h => h.cargo_id === cargo.id)" :key="hab.id" class="px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-xs">
+                    {{ hab.nome }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Habilidades Modal -->
+    <div v-if="showHabilidadesModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" @click.self="showHabilidadesModal = false">
+      <div class="bg-white rounded-lg shadow-xl max-w-3xl w-full mx-4 max-h-[85vh] flex flex-col">
+        <div class="px-6 py-4 border-b flex justify-between items-center">
+          <h3 class="text-lg font-semibold">Habilidades ({{ habilidades.length }})</h3>
+          <button @click="showHabilidadesModal = false" class="text-gray-500 hover:text-gray-700">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-6">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div v-for="hab in habilidades" :key="hab.id" class="bg-orange-50 border border-orange-200 rounded-lg p-3">
+              <h4 class="font-semibold text-orange-900 mb-1">{{ hab.nome }}</h4>
+              <p class="text-xs text-orange-700">
+                <span class="font-medium">Cargo:</span> {{ cargos.find(c => c.id === hab.cargo_id)?.nome || 'N/A' }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -894,6 +1036,11 @@ export default {
       showSaveModal: false,
       showLoadModal: false,
       showConfirmDelete: false,
+      showColaboradoresModal: false,
+      showProjetosModal: false,
+      showCargosModal: false,
+      showHabilidadesModal: false,
+      expandedProjects: {},
       resultadoToDelete: null,
       saveResultName: '',
       resultadosSalvos: [],
@@ -1087,8 +1234,8 @@ export default {
     },
     applySquadFilter() {
       if (this.selectedSquadId) {
-        this.colaboradores = this.allColaboradores.filter(c => c.squad_id === this.selectedSquadId)
-        this.projetos = this.allProjetos.filter(p => p.squad_id === this.selectedSquadId)
+        this.colaboradores = this.allColaboradores.filter(c => c.squad?.id === this.selectedSquadId)
+        this.projetos = this.allProjetos.filter(p => p.squad?.id === this.selectedSquadId)
         localStorage.setItem('selectedSquadId', this.selectedSquadId.toString())
       } else {
         this.colaboradores = this.allColaboradores
@@ -1107,10 +1254,10 @@ export default {
         if (this.squads.some(s => s.id === squadId)) {
           this.selectedSquadId = squadId
         } else {
-          this.selectedSquadId = this.squads[0].id
+          this.selectedSquadId = null
         }
-      } else if (this.squads.length > 0) {
-        this.selectedSquadId = this.squads[0].id
+      } else {
+        this.selectedSquadId = null
       }
       this.applySquadFilter()
     },
