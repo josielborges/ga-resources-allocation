@@ -1095,7 +1095,10 @@ export default {
         this.projetos = this.allProjetos
         localStorage.removeItem('selectedSquadId')
       }
+      this.resultado = null
+      this.comparacaoResultado = null
       this.initializeSelections()
+      this.carregarResultadosSalvos()
     },
     loadSavedSquad() {
       const savedSquadId = localStorage.getItem('selectedSquadId')
@@ -1227,7 +1230,11 @@ export default {
     async carregarResultadosSalvos() {
       try {
         const response = await axios.get('/api/resultados-salvos')
-        this.resultadosSalvos = response.data
+        let resultados = response.data
+        if (this.selectedSquadId) {
+          resultados = resultados.filter(r => r.squad_id === this.selectedSquadId)
+        }
+        this.resultadosSalvos = resultados
       } catch (error) {
         console.error('Erro ao carregar resultados salvos:', error)
       }
@@ -1264,6 +1271,7 @@ export default {
           algoritmo: this.params.algorithm,
           melhor_fitness: this.resultado.melhor_fitness,
           roadmap_end_date: roadmapEndDate,
+          squad_id: this.selectedSquadId,
           tarefas: this.resultado.tarefas,
           historico_fitness: this.resultado.historico_fitness,
           penalidades: this.resultado.penalidades,

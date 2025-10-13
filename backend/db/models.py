@@ -134,8 +134,11 @@ class ResultadoSalvo(Base):
     data_execucao = Column(DateTime, default=datetime.utcnow)
     melhor_fitness = Column(Float)
     roadmap_end_date = Column(Date, nullable=True)
+    squad_id = Column(Integer, ForeignKey("squads.id", ondelete="SET NULL"), nullable=True)
     tarefas = Column(JSON)
     historico_fitness = Column(JSON)
     penalidades = Column(JSON)
     ocorrencias_penalidades = Column(JSON)
     parametros = Column(JSON)
+    
+    squad = relationship("Squad")

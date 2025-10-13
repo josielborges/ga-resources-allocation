@@ -135,6 +135,7 @@ class ResultadoSalvoBase(BaseModel):
     algoritmo: str
     melhor_fitness: float
     roadmap_end_date: Optional[date] = None
+    squad_id: Optional[int] = None
     tarefas: List[Dict[str, Any]]
     historico_fitness: List[float]
     penalidades: Dict[str, Any]
@@ -147,6 +148,7 @@ class ResultadoSalvoCreate(ResultadoSalvoBase):
 class ResultadoSalvo(ResultadoSalvoBase):
     id: int
     data_execucao: datetime
+    squad: Optional[Squad] = None
     
     class Config:
         from_attributes = True
