@@ -34,13 +34,25 @@
         <!-- Header estendido -->
         <div class="text-white px-6 py-4 shadow-sm flex-shrink-0 flex items-center justify-between" style="background: linear-gradient(to bottom, #0891B2, #0C94AD);">
           <h1 class="text-xl font-semibold">{{ getModuleTitle() }}</h1>
-          <SquadSelector v-model="selectedSquadId" :squads="squads" @update:modelValue="applySquadFilter" />
+          <div class="flex items-center gap-3">
+            <select 
+              v-model="selectedTriboId" 
+              @change="onTriboChange"
+              class="px-3 py-1.5 border border-white border-opacity-30 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-white bg-white bg-opacity-20 text-white"
+            >
+              <option :value="null" class="text-gray-900">Tribo</option>
+              <option v-for="tribo in tribos" :key="tribo.id" :value="tribo.id" class="text-gray-900">
+                {{ tribo.nome }}
+              </option>
+            </select>
+            <SquadSelector v-model="selectedSquadId" :squads="filteredSquads" @update:modelValue="applySquadFilter" />
+          </div>
         </div>
         
         <!-- Conteúdo do roadmap -->
         <div class="flex flex-1 overflow-hidden">
           <!-- Parâmetros Sidebar -->
-          <div class="w-72 bg-gray-50 border-r border-gray-200 flex-shrink-0 overflow-y-auto">
+          <div v-if="selectedSquadId" class="w-72 bg-gray-50 border-r border-gray-200 flex-shrink-0 overflow-y-auto">
             <div class="p-4 space-y-4">
             <div class="bg-white rounded-md shadow-sm p-4">
               <h3 class="text-base font-semibold text-gray-900 mb-4">Parâmetros do Algoritmo</h3>
@@ -340,7 +352,16 @@
           
           <!-- Conteúdo principal -->
           <div class="flex-1 p-4 overflow-y-auto">
-            <div v-if="!resultado" class="mt-6 space-y-4">
+            <div v-if="!selectedSquadId" class="flex items-center justify-center h-full">
+              <div class="text-center">
+                <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                <h3 class="text-xl font-semibold text-gray-700 mb-2">Selecione um Squad</h3>
+                <p class="text-gray-500">Por favor, selecione um squad no seletor acima para visualizar o roadmap</p>
+              </div>
+            </div>
+            <div v-else-if="!resultado" class="mt-6 space-y-4">
               <div class="bg-semantic-info-light border border-semantic-info-main rounded-md p-3">
                 <div class="flex items-center">
                   <svg class="w-4 h-4 text-semantic-info-main mr-2" fill="currentColor" viewBox="0 0 20 20">
@@ -531,34 +552,70 @@
         <!-- Header (outros módulos) -->
         <div class="text-white px-6 py-4 shadow-sm flex-shrink-0 flex items-center justify-between" style="background: linear-gradient(to bottom, #0891B2, #0C94AD);">
           <h1 class="text-xl font-semibold">{{ getModuleTitle() }}</h1>
-          <SquadSelector v-model="selectedSquadId" :squads="squads" @update:modelValue="applySquadFilter" />
+          <div class="flex items-center gap-3">
+            <select 
+              v-model="selectedTriboId" 
+              @change="onTriboChange"
+              class="px-3 py-1.5 border border-white border-opacity-30 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-white bg-white bg-opacity-20 text-white"
+            >
+              <option :value="null" class="text-gray-900">Tribo</option>
+              <option v-for="tribo in tribos" :key="tribo.id" :value="tribo.id" class="text-gray-900">
+                {{ tribo.nome }}
+              </option>
+            </select>
+            <SquadSelector v-model="selectedSquadId" :squads="filteredSquads" @update:modelValue="applySquadFilter" />
+          </div>
         </div>
         
         <!-- Content -->
-        <div class="flex-1 p-4 overflow-y-auto">
+        <div class="flex-1 overflow-hidden">
           <!-- Módulo Projetos -->
-          <div v-if="activeModule === 'projetos'">
-            <ProjetosCrud :selectedSquadId="selectedSquadId" :allProjetos="allProjetos" @reload="carregarDados" />
+          <div v-if="activeModule === 'projetos'" class="h-full">
+            <div v-if="!selectedSquadId" class="flex items-center justify-center h-full">
+              <div class="text-center">
+                <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                </svg>
+                <h3 class="text-xl font-semibold text-gray-700 mb-2">Selecione um Squad</h3>
+                <p class="text-gray-500">Por favor, selecione um squad no seletor acima para gerenciar projetos</p>
+              </div>
+            </div>
+            <div v-else class="h-full overflow-y-auto p-4">
+              <ProjetosCrud :selectedSquadId="selectedSquadId" :allProjetos="allProjetos" @reload="carregarDados" />
+            </div>
           </div>
 
           <!-- Módulo Colaboradores -->
-          <div v-if="activeModule === 'colaboradores'">
-            <ColaboradoresCrud :key="selectedSquadId" :selectedSquadId="selectedSquadId" :allColaboradores="allColaboradores" @reload="carregarDados" />
+          <div v-if="activeModule === 'colaboradores'" class="h-full">
+            <div v-if="!selectedSquadId" class="flex items-center justify-center h-full">
+              <div class="text-center">
+                <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                <h3 class="text-xl font-semibold text-gray-700 mb-2">Selecione um Squad</h3>
+                <p class="text-gray-500">Por favor, selecione um squad no seletor acima para gerenciar colaboradores</p>
+              </div>
+            </div>
+            <div v-else class="h-full overflow-y-auto p-4">
+              <ColaboradoresCrud :key="selectedSquadId" :selectedSquadId="selectedSquadId" :allColaboradores="allColaboradores" @reload="carregarDados" />
+            </div>
           </div>
 
           <!-- Módulo Cargos & Habilidades -->
-          <div v-if="activeModule === 'cargos-habilidades'">
+          <div v-if="activeModule === 'cargos-habilidades'" class="h-full overflow-y-auto p-4">
             <CargosHabilidadesCrud />
           </div>
 
           <!-- Módulo Tribos & Squads -->
-          <div v-if="activeModule === 'tribos-squads'">
+          <div v-if="activeModule === 'tribos-squads'" class="h-full overflow-y-auto p-4">
             <TribosSquadsCrud />
           </div>
 
           <!-- Módulo Relatórios -->
-          <div v-if="activeModule === 'relatorios'" class="bg-white rounded-md shadow-sm p-6">
-            <p class="text-text-secondary">Módulo de relatórios em desenvolvimento...</p>
+          <div v-if="activeModule === 'relatorios'" class="h-full overflow-y-auto p-4">
+            <div class="bg-white rounded-md shadow-sm p-6">
+              <p class="text-text-secondary">Módulo de relatórios em desenvolvimento...</p>
+            </div>
           </div>
         </div>
       </div>
@@ -1082,7 +1139,9 @@ export default {
       allColaboradores: [],
       projetos: [],
       allProjetos: [],
+      tribos: [],
       squads: [],
+      selectedTriboId: null,
       selectedSquadId: null,
       menuSections: [
         {
@@ -1114,6 +1173,10 @@ export default {
     }
   },
   computed: {
+    filteredSquads() {
+      if (!this.selectedTriboId) return this.squads
+      return this.squads.filter(s => s.tribo_id === this.selectedTriboId)
+    },
     allColaboradoresWithSimulated() {
       return [...this.colaboradores, ...this.simulatedMembers]
     },
@@ -1215,17 +1278,19 @@ export default {
     async carregarDados() {
       try {
         console.log('Carregando dados...')
-        const [colabRes, projRes, squadsRes] = await Promise.all([
+        const [colabRes, projRes, tribosRes, squadsRes] = await Promise.all([
           axios.get('/api/colaboradores'),
           axios.get('/api/projetos'),
+          axios.get('/api/tribos'),
           axios.get('/api/squads')
         ])
         console.log('Colaboradores:', colabRes.data)
         console.log('Projetos:', projRes.data)
         this.allColaboradores = colabRes.data
         this.allProjetos = projRes.data
+        this.tribos = tribosRes.data
         this.squads = squadsRes.data
-        this.loadSavedSquad()
+        this.loadSavedFilters()
         console.log(`Carregados ${this.allColaboradores.length} colaboradores e ${this.allProjetos.length} projetos`)
       } catch (error) {
         console.error('Erro ao carregar dados:', error)
@@ -1247,18 +1312,30 @@ export default {
       this.initializeSelections()
       this.carregarResultadosSalvos()
     },
-    loadSavedSquad() {
+    onTriboChange() {
+      this.selectedSquadId = null
+      localStorage.setItem('selectedTriboId', this.selectedTriboId?.toString() || '')
+      localStorage.removeItem('selectedSquadId')
+      this.applySquadFilter()
+    },
+    loadSavedFilters() {
+      const savedTriboId = localStorage.getItem('selectedTriboId')
       const savedSquadId = localStorage.getItem('selectedSquadId')
+      
+      if (savedTriboId && this.tribos.length > 0) {
+        const triboId = parseInt(savedTriboId)
+        if (this.tribos.some(t => t.id === triboId)) {
+          this.selectedTriboId = triboId
+        }
+      }
+      
       if (savedSquadId && this.squads.length > 0) {
         const squadId = parseInt(savedSquadId)
         if (this.squads.some(s => s.id === squadId)) {
           this.selectedSquadId = squadId
-        } else {
-          this.selectedSquadId = null
         }
-      } else {
-        this.selectedSquadId = null
       }
+      
       this.applySquadFilter()
     },
     async carregarCargosHabilidades() {
