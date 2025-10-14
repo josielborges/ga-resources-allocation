@@ -307,7 +307,8 @@ def create_colaborador(db: Session, colaborador: schemas.ColaboradorCreate):
         nome=colaborador.nome, 
         cargo_id=colaborador.cargo_id, 
         squad_id=colaborador.squad_id if not colaborador.transversal else None,
-        transversal=1 if colaborador.transversal else 0
+        transversal=1 if colaborador.transversal else 0,
+        ativo=colaborador.ativo
     )
     db.add(db_colaborador)
     db.commit()
@@ -335,6 +336,7 @@ def update_colaborador(db: Session, colaborador_id: int, colaborador: schemas.Co
     db_colaborador.cargo_id = colaborador.cargo_id
     db_colaborador.squad_id = colaborador.squad_id if not colaborador.transversal else None
     db_colaborador.transversal = 1 if colaborador.transversal else 0
+    db_colaborador.ativo = colaborador.ativo
     
     db_colaborador.habilidades.clear()
     

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Table, Date, DateTime, Text, Float
+from sqlalchemy import Column, Integer, String, ForeignKey, Table, Date, DateTime, Text, Float, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import ARRAY, JSON
 from datetime import datetime
@@ -66,6 +66,7 @@ class Colaborador(Base):
     cargo_id = Column(Integer, ForeignKey("cargos.id", ondelete="RESTRICT"))
     squad_id = Column(Integer, ForeignKey("squads.id", ondelete="RESTRICT"), nullable=True)
     transversal = Column(Integer, default=0)
+    ativo = Column(Boolean, default=True, nullable=False)
     
     cargo = relationship("Cargo")
     squad = relationship("Squad")

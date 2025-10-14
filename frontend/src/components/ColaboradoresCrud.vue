@@ -64,6 +64,7 @@
             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cargo</th>
             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Habilidades</th>
             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ausências</th>
+            <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Ativo</th>
             <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
           </tr>
         </thead>
@@ -90,6 +91,18 @@
             </td>
             <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
               {{ colaborador.ausencias.length }}
+            </td>
+            <td class="px-4 py-2 whitespace-nowrap text-center">
+              <button 
+                @click="toggleAtivo(colaborador)"
+                class="relative inline-flex h-4 w-7 items-center rounded-full transition-colors focus:outline-none focus:ring-1 focus:ring-primary-main focus:ring-offset-1"
+                :class="colaborador.ativo ? 'bg-green-500' : 'bg-gray-300'"
+              >
+                <span 
+                  class="inline-block h-3 w-3 transform rounded-full bg-white transition-transform"
+                  :class="colaborador.ativo ? 'translate-x-3.5' : 'translate-x-0.5'"
+                ></span>
+              </button>
             </td>
             <td class="px-4 py-2 whitespace-nowrap text-right text-sm font-medium">
               <div class="flex justify-end space-x-2">
@@ -128,6 +141,7 @@
             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cargo</th>
             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Habilidades</th>
             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ausências</th>
+            <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Ativo</th>
             <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
           </tr>
         </thead>
@@ -154,6 +168,18 @@
             </td>
             <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
               {{ colaborador.ausencias.length }}
+            </td>
+            <td class="px-4 py-2 whitespace-nowrap text-center">
+              <button 
+                @click="toggleAtivo(colaborador)"
+                class="relative inline-flex h-4 w-7 items-center rounded-full transition-colors focus:outline-none focus:ring-1 focus:ring-primary-main focus:ring-offset-1"
+                :class="colaborador.ativo ? 'bg-green-500' : 'bg-gray-300'"
+              >
+                <span 
+                  class="inline-block h-3 w-3 transform rounded-full bg-white transition-transform"
+                  :class="colaborador.ativo ? 'translate-x-3.5' : 'translate-x-0.5'"
+                ></span>
+              </button>
             </td>
             <td class="px-4 py-2 whitespace-nowrap text-right text-sm font-medium">
               <div class="flex justify-end space-x-2">
@@ -229,6 +255,7 @@
             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Squad</th>
             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Habilidades</th>
             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ausências</th>
+            <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Ativo</th>
             <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
           </tr>
         </thead>
@@ -261,6 +288,18 @@
             </td>
             <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
               {{ colaborador.ausencias.length }}
+            </td>
+            <td class="px-4 py-2 whitespace-nowrap text-center">
+              <button 
+                @click="toggleAtivo(colaborador)"
+                class="relative inline-flex h-4 w-7 items-center rounded-full transition-colors focus:outline-none focus:ring-1 focus:ring-primary-main focus:ring-offset-1"
+                :class="colaborador.ativo ? 'bg-green-500' : 'bg-gray-300'"
+              >
+                <span 
+                  class="inline-block h-3 w-3 transform rounded-full bg-white transition-transform"
+                  :class="colaborador.ativo ? 'translate-x-3.5' : 'translate-x-0.5'"
+                ></span>
+              </button>
             </td>
             <td class="px-4 py-2 whitespace-nowrap text-right text-sm font-medium">
               <div class="flex justify-end space-x-2">
@@ -336,19 +375,46 @@
               </div>
             </div>
             
-            <!-- Transversal e Squad -->
-            <div class="grid grid-cols-2 gap-3">
+            <!-- Transversal, Ativo e Squad -->
+            <div class="grid grid-cols-3 gap-3">
               <div>
                 <label class="block text-sm font-medium text-text-primary mb-1">Tipo</label>
-                <label class="flex items-center space-x-2 cursor-pointer px-3 py-1.5 border border-gray-300 rounded-md hover:bg-gray-50">
-                  <input 
-                    type="checkbox" 
-                    v-model="form.transversal"
-                    @change="onTransversalChange"
-                    class="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500"
-                  />
-                  <span class="text-sm">Transversal</span>
-                </label>
+                <button 
+                  type="button"
+                  @click="form.transversal = !form.transversal; onTransversalChange()"
+                  class="w-full flex items-center justify-between px-3 py-2 border-2 rounded-md transition-all focus:outline-none focus:ring-2 focus:ring-offset-1"
+                  :class="form.transversal ? 'border-purple-500 bg-purple-50 focus:ring-purple-500' : 'border-gray-300 bg-white hover:bg-gray-50 focus:ring-gray-400'"
+                >
+                  <span class="text-sm font-medium" :class="form.transversal ? 'text-purple-700' : 'text-gray-600'">Transversal</span>
+                  <div class="relative inline-flex h-5 w-9 items-center rounded-full transition-colors"
+                    :class="form.transversal ? 'bg-purple-600' : 'bg-gray-300'"
+                  >
+                    <span 
+                      class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm"
+                      :class="form.transversal ? 'translate-x-5' : 'translate-x-0.5'"
+                    ></span>
+                  </div>
+                </button>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-text-primary mb-1">Status</label>
+                <button 
+                  type="button"
+                  @click="form.ativo = !form.ativo"
+                  class="w-full flex items-center justify-between px-3 py-2 border-2 rounded-md transition-all focus:outline-none focus:ring-2 focus:ring-offset-1"
+                  :class="form.ativo ? 'border-green-500 bg-green-50 focus:ring-green-500' : 'border-gray-300 bg-white hover:bg-gray-50 focus:ring-gray-400'"
+                >
+                  <span class="text-sm font-medium" :class="form.ativo ? 'text-green-700' : 'text-gray-600'">Ativo</span>
+                  <div class="relative inline-flex h-5 w-9 items-center rounded-full transition-colors"
+                    :class="form.ativo ? 'bg-green-500' : 'bg-gray-300'"
+                  >
+                    <span 
+                      class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm"
+                      :class="form.ativo ? 'translate-x-5' : 'translate-x-0.5'"
+                    ></span>
+                  </div>
+                </button>
               </div>
               
               <div>
@@ -369,17 +435,22 @@
             <!-- Habilidades -->
             <div>
               <label class="block text-sm font-medium text-text-primary mb-1">Habilidades ({{ form.habilidades_ids.length }} selecionadas)</label>
-              <div class="border border-gray-200 rounded-md p-2 bg-white min-h-[80px] max-h-[120px] overflow-y-auto">
-                <div class="flex flex-wrap gap-1">
-                  <span 
-                    v-for="habilidade in habilidadesOrdenadas" 
-                    :key="habilidade.id"
-                    @click="toggleHabilidade(habilidade.id)"
-                    class="text-xs px-2 py-1 rounded cursor-pointer transition-colors"
-                    :class="form.habilidades_ids.includes(habilidade.id) ? 'bg-green-100 text-green-700 font-medium' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
-                  >
-                    {{ habilidade.nome }}
-                  </span>
+              <div class="border border-gray-200 rounded-md p-2 bg-white min-h-[80px] max-h-[180px] overflow-y-auto" style="column-count: 3; column-gap: 0.5rem;">
+                <div v-for="cargo in cargos" :key="cargo.id" style="break-inside: avoid; margin-bottom: 0.5rem;">
+                  <div v-if="habilidadesPorCargo(cargo.id).length > 0">
+                    <div class="text-xs font-semibold text-blue-700 mb-1">{{ cargo.nome }}</div>
+                    <div class="flex flex-wrap gap-1">
+                      <span 
+                        v-for="habilidade in habilidadesPorCargo(cargo.id)" 
+                        :key="habilidade.id"
+                        @click="toggleHabilidade(habilidade.id)"
+                        class="text-xs px-2 py-1 rounded cursor-pointer transition-colors"
+                        :class="form.habilidades_ids.includes(habilidade.id) ? 'bg-green-100 text-green-700 font-medium' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+                      >
+                        {{ habilidade.nome }}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -488,6 +559,7 @@ export default {
         cargo_id: '',
         squad_id: null,
         transversal: false,
+        ativo: true,
         habilidades_ids: [],
         ausencias: []
       },
@@ -534,6 +606,13 @@ export default {
     },
     habilidadesOrdenadas() {
       return [...this.habilidades].sort((a, b) => a.nome.localeCompare(b.nome))
+    },
+    habilidadesPorCargo() {
+      return (cargoId) => {
+        return this.habilidades
+          .filter(h => h.cargo_id === cargoId)
+          .sort((a, b) => a.nome.localeCompare(b.nome))
+      }
     }
   },
   async mounted() {
@@ -582,6 +661,7 @@ export default {
           cargo_id: colaborador.cargo.id,
           squad_id: colaborador.squad?.id || null,
           transversal: colaborador.transversal || false,
+          ativo: colaborador.ativo !== undefined ? colaborador.ativo : true,
           habilidades_ids: colaborador.habilidades.map(h => h.id),
           ausencias: colaborador.ausencias.map(a => ({ data: a.data }))
         }
@@ -591,6 +671,7 @@ export default {
           cargo_id: '',
           squad_id: null,
           transversal: false,
+          ativo: true,
           habilidades_ids: [],
           ausencias: []
         }
@@ -681,6 +762,28 @@ export default {
     cancelarExclusao() {
       this.showConfirmModal = false
       this.itemParaExcluir = null
+    },
+    
+    async toggleAtivo(colaborador) {
+      const previousState = colaborador.ativo
+      colaborador.ativo = !colaborador.ativo
+      
+      try {
+        const updatedData = {
+          nome: colaborador.nome,
+          cargo_id: colaborador.cargo.id,
+          squad_id: colaborador.squad?.id || null,
+          transversal: colaborador.transversal || false,
+          ativo: colaborador.ativo,
+          habilidades_ids: colaborador.habilidades.map(h => h.id),
+          ausencias: colaborador.ausencias.map(a => ({ data: a.data }))
+        }
+        await axios.put(`/api/colaboradores/${colaborador.id}`, updatedData)
+      } catch (error) {
+        colaborador.ativo = previousState
+        console.error('Erro ao atualizar status ativo:', error)
+        alert('Erro ao atualizar status. Tente novamente.')
+      }
     }
   }
 }

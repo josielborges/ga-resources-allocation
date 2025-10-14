@@ -74,6 +74,7 @@ class ColaboradorCreate(ColaboradorBase):
     cargo_id: int
     squad_id: Optional[int] = None
     transversal: bool = False
+    ativo: bool = True
     habilidades_ids: List[int] = []
     ausencias: List[dict] = []
 
@@ -82,6 +83,7 @@ class Colaborador(ColaboradorBase):
     cargo: Cargo
     squad: Optional[Squad] = None
     transversal: bool = False
+    ativo: bool = True
     habilidades: List[Habilidade] = []
     ausencias: List[Ausencia] = []
     
