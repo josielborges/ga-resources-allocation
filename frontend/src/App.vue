@@ -46,14 +46,39 @@
               </option>
             </select>
             <SquadSelector v-model="selectedSquadId" :squads="filteredSquads" @update:modelValue="applySquadFilter" />
+            <select 
+              v-model="selectedYear" 
+              @change="applyYearFilter"
+              class="px-3 py-1.5 border border-white border-opacity-30 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-white bg-white bg-opacity-20 text-white"
+            >
+              <option :value="null" class="text-gray-900">Ano</option>
+              <option v-for="year in availableYears" :key="year" :value="year" class="text-gray-900">
+                {{ year }}
+              </option>
+            </select>
           </div>
         </div>
         
         <!-- Conteúdo do roadmap -->
         <div class="flex flex-1 overflow-hidden">
           <!-- Parâmetros Sidebar -->
-          <div v-if="selectedSquadId" class="w-72 bg-gray-50 border-r border-gray-200 flex-shrink-0 overflow-y-auto">
+          <div v-if="selectedSquadId && selectedYear" class="w-72 bg-gray-50 border-r border-gray-200 flex-shrink-0 overflow-y-auto">
             <div class="p-4 space-y-4">
+            <!-- Data Summary -->
+            <div class="bg-white rounded-md shadow-sm p-3">
+              <h4 class="text-sm font-semibold text-gray-900 mb-2">Dados Disponíveis</h4>
+              <div class="grid grid-cols-2 gap-2">
+                <div class="bg-blue-50 rounded p-2 text-center">
+                  <p class="text-2xl font-bold text-blue-700">{{ projetos.length }}</p>
+                  <p class="text-xs text-blue-600">Projetos</p>
+                </div>
+                <div class="bg-green-50 rounded p-2 text-center">
+                  <p class="text-2xl font-bold text-green-700">{{ colaboradores.length }}</p>
+                  <p class="text-xs text-green-600">Colaboradores</p>
+                </div>
+              </div>
+            </div>
+            
             <div class="bg-white rounded-md shadow-sm p-4">
               <h3 class="text-base font-semibold text-gray-900 mb-4">Parâmetros do Algoritmo</h3>
               
@@ -242,9 +267,22 @@
                 </div>
                 
                 <div class="space-y-2 pt-2">
+                  <div v-if="projetos.length === 0 || colaboradores.length === 0" class="bg-yellow-50 border border-yellow-300 rounded-md p-3 mb-2">
+                    <div class="flex items-start gap-2">
+                      <svg class="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                      </svg>
+                      <div class="text-xs text-yellow-800">
+                        <p class="font-medium mb-1">Dados insuficientes</p>
+                        <p v-if="projetos.length === 0">Nenhum projeto cadastrado para este ano</p>
+                        <p v-if="colaboradores.length === 0">Nenhum colaborador no squad</p>
+                      </div>
+                    </div>
+                  </div>
+                  
                   <button 
                     @click="prepareExecution" 
-                    :disabled="loading" 
+                    :disabled="loading || projetos.length === 0 || colaboradores.length === 0" 
                     class="bg-primary-main text-white px-4 py-2 rounded-md text-sm font-medium w-full disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary-light transition-colors shadow-sm"
                     type="button"
                   >
@@ -259,16 +297,9 @@
                   </button>
                   
                   <button 
-                    @click="showLoadModal = true" 
-                    class="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium w-full hover:bg-blue-700 transition-colors shadow-sm"
-                    type="button"
-                  >
-                    Carregar Resultado
-                  </button>
-                  
-                  <button 
                     @click="showComparisonParams = !showComparisonParams" 
-                    class="bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium w-full hover:bg-green-700 transition-colors shadow-sm"
+                    :disabled="projetos.length === 0 || colaboradores.length === 0"
+                    class="bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium w-full hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
                     type="button"
                   >
                     {{ showComparisonParams ? 'Ocultar' : 'Configurar' }} Comparação
@@ -333,7 +364,7 @@
                 
               <button 
                 @click="compararAlgoritmos" 
-                :disabled="loading" 
+                :disabled="loading || projetos.length === 0 || colaboradores.length === 0" 
                 class="bg-purple-600 text-white px-4 py-2 rounded-md text-sm font-medium w-full disabled:opacity-50 disabled:cursor-not-allowed hover:bg-purple-700 transition-colors shadow-sm"
                 type="button"
               >
@@ -359,6 +390,15 @@
                 </svg>
                 <h3 class="text-xl font-semibold text-gray-700 mb-2">Selecione um Squad</h3>
                 <p class="text-gray-500">Por favor, selecione um squad no seletor acima para visualizar o roadmap</p>
+              </div>
+            </div>
+            <div v-if="!selectedYear" class="flex items-center justify-center h-full">
+              <div class="text-center">
+                <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                <h3 class="text-xl font-semibold text-gray-700 mb-2">Selecione o Ano do Roadmap</h3>
+                <p class="text-gray-500">Por favor, selecione um ano no filtro acima para visualizar os projetos</p>
               </div>
             </div>
             <div v-else-if="!resultado" class="mt-6 space-y-4">
@@ -397,7 +437,6 @@
                   </div>
                 </div>
                 <button 
-                  v-if="resultadosSalvos.length > 6"
                   @click="showLoadModal = true" 
                   class="mt-3 text-sm text-primary-main hover:underline"
                 >
@@ -564,6 +603,16 @@
               </option>
             </select>
             <SquadSelector v-model="selectedSquadId" :squads="filteredSquads" @update:modelValue="applySquadFilter" />
+            <select 
+              v-model="selectedYear" 
+              @change="applyYearFilter"
+              class="px-3 py-1.5 border border-white border-opacity-30 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-white bg-white bg-opacity-20 text-white"
+            >
+              <option :value="null" class="text-gray-900">Ano</option>
+              <option v-for="year in availableYears" :key="year" :value="year" class="text-gray-900">
+                {{ year }}
+              </option>
+            </select>
           </div>
         </div>
         
@@ -580,8 +629,17 @@
                 <p class="text-gray-500">Por favor, selecione um squad no seletor acima para gerenciar projetos</p>
               </div>
             </div>
+            <div v-if="!selectedYear" class="flex items-center justify-center h-full">
+              <div class="text-center">
+                <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                <h3 class="text-xl font-semibold text-gray-700 mb-2">Selecione o Ano do Roadmap</h3>
+                <p class="text-gray-500">Por favor, selecione um ano no filtro acima para visualizar os projetos</p>
+              </div>
+            </div>
             <div v-else class="h-full overflow-y-auto p-4">
-              <ProjetosCrud :selectedSquadId="selectedSquadId" :allProjetos="allProjetos" @reload="carregarDados" />
+              <ProjetosCrud :selectedSquadId="selectedSquadId" :selectedYear="selectedYear" :allProjetos="allProjetos" @reload="carregarDados" />
             </div>
           </div>
 
@@ -609,6 +667,11 @@
           <!-- Módulo Tribos & Squads -->
           <div v-if="activeModule === 'tribos-squads'" class="h-full overflow-y-auto p-4">
             <TribosSquadsCrud />
+          </div>
+
+          <!-- Módulo Períodos Roadmaps -->
+          <div v-if="activeModule === 'periodos-roadmaps'" class="h-full overflow-y-auto p-4">
+            <PeriodosRoadmapsCrud />
           </div>
 
           <!-- Módulo Relatórios -->
@@ -1059,6 +1122,7 @@ import ProjetosCrud from './components/ProjetosCrud.vue'
 import ColaboradoresCrud from './components/ColaboradoresCrud.vue'
 import CargosHabilidadesCrud from './components/CargosHabilidadesCrud.vue'
 import TribosSquadsCrud from './components/TribosSquadsCrud.vue'
+import PeriodosRoadmapsCrud from './components/PeriodosRoadmapsCrud.vue'
 import ConfirmModal from './components/ConfirmModal.vue'
 import SquadSelector from './components/SquadSelector.vue'
 
@@ -1075,6 +1139,7 @@ export default {
     ColaboradoresCrud,
     CargosHabilidadesCrud,
     TribosSquadsCrud,
+    PeriodosRoadmapsCrud,
     ConfirmModal,
     SquadSelector,
     CpuChipIcon,
@@ -1141,8 +1206,10 @@ export default {
       allProjetos: [],
       tribos: [],
       squads: [],
+      periodosRoadmaps: [],
       selectedTriboId: null,
       selectedSquadId: null,
+      selectedYear: null,
       menuSections: [
         {
           title: 'Squad',
@@ -1156,7 +1223,8 @@ export default {
           title: 'Geral',
           items: [
             { id: 'tribos-squads', label: 'Tribos e Squads', icon: 'UserGroupIcon' },
-            { id: 'cargos-habilidades', label: 'Cargos e Habilidades', icon: 'BriefcaseIcon' }
+            { id: 'cargos-habilidades', label: 'Cargos e Habilidades', icon: 'BriefcaseIcon' },
+            { id: 'periodos-roadmaps', label: 'Períodos de Roadmaps', icon: 'AcademicCapIcon' }
           ]
         }
       ],
@@ -1176,6 +1244,9 @@ export default {
     filteredSquads() {
       if (!this.selectedTriboId) return this.squads
       return this.squads.filter(s => s.tribo_id === this.selectedTriboId)
+    },
+    availableYears() {
+      return this.periodosRoadmaps.map(p => p.ano).sort((a, b) => b - a)
     },
     allColaboradoresWithSimulated() {
       return [...this.colaboradores, ...this.simulatedMembers]
@@ -1278,11 +1349,12 @@ export default {
     async carregarDados() {
       try {
         console.log('Carregando dados...')
-        const [colabRes, projRes, tribosRes, squadsRes] = await Promise.all([
+        const [colabRes, projRes, tribosRes, squadsRes, periodosRes] = await Promise.all([
           axios.get('/api/colaboradores'),
           axios.get('/api/projetos'),
           axios.get('/api/tribos'),
-          axios.get('/api/squads')
+          axios.get('/api/squads'),
+          axios.get('/api/periodos-roadmaps')
         ])
         console.log('Colaboradores:', colabRes.data)
         console.log('Projetos:', projRes.data)
@@ -1290,6 +1362,7 @@ export default {
         this.allProjetos = projRes.data
         this.tribos = tribosRes.data
         this.squads = squadsRes.data
+        this.periodosRoadmaps = periodosRes.data
         this.loadSavedFilters()
         console.log(`Carregados ${this.allColaboradores.length} colaboradores e ${this.allProjetos.length} projetos`)
       } catch (error) {
@@ -1298,15 +1371,44 @@ export default {
       }
     },
     applySquadFilter() {
+      this.selectedYear = null
+      localStorage.removeItem('selectedYear')
       if (this.selectedSquadId) {
-        this.colaboradores = this.allColaboradores.filter(c => c.squad?.id === this.selectedSquadId)
-        this.projetos = this.allProjetos.filter(p => p.squad?.id === this.selectedSquadId)
         localStorage.setItem('selectedSquadId', this.selectedSquadId.toString())
       } else {
-        this.colaboradores = this.allColaboradores
-        this.projetos = this.allProjetos
         localStorage.removeItem('selectedSquadId')
       }
+      this.applyFilters()
+    },
+    applyYearFilter() {
+      if (this.selectedYear) {
+        localStorage.setItem('selectedYear', this.selectedYear.toString())
+      } else {
+        localStorage.removeItem('selectedYear')
+      }
+      this.applyFilters()
+    },
+    applyFilters() {
+      let filteredColaboradores = this.allColaboradores
+      let filteredProjetos = []
+      
+      if (this.selectedSquadId) {
+        filteredColaboradores = filteredColaboradores.filter(c => c.squad?.id === this.selectedSquadId)
+        filteredProjetos = this.allProjetos.filter(p => p.squad?.id === this.selectedSquadId)
+        localStorage.setItem('selectedSquadId', this.selectedSquadId.toString())
+      } else {
+        filteredProjetos = this.allProjetos
+        localStorage.removeItem('selectedSquadId')
+      }
+      
+      if (this.selectedYear !== null) {
+        filteredProjetos = filteredProjetos.filter(p => p.ano === this.selectedYear)
+      } else {
+        filteredProjetos = []
+      }
+      
+      this.colaboradores = filteredColaboradores
+      this.projetos = filteredProjetos
       this.resultado = null
       this.comparacaoResultado = null
       this.initializeSelections()
@@ -1314,13 +1416,16 @@ export default {
     },
     onTriboChange() {
       this.selectedSquadId = null
+      this.selectedYear = null
       localStorage.setItem('selectedTriboId', this.selectedTriboId?.toString() || '')
       localStorage.removeItem('selectedSquadId')
-      this.applySquadFilter()
+      localStorage.removeItem('selectedYear')
+      this.applyFilters()
     },
     loadSavedFilters() {
       const savedTriboId = localStorage.getItem('selectedTriboId')
       const savedSquadId = localStorage.getItem('selectedSquadId')
+      const savedYear = localStorage.getItem('selectedYear')
       
       if (savedTriboId && this.tribos.length > 0) {
         const triboId = parseInt(savedTriboId)
@@ -1333,10 +1438,17 @@ export default {
         const squadId = parseInt(savedSquadId)
         if (this.squads.some(s => s.id === squadId)) {
           this.selectedSquadId = squadId
+          
+          if (savedYear) {
+            const year = parseInt(savedYear)
+            if (this.periodosRoadmaps.some(p => p.ano === year)) {
+              this.selectedYear = year
+            }
+          }
         }
       }
       
-      this.applySquadFilter()
+      this.applyFilters()
     },
     async carregarCargosHabilidades() {
       try {
@@ -1453,12 +1565,11 @@ export default {
     },
     async carregarResultadosSalvos() {
       try {
-        const response = await axios.get('/api/resultados-salvos')
-        let resultados = response.data
-        if (this.selectedSquadId) {
-          resultados = resultados.filter(r => r.squad_id === this.selectedSquadId)
-        }
-        this.resultadosSalvos = resultados
+        const params = {}
+        if (this.selectedSquadId) params.squad_id = this.selectedSquadId
+        if (this.selectedYear) params.ano = this.selectedYear
+        const response = await axios.get('/api/resultados-salvos', { params })
+        this.resultadosSalvos = response.data
       } catch (error) {
         console.error('Erro ao carregar resultados salvos:', error)
       }
@@ -1496,6 +1607,7 @@ export default {
           melhor_fitness: this.resultado.melhor_fitness,
           roadmap_end_date: roadmapEndDate,
           squad_id: this.selectedSquadId,
+          ano: this.selectedYear,
           tarefas: this.resultado.tarefas,
           historico_fitness: this.resultado.historico_fitness,
           penalidades: this.resultado.penalidades,
@@ -1590,7 +1702,8 @@ export default {
         'colaboradores': 'Gerenciamento de Colaboradores',
         'cargos-habilidades': 'Gerenciamento de Cargos & Habilidades',
         'tribos-squads': 'Gerenciamento de Tribos & Squads',
-        'relatorios': 'Relatórios e Análises'
+        'relatorios': 'Relatórios e Análises',
+        'periodos-roadmaps' : 'Períodos de Roadmaps'
       }
       return titles[this.activeModule] || 'Sistema de Alocação'
     }

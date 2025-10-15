@@ -19,7 +19,7 @@
       </div>
       
       <div v-else-if="projetos.length === 0" class="p-8 text-center text-text-secondary">
-        Nenhum projeto encontrado
+        Nenhum projeto encontrado para o ano selecionado
       </div>
       
       <table v-else class="min-w-full divide-y divide-gray-200">
@@ -101,7 +101,7 @@
           <div class="space-y-4">
             <!-- Dados do Projeto -->
             <div class="grid grid-cols-12 gap-4">
-              <div class="col-span-5">
+              <div class="col-span-4">
                 <label class="block text-sm font-medium mb-1">Nome do Projeto</label>
                 <input 
                   v-model="form.nome" 
@@ -111,7 +111,7 @@
                 />
               </div>
               
-              <div class="col-span-3">
+              <div class="col-span-2">
                 <label class="block text-sm font-medium mb-1">Squad</label>
                 <select 
                   v-model="form.squad_id" 
@@ -125,7 +125,7 @@
                 </select>
               </div>
               
-              <div class="col-span-3">
+              <div class="col-span-5">
                 <label class="block text-sm font-medium mb-1">Deadline (Opcional)</label>
                 <input 
                   v-model="form.termino" 
@@ -349,6 +349,10 @@ export default {
     allProjetos: {
       type: Array,
       default: () => []
+    },
+    selectedYear: {
+      type: Number,
+      default: null
     }
   },
   components: {
@@ -384,10 +388,19 @@ export default {
   },
   computed: {
     projetos() {
-      if (this.selectedSquadId) {
-        return this.allProjetos.filter(p => p.squad_id === this.selectedSquadId)
+      if (this.selectedYear === null) {
+        return []
       }
-      return this.allProjetos
+      
+      let filtered = this.allProjetos
+      
+      if (this.selectedSquadId) {
+        filtered = filtered.filter(p => p.squad_id === this.selectedSquadId)
+      }
+      
+      filtered = filtered.filter(p => p.ano === this.selectedYear)
+      
+      return filtered
     },
     projetosOrdenados() {
       return [...this.projetos].sort((a, b) => a.nome.localeCompare(b.nome))
@@ -581,6 +594,7 @@ export default {
       try {
         const formData = {
           ...this.form,
+          ano: this.selectedYear,
           etapas: this.form.etapas.map((etapa, index) => {
             // Para projetos existentes, converter originalIndex para IDs reais
             // Para projetos novos, usar os originalIndex como referência de ordem

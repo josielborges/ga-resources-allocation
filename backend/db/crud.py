@@ -15,7 +15,7 @@ def get_projeto(db: Session, projeto_id: int):
     return db.query(models.Projeto).filter(models.Projeto.id == projeto_id).first()
 
 def create_projeto(db: Session, projeto: schemas.ProjetoCreate):
-    db_projeto = models.Projeto(nome=projeto.nome, color=projeto.color, termino=projeto.termino, squad_id=projeto.squad_id)
+    db_projeto = models.Projeto(nome=projeto.nome, color=projeto.color, termino=projeto.termino, squad_id=projeto.squad_id, ano=projeto.ano)
     db.add(db_projeto)
     db.commit()
     db.refresh(db_projeto)
@@ -65,6 +65,7 @@ def update_projeto(db: Session, projeto_id: int, projeto: schemas.ProjetoCreate)
     db_projeto.color = projeto.color
     db_projeto.termino = projeto.termino
     db_projeto.squad_id = projeto.squad_id
+    db_projeto.ano = projeto.ano
     
     etapas_existentes = db.query(models.Etapa).filter(models.Etapa.projeto_id == projeto_id).all()
     etapas_existentes_ordenadas = sorted(etapas_existentes, key=lambda e: e.ordem or 0)
@@ -370,8 +371,13 @@ def create_resultado_salvo(db: Session, resultado: schemas.ResultadoSalvoCreate)
     db.refresh(db_resultado)
     return db_resultado
 
-def get_resultados_salvos(db: Session) -> List[models.ResultadoSalvo]:
-    return db.query(models.ResultadoSalvo).order_by(models.ResultadoSalvo.data_execucao.desc()).all()
+def get_resultados_salvos(db: Session, squad_id: int = None, ano: int = None) -> List[models.ResultadoSalvo]:
+    query = db.query(models.ResultadoSalvo)
+    if squad_id is not None:
+        query = query.filter(models.ResultadoSalvo.squad_id == squad_id)
+    if ano is not None:
+        query = query.filter(models.ResultadoSalvo.ano == ano)
+    return query.order_by(models.ResultadoSalvo.data_execucao.desc()).all()
 
 def get_resultado_salvo(db: Session, resultado_id: int):
     return db.query(models.ResultadoSalvo).filter(models.ResultadoSalvo.id == resultado_id).first()
@@ -380,6 +386,39 @@ def delete_resultado_salvo(db: Session, resultado_id: int):
     db_resultado = db.query(models.ResultadoSalvo).filter(models.ResultadoSalvo.id == resultado_id).first()
     if db_resultado:
         db.delete(db_resultado)
+        db.commit()
+        return True
+    return False
+
+# CRUD Periodos Roadmaps
+def get_periodos_roadmaps(db: Session) -> List[models.PeriodoRoadmap]:
+    return db.query(models.PeriodoRoadmap).order_by(models.PeriodoRoadmap.ano.desc()).all()
+
+def get_periodo_roadmap(db: Session, periodo_id: int):
+    return db.query(models.PeriodoRoadmap).filter(models.PeriodoRoadmap.id == periodo_id).first()
+
+def create_periodo_roadmap(db: Session, periodo: schemas.PeriodoRoadmapCreate):
+    db_periodo = models.PeriodoRoadmap(**periodo.dict())
+    db.add(db_periodo)
+    db.commit()
+    db.refresh(db_periodo)
+    return db_periodo
+
+def update_periodo_roadmap(db: Session, periodo_id: int, periodo: schemas.PeriodoRoadmapCreate):
+    db_periodo = db.query(models.PeriodoRoadmap).filter(models.PeriodoRoadmap.id == periodo_id).first()
+    if not db_periodo:
+        return None
+    db_periodo.ano = periodo.ano
+    db_periodo.inicio = periodo.inicio
+    db_periodo.termino = periodo.termino
+    db.commit()
+    db.refresh(db_periodo)
+    return db_periodo
+
+def delete_periodo_roadmap(db: Session, periodo_id: int):
+    db_periodo = db.query(models.PeriodoRoadmap).filter(models.PeriodoRoadmap.id == periodo_id).first()
+    if db_periodo:
+        db.delete(db_periodo)
         db.commit()
         return True
     return False

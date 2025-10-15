@@ -90,6 +90,7 @@ class Projeto(Base):
     color = Column(String)
     termino = Column(Date, nullable=True)
     squad_id = Column(Integer, ForeignKey("squads.id", ondelete="RESTRICT"), nullable=True)
+    ano = Column(Integer, nullable=True)
     
     squad = relationship("Squad")
     etapas = relationship("Etapa", back_populates="projeto")
@@ -136,6 +137,7 @@ class ResultadoSalvo(Base):
     melhor_fitness = Column(Float)
     roadmap_end_date = Column(Date, nullable=True)
     squad_id = Column(Integer, ForeignKey("squads.id", ondelete="SET NULL"), nullable=True)
+    ano = Column(Integer, nullable=True)
     tarefas = Column(JSON)
     historico_fitness = Column(JSON)
     penalidades = Column(JSON)
@@ -143,3 +145,11 @@ class ResultadoSalvo(Base):
     parametros = Column(JSON)
     
     squad = relationship("Squad")
+
+class PeriodoRoadmap(Base):
+    __tablename__ = "periodos_roadmaps"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    ano = Column(Integer, nullable=False, unique=True, index=True)
+    inicio = Column(Date, nullable=False)
+    termino = Column(Date, nullable=False)

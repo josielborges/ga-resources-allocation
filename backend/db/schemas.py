@@ -117,6 +117,7 @@ class ProjetoBase(BaseModel):
     color: str
     termino: Optional[date] = None
     squad_id: Optional[int] = None
+    ano: Optional[int] = None
 
 class ProjetoCreate(ProjetoBase):
     etapas: List[EtapaCreate] = []
@@ -138,6 +139,7 @@ class ResultadoSalvoBase(BaseModel):
     melhor_fitness: float
     roadmap_end_date: Optional[date] = None
     squad_id: Optional[int] = None
+    ano: Optional[int] = None
     tarefas: List[Dict[str, Any]]
     historico_fitness: List[float]
     penalidades: Dict[str, Any]
@@ -151,6 +153,20 @@ class ResultadoSalvo(ResultadoSalvoBase):
     id: int
     data_execucao: datetime
     squad: Optional[Squad] = None
+    
+    class Config:
+        from_attributes = True
+
+class PeriodoRoadmapBase(BaseModel):
+    ano: int
+    inicio: date
+    termino: date
+
+class PeriodoRoadmapCreate(PeriodoRoadmapBase):
+    pass
+
+class PeriodoRoadmap(PeriodoRoadmapBase):
+    id: int
     
     class Config:
         from_attributes = True

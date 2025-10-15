@@ -282,8 +282,8 @@ async def salvar_resultado(resultado: schemas.ResultadoSalvoCreate, db: Session 
     return crud.create_resultado_salvo(db, resultado)
 
 @app.get("/api/resultados-salvos", response_model=List[schemas.ResultadoSalvo])
-async def listar_resultados_salvos(db: Session = Depends(get_db)):
-    return crud.get_resultados_salvos(db)
+async def listar_resultados_salvos(squad_id: int = None, ano: int = None, db: Session = Depends(get_db)):
+    return crud.get_resultados_salvos(db, squad_id, ano)
 
 @app.get("/api/resultados-salvos/{resultado_id}", response_model=schemas.ResultadoSalvo)
 async def obter_resultado_salvo(resultado_id: int, db: Session = Depends(get_db)):
@@ -297,6 +297,28 @@ async def deletar_resultado_salvo(resultado_id: int, db: Session = Depends(get_d
     if not crud.delete_resultado_salvo(db, resultado_id):
         raise HTTPException(status_code=404, detail="Resultado não encontrado")
     return {"message": "Resultado deletado com sucesso"}
+
+# CRUD Periodos Roadmaps
+@app.get("/api/periodos-roadmaps", response_model=List[schemas.PeriodoRoadmap])
+async def get_periodos_roadmaps(db: Session = Depends(get_db)):
+    return crud.get_periodos_roadmaps(db)
+
+@app.post("/api/periodos-roadmaps", response_model=schemas.PeriodoRoadmap)
+async def create_periodo_roadmap(periodo: schemas.PeriodoRoadmapCreate, db: Session = Depends(get_db)):
+    return crud.create_periodo_roadmap(db, periodo)
+
+@app.put("/api/periodos-roadmaps/{periodo_id}", response_model=schemas.PeriodoRoadmap)
+async def update_periodo_roadmap(periodo_id: int, periodo: schemas.PeriodoRoadmapCreate, db: Session = Depends(get_db)):
+    updated_periodo = crud.update_periodo_roadmap(db, periodo_id, periodo)
+    if not updated_periodo:
+        raise HTTPException(status_code=404, detail="Período não encontrado")
+    return updated_periodo
+
+@app.delete("/api/periodos-roadmaps/{periodo_id}")
+async def delete_periodo_roadmap(periodo_id: int, db: Session = Depends(get_db)):
+    if not crud.delete_periodo_roadmap(db, periodo_id):
+        raise HTTPException(status_code=404, detail="Período não encontrado")
+    return {"message": "Período deletado com sucesso"}
 
 if __name__ == "__main__":
     import uvicorn
