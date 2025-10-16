@@ -1,6 +1,7 @@
 import random
 import math
-from typing import List, Dict, Tuple
+import asyncio
+from typing import List, Dict, Tuple, AsyncGenerator
 from algorithm.evaluator import SolutionEvaluator
 from algorithm.scheduler import TaskScheduler
 
@@ -162,6 +163,57 @@ class AntColonyOptimization:
                         improved_solution[i] = original_collab
         
         return improved_solution
+    
+    async def run_with_progress(self, num_ants: int, max_iterations: int, tasks: List[Dict], 
+           collaborators: List[Dict], project_deadlines: Dict[str, int] = None) -> AsyncGenerator[Dict, None]:
+        num_tasks = len(tasks)
+        collaborator_ids = [c["id"] for c in collaborators]
+        pheromones = self.initialize_pheromones(num_tasks, collaborator_ids)
+        
+        best_solution = None
+        best_fitness = float("inf")
+        best_penalties = {}
+        best_violations = {}
+        
+        for iteration in range(max_iterations):
+            solutions, fitnesses, penalties_list, violations_list = [], [], [], []
+            
+            for ant in range(num_ants):
+                solution = self.construct_solution(tasks, collaborators, pheromones)
+                local_search_prob = 0.5 * (1.0 - iteration / max_iterations)
+                if random.random() < local_search_prob:
+                    solution = self.local_search(solution, tasks, collaborators, project_deadlines)
+                
+                fitness, penalties, violations = self.evaluator.evaluate(solution, tasks, collaborators, project_deadlines)
+                solutions.append(solution)
+                fitnesses.append(fitness)
+                penalties_list.append(penalties)
+                violations_list.append(violations)
+                
+                if fitness < best_fitness:
+                    best_fitness = fitness
+                    best_solution = solution[:]
+                    best_penalties = penalties
+                    best_violations = violations
+            
+            self.update_pheromones(pheromones, solutions, fitnesses, tasks)
+            
+            yield {
+                "type": "progress",
+                "generation": iteration + 1,
+                "total_generations": max_iterations,
+                "best_fitness": best_fitness,
+                "progress_percent": round((iteration + 1) / max_iterations * 100, 1)
+            }
+            await asyncio.sleep(0)
+        
+        yield {
+            "type": "complete",
+            "best_solution": best_solution,
+            "best_fitness": best_fitness,
+            "best_penalties": best_penalties,
+            "best_violations": best_violations
+        }
     
     def run(self, num_ants: int, max_iterations: int, tasks: List[Dict], 
            collaborators: List[Dict], project_deadlines: Dict[str, int] = None) -> Tuple[List[int], float, List[float], Dict, Dict]:

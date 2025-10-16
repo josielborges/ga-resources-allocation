@@ -1,12 +1,13 @@
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 import json
 import datetime
 from typing import List, Dict, Any
 from models import *
-from services.algorithm_service import AlgorithmService
+from services.ga_service import AlgorithmService
 from services.aco_service import ACOService
 from algorithm_comparison import AlgorithmComparison
 from utils.config import lifespan, settings
@@ -206,6 +207,36 @@ async def delete_colaborador(colaborador_id: int, db: Session = Depends(get_db))
         raise HTTPException(status_code=404, detail="Colaborador não encontrado")
     return {"message": "Colaborador deletado com sucesso"}
 
+@app.post("/api/executar-algoritmo-stream")
+async def executar_algoritmo_stream(params: AlgoritmoParams, db: Session = Depends(get_db)):
+    async def event_generator():
+        try:
+            async for event in algorithm_service.execute_algorithm_stream(
+                {
+                    "ref_date": params.ref_date,
+                    "tam_pop": params.tam_pop,
+                    "n_gen": params.n_gen,
+                    "pc": params.pc,
+                    "pm": params.pm,
+                    "projeto_ids": params.projeto_ids,
+                    "colaborador_ids": params.colaborador_ids,
+                    "simulated_members": [m.dict() for m in params.simulated_members] if params.simulated_members else []
+                }, 
+                db
+            ):
+                yield f"data: {json.dumps(event)}\n\n"
+        except Exception as e:
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+    
+    return StreamingResponse(
+        event_generator(), 
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no"
+        }
+    )
+
 @app.post("/api/executar-algoritmo")
 async def executar_algoritmo(params: AlgoritmoParams, db: Session = Depends(get_db)):
     try:
@@ -233,6 +264,38 @@ async def executar_algoritmo(params: AlgoritmoParams, db: Session = Depends(get_
         print(f"Error in executar_algoritmo: {str(e)}")
         print(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/executar-aco-stream")
+async def executar_aco_stream(params: AlgoritmoParams, db: Session = Depends(get_db)):
+    async def event_generator():
+        try:
+            async for event in aco_service.execute_algorithm_stream(
+                {
+                    "ref_date": params.ref_date,
+                    "tam_pop": params.tam_pop,
+                    "n_gen": params.n_gen,
+                    "alpha": getattr(params, 'alpha', 1.0),
+                    "beta": getattr(params, 'beta', 2.0),
+                    "rho": getattr(params, 'rho', 0.5),
+                    "q0": getattr(params, 'q0', 0.9),
+                    "projeto_ids": params.projeto_ids,
+                    "colaborador_ids": params.colaborador_ids,
+                    "simulated_members": [m.dict() for m in params.simulated_members] if params.simulated_members else []
+                },
+                db
+            ):
+                yield f"data: {json.dumps(event)}\n\n"
+        except Exception as e:
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+    
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no"
+        }
+    )
 
 @app.post("/api/executar-aco")
 async def executar_aco(params: AlgoritmoParams, db: Session = Depends(get_db)):

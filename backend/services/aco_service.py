@@ -1,5 +1,6 @@
 import datetime
-from typing import List, Dict, Tuple
+import asyncio
+from typing import List, Dict, Tuple, AsyncGenerator
 from sqlalchemy.orm import Session
 from ant_colony_optimization import AntColonyOptimization
 from algorithm.scheduler import TaskScheduler
@@ -135,6 +136,48 @@ class ACOService:
                             queue.append(etapa_check["id"])
         
         return all_tasks
+    
+    async def execute_algorithm_stream(self, params: Dict, db: Session) -> AsyncGenerator[Dict, None]:
+        colaboradores, projetos = self.load_data_from_db(
+            db,
+            colaborador_ids=params.get("colaborador_ids"),
+            projeto_ids=params.get("projeto_ids")
+        )
+        
+        simulated_members = params.get("simulated_members", [])
+        for sim_member in simulated_members:
+            cargo = crud.get_cargo(db, sim_member["cargo_id"])
+            colaboradores.append({
+                "id": f"sim_{sim_member['nome']}",
+                "nome": sim_member["nome"],
+                "cargo": cargo.nome if cargo else "Unknown",
+                "habilidades": sim_member.get("habilidade_names", []),
+                "ausencias": []
+            })
+        
+        ref_date = datetime.datetime.strptime(params["ref_date"], "%Y-%m-%d").date()
+        colaboradores = self.convert_absences(colaboradores, ref_date)
+        tarefas_globais = self.build_global_tasks(projetos)
+        
+        project_deadlines = {}
+        for proj in projetos:
+            if proj.get("termino"):
+                delta = proj["termino"] - ref_date
+                project_deadlines[proj["nome"]] = delta.days
+        
+        alpha = params.get("alpha", 0.5)
+        beta = params.get("beta", 3.0)
+        rho = params.get("rho", 0.05)
+        q0 = params.get("q0", 0.5)
+        self.aco = AntColonyOptimization(alpha=alpha, beta=beta, rho=rho, q0=q0)
+        
+        num_ants = params.get("tam_pop", 50)
+        max_iterations = params.get("n_gen", 100)
+        
+        async for progress in self.aco.run_with_progress(
+            num_ants, max_iterations, tarefas_globais, colaboradores, project_deadlines
+        ):
+            yield progress
     
     def execute_algorithm(self, params: Dict, db: Session) -> Dict:
         """Execute ACO algorithm with given parameters"""

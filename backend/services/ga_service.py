@@ -1,5 +1,6 @@
 import datetime
-from typing import List, Dict, Tuple
+import asyncio
+from typing import List, Dict, Tuple, AsyncGenerator
 from sqlalchemy.orm import Session
 from genetic_algorithm import GeneticAlgorithm, Utils
 from algorithm.scheduler import TaskScheduler
@@ -169,6 +170,43 @@ class AlgorithmService:
             tarefas_globais.extend(level_tasks)
         
         return tarefas_globais
+    
+    async def execute_algorithm_stream(self, params: Dict, db: Session) -> AsyncGenerator[Dict, None]:
+        """Execute genetic algorithm with progress streaming"""
+        colaboradores, projetos = self.load_data_from_db(
+            db, 
+            colaborador_ids=params.get("colaborador_ids"),
+            projeto_ids=params.get("projeto_ids")
+        )
+        
+        # Add simulated members
+        simulated_members = params.get("simulated_members", [])
+        for sim_member in simulated_members:
+            cargo = crud.get_cargo(db, sim_member["cargo_id"])
+            colaboradores.append({
+                "id": f"sim_{sim_member['nome']}",
+                "nome": sim_member["nome"],
+                "cargo": cargo.nome if cargo else "Unknown",
+                "habilidades": sim_member.get("habilidade_names", []),
+                "ausencias": []
+            })
+        
+        ref_date = datetime.datetime.strptime(params["ref_date"], "%Y-%m-%d").date()
+        colaboradores = self.convert_absences(colaboradores, ref_date)
+        tarefas_globais = self.build_global_tasks(projetos)
+        
+        project_deadlines = {}
+        for proj in projetos:
+            if proj.get("termino"):
+                delta = proj["termino"] - ref_date
+                project_deadlines[proj["nome"]] = delta.days
+        
+        # Run GA with progress callback
+        async for progress in self.ga.run_with_progress(
+            params["tam_pop"], params["n_gen"], params["pc"], params["pm"], 
+            tarefas_globais, colaboradores, project_deadlines
+        ):
+            yield progress
     
     def execute_algorithm(self, params: Dict, db: Session) -> Dict:
         """Execute genetic algorithm with given parameters"""

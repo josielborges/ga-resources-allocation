@@ -106,7 +106,6 @@ class SolutionEvaluator:
                     penalties["work_period_violation"] += violation.penalty
                     violations_details["work_period_violation"].append(violation.details)
                 elif violation.type == "vacation_conflict":
-                    print(f"  *** ADDING PENALTY: {violation.penalty} (total now: {penalties['vacation_conflict'] + violation.penalty}) ***")
                     penalties["vacation_conflict"] += violation.penalty
                     violations_details["vacation_conflict"].append(violation.details)
                 else:  # absence_conflict

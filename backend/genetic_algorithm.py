@@ -1,6 +1,7 @@
 import datetime
 import random
-from typing import List, Dict, Tuple
+import asyncio
+from typing import List, Dict, Tuple, AsyncGenerator
 from algorithm.evaluator import SolutionEvaluator
 from algorithm.scheduler import TaskScheduler
 
@@ -60,6 +61,73 @@ class GeneticAlgorithm:
                 else:
                     individual[i] = random.choice(collaborator_ids)
         return individual
+    
+    async def run_with_progress(self, pop_size: int, generations: int, crossover_prob: float, 
+           mutation_prob: float, tasks: List[Dict], 
+           collaborators: List[Dict], project_deadlines: Dict[str, int] = None) -> AsyncGenerator[Dict, None]:
+        
+        num_tasks = len(tasks)
+        collaborator_ids = [c["id"] for c in collaborators]
+        population = self.create_initial_population(pop_size, num_tasks, collaborator_ids)
+        
+        best_solution = None
+        best_fitness = float("inf")
+        best_penalties = {}
+        best_violations = {}
+        
+        for generation in range(generations):
+            evaluations = [self.evaluator.evaluate(ind, tasks, collaborators, project_deadlines) 
+                         for ind in population]
+            fitnesses = [eval_result[0] for eval_result in evaluations]
+            penalties = [eval_result[1] for eval_result in evaluations]
+            violations = [eval_result[2] for eval_result in evaluations]
+            
+            for i, fitness in enumerate(fitnesses):
+                if fitness < best_fitness:
+                    best_fitness = fitness
+                    best_solution = population[i][:]
+                    best_penalties = penalties[i]
+                    best_violations = violations[i]
+            
+            # Yield progress
+            yield {
+                "type": "progress",
+                "generation": generation + 1,
+                "total_generations": generations,
+                "best_fitness": best_fitness,
+                "progress_percent": round((generation + 1) / generations * 100, 1)
+            }
+            await asyncio.sleep(0)
+            
+            new_population = []
+            while len(new_population) < pop_size:
+                parent1_idx = self.tournament_selection(population, fitnesses)
+                parent2_idx = self.tournament_selection(population, fitnesses)
+                parent1 = population[parent1_idx]
+                parent2 = population[parent2_idx]
+                
+                if random.random() < crossover_prob:
+                    child1, child2 = self.crossover(parent1, parent2)
+                else:
+                    child1, child2 = parent1[:], parent2[:]
+                
+                if random.random() < mutation_prob:
+                    child1 = self.mutate(child1, collaborator_ids)
+                if random.random() < mutation_prob:
+                    child2 = self.mutate(child2, collaborator_ids)
+                
+                new_population.extend([child1, child2])
+            
+            population = new_population[:pop_size]
+        
+        # Final result
+        yield {
+            "type": "complete",
+            "best_solution": best_solution,
+            "best_fitness": best_fitness,
+            "best_penalties": best_penalties,
+            "best_violations": best_violations
+        }
     
     def run(self, pop_size: int, generations: int, crossover_prob: float, 
            mutation_prob: float, tasks: List[Dict], 

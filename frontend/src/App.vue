@@ -1114,6 +1114,17 @@
         </div>
       </div>
     </div>
+    
+    <!-- Progress Bar -->
+    <ProgressBar 
+      :show="showProgress"
+      :title="params.algorithm === 'ga' ? 'Executando Algoritmo Genético' : 'Executando Colônia de Formigas'"
+      :current="progressData.current"
+      :total="progressData.total"
+      :percent="progressData.percent"
+      :fitness="progressData.fitness"
+      :loading="progressLoading"
+    />
   </div>
 </template>
 
@@ -1133,6 +1144,7 @@ import TribosSquadsCrud from './components/TribosSquadsCrud.vue'
 import PeriodosRoadmapsCrud from './components/PeriodosRoadmapsCrud.vue'
 import ConfirmModal from './components/ConfirmModal.vue'
 import SquadSelector from './components/SquadSelector.vue'
+import ProgressBar from './components/ProgressBar.vue'
 
 export default {
   name: 'App',
@@ -1150,6 +1162,7 @@ export default {
     PeriodosRoadmapsCrud,
     ConfirmModal,
     SquadSelector,
+    ProgressBar,
     CpuChipIcon,
     FolderIcon,
     UserGroupIcon,
@@ -1245,7 +1258,10 @@ export default {
         { name: 'mapa', label: 'Mapa de Alocação' },
         { name: 'comparacao', label: 'Comparação' }
       ],
-      comparacaoResultado: null
+      comparacaoResultado: null,
+      showProgress: false,
+      progressData: { current: 0, total: 100, percent: 0, fitness: 0 },
+      progressLoading: false
     }
   },
   computed: {
@@ -1514,11 +1530,12 @@ export default {
     async executarAlgoritmo() {
       this.showSelectionModal = false
       this.loading = true
+      this.showProgress = true
+      this.progressData = { current: 0, total: 1, percent: 0, fitness: 0 }
+      
       try {
-        // Reload data to get latest collaborators
         await this.carregarDados()
         
-        const endpoint = this.params.algorithm === 'aco' ? '/api/executar-aco' : '/api/executar-algoritmo'
         const payload = {
           ...this.params,
           projeto_ids: this.selectedProjects,
@@ -1529,13 +1546,63 @@ export default {
             habilidade_names: m.habilidades.map(h => h.nome)
           }))
         }
-        const response = await axios.post(endpoint, payload)
-        this.resultado = response.data
-        this.activeTab = 'gantt'
-        console.log(`${this.params.algorithm.toUpperCase()} executado com sucesso!`)
+        
+        // Use streaming endpoint for both GA and ACO
+        const streamEndpoint = this.params.algorithm === 'ga' ? '/api/executar-algoritmo-stream' : '/api/executar-aco-stream'
+        const regularEndpoint = this.params.algorithm === 'ga' ? '/api/executar-algoritmo' : '/api/executar-aco'
+        
+        const response = await fetch(streamEndpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        })
+        
+        const reader = response.body.getReader()
+        const decoder = new TextDecoder()
+        let buffer = ''
+        
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+          
+          buffer += decoder.decode(value, { stream: true })
+          const lines = buffer.split('\n')
+          buffer = lines.pop()
+          
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = JSON.parse(line.slice(6))
+              
+              if (data.error) {
+                console.error('Erro:', data.error)
+                this.showProgress = false
+                this.loading = false
+                return
+              }
+              
+              if (data.type === 'progress') {
+                this.progressData.current = data.generation
+                this.progressData.total = data.total_generations
+                this.progressData.fitness = data.best_fitness
+              } else if (data.type === 'complete') {
+                // Show loading state
+                this.progressLoading = true
+                // Get full result from regular endpoint
+                const finalResponse = await axios.post(regularEndpoint, payload)
+                this.resultado = finalResponse.data
+                this.showProgress = false
+                this.progressLoading = false
+                this.loading = false
+                this.activeTab = 'gantt'
+                console.log(`${this.params.algorithm.toUpperCase()} executado com sucesso!`)
+                return
+              }
+            }
+          }
+        }
       } catch (error) {
         console.error('Erro ao executar algoritmo')
-      } finally {
+        this.showProgress = false
         this.loading = false
       }
     },
