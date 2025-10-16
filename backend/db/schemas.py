@@ -67,8 +67,24 @@ class Ausencia(AusenciaBase):
     class Config:
         from_attributes = True
 
+class FeriasBase(BaseModel):
+    inicio: date
+    termino: date
+
+class FeriasCreate(FeriasBase):
+    colaborador_id: int
+
+class Ferias(FeriasBase):
+    id: int
+    colaborador_id: int
+    
+    class Config:
+        from_attributes = True
+
 class ColaboradorBase(BaseModel):
     nome: str
+    inicio: Optional[date] = None
+    termino: Optional[date] = None
 
 class ColaboradorCreate(ColaboradorBase):
     cargo_id: int
@@ -77,6 +93,7 @@ class ColaboradorCreate(ColaboradorBase):
     ativo: bool = True
     habilidades_ids: List[int] = []
     ausencias: List[dict] = []
+    ferias: List[dict] = []
 
 class Colaborador(ColaboradorBase):
     id: int
@@ -86,6 +103,7 @@ class Colaborador(ColaboradorBase):
     ativo: bool = True
     habilidades: List[Habilidade] = []
     ausencias: List[Ausencia] = []
+    ferias: List[Ferias] = []
     
     class Config:
         from_attributes = True

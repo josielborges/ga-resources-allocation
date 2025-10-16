@@ -19,7 +19,9 @@ class ConstraintValidator:
         "makespan": 200,
         "resource_idle_time": 100,
         "bottleneck_delay": 300,
-        "deadline_violation": 1000
+        "deadline_violation": 1000,
+        "work_period_violation": 5000,
+        "vacation_conflict": 2000
     }
     
     @classmethod
@@ -60,8 +62,34 @@ class ConstraintValidator:
         return violations
     
     @classmethod
-    def validate_availability(cls, collaborator: Dict, start_day: int, end_day: int) -> List[ConstraintViolation]:
+    def validate_availability(cls, collaborator: Dict, start_day: int, end_day: int, task: Dict = None) -> List[ConstraintViolation]:
         violations = []
+        
+        # Check work period
+        inicio = collaborator.get("inicio")
+        termino = collaborator.get("termino")
+        if inicio is not None and inicio > 0 and start_day < inicio:
+            violations.append(ConstraintViolation(
+                type="work_period_violation",
+                penalty=cls.PENALTIES["work_period_violation"],
+                details={
+                    "colaborador": collaborator["nome"],
+                    "dia_inicio_tarefa": start_day,
+                    "dia_inicio_trabalho": inicio
+                }
+            ))
+        if termino is not None and termino > 0 and end_day > termino:
+            violations.append(ConstraintViolation(
+                type="work_period_violation",
+                penalty=cls.PENALTIES["work_period_violation"],
+                details={
+                    "colaborador": collaborator["nome"],
+                    "dia_fim_tarefa": end_day,
+                    "dia_fim_trabalho": termino
+                }
+            ))
+        
+        # Check absences
         for day in range(start_day, end_day):
             if day in collaborator["ausencias"]:
                 violations.append(ConstraintViolation(
@@ -73,6 +101,33 @@ class ConstraintValidator:
                     }
                 ))
                 break
+        
+        # Check vacations
+        ferias_list = collaborator.get("ferias", [])
+        
+        for ferias in ferias_list:
+            ferias_inicio, ferias_fim = ferias
+            # Check if task overlaps with vacation period
+            if start_day < ferias_fim and end_day > ferias_inicio:
+                overlap_days = min(end_day, ferias_fim) - max(start_day, ferias_inicio)
+                penalty_value = cls.PENALTIES["vacation_conflict"] * overlap_days
+                details = {
+                    "colaborador": collaborator["nome"],
+                    "ferias_inicio": ferias_inicio,
+                    "ferias_fim": ferias_fim,
+                    "dias_sobrepostos": overlap_days,
+                    "tarefa_inicio": start_day,
+                    "tarefa_fim": end_day
+                }
+                if task:
+                    details["projeto"] = task.get("projeto", "")
+                    details["tarefa"] = task.get("nome", "")
+                violations.append(ConstraintViolation(
+                    type="vacation_conflict",
+                    penalty=penalty_value,
+                    details=details
+                ))
+        
         return violations
     
     @classmethod

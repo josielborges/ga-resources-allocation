@@ -432,6 +432,26 @@
               </div>
             </div>
             
+            <!-- Work Period -->
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm font-medium text-text-primary mb-1">Início do Trabalho</label>
+                <input 
+                  v-model="form.inicio" 
+                  type="date"
+                  class="w-full px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-main"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-text-primary mb-1">Término do Trabalho</label>
+                <input 
+                  v-model="form.termino" 
+                  type="date"
+                  class="w-full px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-main"
+                />
+              </div>
+            </div>
+            
             <!-- Habilidades -->
             <div>
               <label class="block text-sm font-medium text-text-primary mb-1">Habilidades ({{ form.habilidades_ids.length }} selecionadas)</label>
@@ -451,6 +471,48 @@
                       </span>
                     </div>
                   </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Férias -->
+            <div>
+              <div class="flex justify-between items-center mb-2">
+                <label class="block text-sm font-medium text-text-primary">Férias</label>
+                <button 
+                  type="button" 
+                  @click="adicionarFerias" 
+                  class="text-primary-main hover:text-primary-light text-xs font-medium"
+                >
+                  + Adicionar
+                </button>
+              </div>
+              <div class="space-y-1.5">
+                <div v-for="(ferias, index) in form.ferias" :key="index" class="flex items-center space-x-2">
+                  <input 
+                    v-model="ferias.inicio" 
+                    type="date" 
+                    required
+                    placeholder="Início"
+                    class="flex-1 px-2 py-1.5 border border-gray-300 rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-primary-main"
+                  />
+                  <input 
+                    v-model="ferias.termino" 
+                    type="date" 
+                    required
+                    placeholder="Término"
+                    class="flex-1 px-2 py-1.5 border border-gray-300 rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-primary-main"
+                  />
+                  <button 
+                    type="button" 
+                    @click="removerFerias(index)" 
+                    class="text-red-500 hover:text-red-700 p-0.5"
+                    title="Remover"
+                  >
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                  </button>
                 </div>
               </div>
             </div>
@@ -543,6 +605,18 @@ export default {
     allColaboradores: {
       type: Array,
       default: () => []
+    },
+    selectedYear: {
+      type: Number,
+      default: null
+    },
+    yearStartDate: {
+      type: String,
+      default: null
+    },
+    yearEndDate: {
+      type: String,
+      default: null
     }
   },
   data() {
@@ -561,7 +635,10 @@ export default {
         transversal: false,
         ativo: true,
         habilidades_ids: [],
-        ausencias: []
+        ausencias: [],
+        ferias: [],
+        inicio: null,
+        termino: null
       },
       showConfirmModal: false,
       itemParaExcluir: null,
@@ -663,9 +740,26 @@ export default {
           transversal: colaborador.transversal || false,
           ativo: colaborador.ativo !== undefined ? colaborador.ativo : true,
           habilidades_ids: colaborador.habilidades.map(h => h.id),
-          ausencias: colaborador.ausencias.map(a => ({ data: a.data }))
+          ausencias: colaborador.ausencias.map(a => ({ data: a.data })),
+          ferias: colaborador.ferias?.map(f => ({ inicio: f.inicio, termino: f.termino })) || [],
+          inicio: colaborador.inicio || null,
+          termino: colaborador.termino || null
         }
       } else {
+        // Format dates properly for date input (YYYY-MM-DD)
+        let inicioDefault = null
+        let terminoDefault = null
+        
+        if (this.yearStartDate) {
+          const startDate = new Date(this.yearStartDate)
+          inicioDefault = startDate.toISOString().split('T')[0]
+        }
+        
+        if (this.yearEndDate) {
+          const endDate = new Date(this.yearEndDate)
+          terminoDefault = endDate.toISOString().split('T')[0]
+        }
+        
         this.form = {
           nome: '',
           cargo_id: '',
@@ -673,7 +767,10 @@ export default {
           transversal: false,
           ativo: true,
           habilidades_ids: [],
-          ausencias: []
+          ausencias: [],
+          ferias: [],
+          inicio: inicioDefault,
+          termino: terminoDefault
         }
       }
       this.showModal = true
@@ -690,6 +787,14 @@ export default {
     
     removerAusencia(index) {
       this.form.ausencias.splice(index, 1)
+    },
+    
+    adicionarFerias() {
+      this.form.ferias.push({ inicio: '', termino: '' })
+    },
+    
+    removerFerias(index) {
+      this.form.ferias.splice(index, 1)
     },
     
     async salvarColaborador() {
@@ -776,7 +881,10 @@ export default {
           transversal: colaborador.transversal || false,
           ativo: colaborador.ativo,
           habilidades_ids: colaborador.habilidades.map(h => h.id),
-          ausencias: colaborador.ausencias.map(a => ({ data: a.data }))
+          ausencias: colaborador.ausencias.map(a => ({ data: a.data })),
+          ferias: colaborador.ferias?.map(f => ({ inicio: f.inicio, termino: f.termino })) || [],
+          inicio: colaborador.inicio || null,
+          termino: colaborador.termino || null
         }
         await axios.put(`/api/colaboradores/${colaborador.id}`, updatedData)
       } catch (error) {

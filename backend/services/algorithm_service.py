@@ -30,7 +30,10 @@ class AlgorithmService:
                 "nome": colab.nome,
                 "cargo": colab.cargo.nome,
                 "habilidades": [h.nome for h in colab.habilidades],
-                "ausencias": [a.data.strftime("%Y-%m-%d") for a in colab.ausencias]
+                "ausencias": [a.data.strftime("%Y-%m-%d") for a in colab.ausencias],
+                "inicio": colab.inicio,
+                "termino": colab.termino,
+                "ferias": [(f.inicio, f.termino) for f in colab.ferias]
             })
         
         projetos = []
@@ -56,13 +59,29 @@ class AlgorithmService:
         return colaboradores, projetos
     
     def convert_absences(self, colaboradores: List[Dict], ref_date: datetime.date) -> List[Dict]:
-        """Convert absence dates to integer days"""
+        """Convert absence dates, work period, and vacation dates to integer days"""
         for colab in colaboradores:
             ausencias_convertidas = []
             for data_str in colab["ausencias"]:
                 dia_int = Utils.date_to_int(data_str, ref_date)
                 ausencias_convertidas.append(dia_int)
             colab["ausencias"] = ausencias_convertidas
+            
+            # Convert work period
+            if colab.get("inicio"):
+                colab["inicio"] = (colab["inicio"] - ref_date).days
+            if colab.get("termino"):
+                colab["termino"] = (colab["termino"] - ref_date).days
+            
+            # Convert vacation periods
+            ferias_convertidas = []
+            for inicio, termino in colab.get("ferias", []):
+                inicio_dias = (inicio - ref_date).days
+                termino_dias = (termino - ref_date).days
+                ferias_convertidas.append((inicio_dias, termino_dias))
+                print(f"DEBUG: {colab['nome']} vacation: {inicio} to {termino} = days {inicio_dias} to {termino_dias} (ref={ref_date})")
+            colab["ferias"] = ferias_convertidas
+        
         return colaboradores
     
     def build_global_tasks(self, projetos: List[Dict]) -> List[Dict]:
@@ -194,30 +213,65 @@ class AlgorithmService:
             best_solution, tarefas_globais, colaboradores, ref_date
         )
         
-        # Recalculate deadline violations from the actual schedule
+        # Validate actual schedule with real day numbers
         from algorithm.constraints import ConstraintValidator
         validator = ConstraintValidator()
         
-        # Find actual project completion days from schedule
-        project_completion = {}
+        final_penalties = {
+            "habilidades_incorretas": 0,
+            "cargo_incorreto": 0,
+            "ausencias": 0,
+            "sobreposicoes_colaborador": 0,
+            "resource_idle_time": 0,
+            "gaps_projeto": 0,
+            "makespan": 0,
+            "deadline_violation": 0,
+            "work_period_violation": 0,
+            "vacation_conflict": 0
+        }
+        final_violations = {
+            "habilidades_incorretas": [],
+            "cargo_incorreto": [],
+            "ausencias": [],
+            "sobreposicoes_colaborador": [],
+            "resource_idle_time": [],
+            "gaps_projeto": [],
+            "deadline_violation": [],
+            "work_period_violation": [],
+            "vacation_conflict": []
+        }
+        
         for task_schedule in schedule:
-            project = task_schedule["projeto"]
-            end_day = task_schedule["fim_dias"]
-            project_completion[project] = max(project_completion.get(project, 0), end_day)
+            task = next((t for t in tarefas_globais if t["projeto"] == task_schedule["projeto"] and t["nome"] == task_schedule["nome_tarefa"]), None)
+            if not task:
+                continue
+            
+            collaborator = next(c for c in colaboradores if c["nome"] == task_schedule["colaborador"])
+            start_day = task_schedule["inicio_dias"]
+            end_day = task_schedule["fim_dias"] + 1
+            
+            skill_violations = validator.validate_skills(task, collaborator)
+            for v in skill_violations:
+                final_penalties["habilidades_incorretas"] += v.penalty
+                final_violations["habilidades_incorretas"].append(v.details)
+            
+            position_violations = validator.validate_position(task, collaborator)
+            for v in position_violations:
+                final_penalties["cargo_incorreto"] += v.penalty
+                final_violations["cargo_incorreto"].append(v.details)
+            
+            availability_violations = validator.validate_availability(collaborator, start_day, end_day, task)
+            for v in availability_violations:
+                if v.type == "vacation_conflict":
+                    final_penalties["vacation_conflict"] += v.penalty
+                    final_violations["vacation_conflict"].append(v.details)
+                elif v.type == "work_period_violation":
+                    final_penalties["work_period_violation"] += v.penalty
+                    final_violations["work_period_violation"].append(v.details)
+                elif v.type == "absence_conflict":
+                    final_penalties["ausencias"] += v.penalty
+                    final_violations["ausencias"].append(v.details)
         
-        # Recalculate deadline violations
-        final_penalties = dict(penalties)
-        final_violations = {k: list(v) for k, v in violations.items()}
-        final_penalties["deadline_violation"] = 0
-        final_violations["deadline_violation"] = []
-        
-        for project_name, deadline_day in project_deadlines.items():
-            if project_name in project_completion:
-                actual_end = project_completion[project_name]
-                deadline_violations = validator.validate_deadline(project_name, actual_end, deadline_day)
-                for violation in deadline_violations:
-                    final_penalties["deadline_violation"] += violation.penalty
-                    final_violations["deadline_violation"].append(violation.details)
         
         return {
             "tarefas": schedule,

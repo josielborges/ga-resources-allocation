@@ -229,6 +229,9 @@ async def executar_algoritmo(params: AlgoritmoParams, db: Session = Depends(get_
         )
         
     except Exception as e:
+        import traceback
+        print(f"Error in executar_algoritmo: {str(e)}")
+        print(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/executar-aco")
@@ -238,8 +241,10 @@ async def executar_aco(params: AlgoritmoParams, db: Session = Depends(get_db)):
             "ref_date": params.ref_date,
             "tam_pop": params.tam_pop,
             "n_gen": params.n_gen,
-            "pc": params.pc,
-            "pm": params.pm,
+            "alpha": getattr(params, 'alpha', 1.0),
+            "beta": getattr(params, 'beta', 2.0),
+            "rho": getattr(params, 'rho', 0.5),
+            "q0": getattr(params, 'q0', 0.9),
             "projeto_ids": params.projeto_ids,
             "colaborador_ids": params.colaborador_ids,
             "simulated_members": [m.dict() for m in params.simulated_members] if params.simulated_members else []
@@ -254,6 +259,9 @@ async def executar_aco(params: AlgoritmoParams, db: Session = Depends(get_db)):
         )
         
     except Exception as e:
+        import traceback
+        print(f"Error in executar_aco: {str(e)}")
+        print(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/comparar-algoritmos")

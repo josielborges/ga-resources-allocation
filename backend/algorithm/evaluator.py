@@ -25,7 +25,9 @@ class SolutionEvaluator:
             "resource_idle_time": 0,
             "gaps_projeto": 0,
             "makespan": 0,
-            "deadline_violation": 0
+            "deadline_violation": 0,
+            "work_period_violation": 0,
+            "vacation_conflict": 0
         }
         
         violations_details = {
@@ -35,7 +37,9 @@ class SolutionEvaluator:
             "sobreposicoes_colaborador": [],
             "resource_idle_time": [],
             "gaps_projeto": [],
-            "deadline_violation": []
+            "deadline_violation": [],
+            "work_period_violation": [],
+            "vacation_conflict": []
         }
         
         makespan = 0
@@ -68,24 +72,46 @@ class SolutionEvaluator:
                     if pred_id in task_completions:
                         predecessor_end = max(predecessor_end, task_completions[pred_id])
             
-            start_day = max(collaborator_end, predecessor_end)
-            while start_day in collaborator["ausencias"]:
+            # Consider work period start date only if set
+            work_start = collaborator.get("inicio")
+            if work_start is not None:
+                start_day = max(collaborator_end, predecessor_end, work_start)
+            else:
+                start_day = max(collaborator_end, predecessor_end)
+            
+            # Helper function to check if day is blocked (only absences, not vacations)
+            def is_day_blocked(day):
+                if day in collaborator["ausencias"]:
+                    return True
+                return False
+            
+            # Skip blocked days at start
+            while is_day_blocked(start_day):
                 start_day += 1
             
+            # Calculate end day skipping blocked days
             end_day = start_day
             remaining_duration = task["duracao_dias"]
             while remaining_duration > 0:
-                if end_day not in collaborator["ausencias"]:
+                if not is_day_blocked(end_day):
                     remaining_duration -= 1
                 end_day += 1
             
             # Check availability violations
             availability_violations = self.validator.validate_availability(
-                collaborator, start_day, end_day
+                collaborator, start_day, end_day, task
             )
             for violation in availability_violations:
-                penalties["ausencias"] += violation.penalty
-                violations_details["ausencias"].append(violation.details)
+                if violation.type == "work_period_violation":
+                    penalties["work_period_violation"] += violation.penalty
+                    violations_details["work_period_violation"].append(violation.details)
+                elif violation.type == "vacation_conflict":
+                    print(f"  *** ADDING PENALTY: {violation.penalty} (total now: {penalties['vacation_conflict'] + violation.penalty}) ***")
+                    penalties["vacation_conflict"] += violation.penalty
+                    violations_details["vacation_conflict"].append(violation.details)
+                else:  # absence_conflict
+                    penalties["ausencias"] += violation.penalty
+                    violations_details["ausencias"].append(violation.details)
             
             # Update tracking
             task_completions[task["task_id"]] = end_day

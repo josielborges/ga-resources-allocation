@@ -89,7 +89,9 @@ export default {
         'gaps_projeto': 'Intervalos entre Tarefas',
         'resource_idle_time': 'Tempo Ocioso de Recursos',
         'deadline_violation': 'Violação de Prazo',
-        'makespan': 'Duração Total do Projeto'
+        'makespan': 'Duração Total do Projeto',
+        'work_period_violation': 'Vioçação de Período de Trabalho',
+        'vacation_conflict': 'Conflito com Férias'
       }
       return translations[key] || key
     },

@@ -16,19 +16,31 @@ class TaskScheduler:
                 if pred_id in task_completions:
                     predecessor_end = max(predecessor_end, task_completions[pred_id])
         
-        start_day = max(collaborator_end, predecessor_end)
+        # Consider work period start date only if set
+        work_start = collaborator.get("inicio")
+        if work_start is not None:
+            start_day = max(collaborator_end, predecessor_end, work_start)
+        else:
+            start_day = max(collaborator_end, predecessor_end)
         
-        # Skip absences and weekends
-        while (start_day in collaborator["ausencias"] or 
-               TaskScheduler._is_weekend(start_day, ref_date)):
+        # Helper function to check if day is blocked (absences and weekends only, not vacations)
+        def is_day_blocked(day):
+            if day in collaborator["ausencias"]:
+                return True
+            if TaskScheduler._is_weekend(day, ref_date):
+                return True
+            return False
+        
+        # Skip blocked days at start
+        while is_day_blocked(start_day):
             start_day += 1
         
+        # Calculate end day skipping blocked days
         end_day = start_day
         remaining_duration = task["duracao_dias"]
         
         while remaining_duration > 0:
-            if (end_day not in collaborator["ausencias"] and 
-                not TaskScheduler._is_weekend(end_day, ref_date)):
+            if not is_day_blocked(end_day):
                 remaining_duration -= 1
             end_day += 1
             

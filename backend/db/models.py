@@ -67,11 +67,14 @@ class Colaborador(Base):
     squad_id = Column(Integer, ForeignKey("squads.id", ondelete="RESTRICT"), nullable=True)
     transversal = Column(Integer, default=0)
     ativo = Column(Boolean, default=True, nullable=False)
+    inicio = Column(Date, nullable=True)
+    termino = Column(Date, nullable=True)
     
     cargo = relationship("Cargo")
     squad = relationship("Squad")
     habilidades = relationship("Habilidade", secondary=colaborador_habilidade, back_populates="colaboradores")
     ausencias = relationship("Ausencia", back_populates="colaborador")
+    ferias = relationship("Ferias", back_populates="colaborador", cascade="all, delete-orphan")
 
 class Ausencia(Base):
     __tablename__ = "ausencias"
@@ -81,6 +84,16 @@ class Ausencia(Base):
     data = Column(Date)
     
     colaborador = relationship("Colaborador", back_populates="ausencias")
+
+class Ferias(Base):
+    __tablename__ = "ferias"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    colaborador_id = Column(Integer, ForeignKey("colaboradores.id", ondelete="CASCADE"))
+    inicio = Column(Date, nullable=False)
+    termino = Column(Date, nullable=False)
+    
+    colaborador = relationship("Colaborador", back_populates="ferias")
 
 class Projeto(Base):
     __tablename__ = "projetos"

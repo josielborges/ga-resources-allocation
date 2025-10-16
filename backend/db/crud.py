@@ -309,7 +309,9 @@ def create_colaborador(db: Session, colaborador: schemas.ColaboradorCreate):
         cargo_id=colaborador.cargo_id, 
         squad_id=colaborador.squad_id if not colaborador.transversal else None,
         transversal=1 if colaborador.transversal else 0,
-        ativo=colaborador.ativo
+        ativo=colaborador.ativo,
+        inicio=colaborador.inicio,
+        termino=colaborador.termino
     )
     db.add(db_colaborador)
     db.commit()
@@ -323,6 +325,10 @@ def create_colaborador(db: Session, colaborador: schemas.ColaboradorCreate):
     for ausencia_data in colaborador.ausencias:
         db_ausencia = models.Ausencia(data=ausencia_data['data'], colaborador_id=db_colaborador.id)
         db.add(db_ausencia)
+    
+    for ferias_data in colaborador.ferias:
+        db_ferias = models.Ferias(inicio=ferias_data['inicio'], termino=ferias_data['termino'], colaborador_id=db_colaborador.id)
+        db.add(db_ferias)
     
     db.commit()
     db.refresh(db_colaborador)
@@ -338,6 +344,8 @@ def update_colaborador(db: Session, colaborador_id: int, colaborador: schemas.Co
     db_colaborador.squad_id = colaborador.squad_id if not colaborador.transversal else None
     db_colaborador.transversal = 1 if colaborador.transversal else 0
     db_colaborador.ativo = colaborador.ativo
+    db_colaborador.inicio = colaborador.inicio
+    db_colaborador.termino = colaborador.termino
     
     db_colaborador.habilidades.clear()
     
@@ -351,6 +359,12 @@ def update_colaborador(db: Session, colaborador_id: int, colaborador: schemas.Co
     for ausencia_data in colaborador.ausencias:
         db_ausencia = models.Ausencia(data=ausencia_data['data'], colaborador_id=colaborador_id)
         db.add(db_ausencia)
+    
+    db.query(models.Ferias).filter(models.Ferias.colaborador_id == colaborador_id).delete()
+    
+    for ferias_data in colaborador.ferias:
+        db_ferias = models.Ferias(inicio=ferias_data['inicio'], termino=ferias_data['termino'], colaborador_id=colaborador_id)
+        db.add(db_ferias)
     
     db.commit()
     db.refresh(db_colaborador)

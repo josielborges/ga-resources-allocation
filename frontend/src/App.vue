@@ -655,7 +655,15 @@
               </div>
             </div>
             <div v-else class="h-full overflow-y-auto p-4">
-              <ColaboradoresCrud :key="selectedSquadId" :selectedSquadId="selectedSquadId" :allColaboradores="allColaboradores" @reload="carregarDados" />
+              <ColaboradoresCrud 
+                :key="selectedSquadId" 
+                :selectedSquadId="selectedSquadId" 
+                :allColaboradores="allColaboradores" 
+                :selectedYear="selectedYear"
+                :yearStartDate="getYearStartDate()"
+                :yearEndDate="getYearEndDate()"
+                @reload="carregarDados" 
+              />
             </div>
           </div>
 
@@ -1706,6 +1714,16 @@ export default {
         'periodos-roadmaps' : 'Períodos de Roadmaps'
       }
       return titles[this.activeModule] || 'Sistema de Alocação'
+    },
+    getYearStartDate() {
+      if (!this.selectedYear) return null
+      const periodo = this.periodosRoadmaps.find(p => p.ano === this.selectedYear)
+      return periodo?.inicio || null
+    },
+    getYearEndDate() {
+      if (!this.selectedYear) return null
+      const periodo = this.periodosRoadmaps.find(p => p.ano === this.selectedYear)
+      return periodo?.termino || null
     }
   }
 }
