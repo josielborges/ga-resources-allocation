@@ -432,26 +432,6 @@
               </div>
             </div>
             
-            <!-- Work Period -->
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="block text-sm font-medium text-text-primary mb-1">Início do Trabalho</label>
-                <input 
-                  v-model="form.inicio" 
-                  type="date"
-                  class="w-full px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-main"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-text-primary mb-1">Término do Trabalho</label>
-                <input 
-                  v-model="form.termino" 
-                  type="date"
-                  class="w-full px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-main"
-                />
-              </div>
-            </div>
-            
             <!-- Habilidades -->
             <div>
               <label class="block text-sm font-medium text-text-primary mb-1">Habilidades ({{ form.habilidades_ids.length }} selecionadas)</label>
@@ -475,78 +455,108 @@
               </div>
             </div>
             
-            <!-- Férias -->
-            <div>
-              <div class="flex justify-between items-center mb-2">
-                <label class="block text-sm font-medium text-text-primary">Férias</label>
-                <button 
-                  type="button" 
-                  @click="adicionarFerias" 
-                  class="text-primary-main hover:text-primary-light text-xs font-medium"
-                >
-                  + Adicionar
-                </button>
-              </div>
-              <div class="space-y-1.5">
-                <div v-for="(ferias, index) in form.ferias" :key="index" class="flex items-center space-x-2">
-                  <input 
-                    v-model="ferias.inicio" 
-                    type="date" 
-                    required
-                    placeholder="Início"
-                    class="flex-1 px-2 py-1.5 border border-gray-300 rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-primary-main"
-                  />
-                  <input 
-                    v-model="ferias.termino" 
-                    type="date" 
-                    required
-                    placeholder="Término"
-                    class="flex-1 px-2 py-1.5 border border-gray-300 rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-primary-main"
-                  />
-                  <button 
-                    type="button" 
-                    @click="removerFerias(index)" 
-                    class="text-red-500 hover:text-red-700 p-0.5"
-                    title="Remover"
-                  >
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                    </svg>
-                  </button>
+            <!-- Dates Section -->
+            <div class="border-t border-gray-200 pt-3 mt-2">
+              <h4 class="text-sm font-semibold text-gray-700 mb-3">Datas e Disponibilidade</h4>
+              
+              <!-- Work Period -->
+              <div class="mb-3">
+                <label class="block text-xs font-medium text-gray-600 mb-1.5">Período de Trabalho</label>
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <label class="block text-xs text-gray-500 mb-0.5">Início</label>
+                    <input 
+                      v-model="form.inicio" 
+                      type="date"
+                      class="w-full px-2 py-1.5 border border-gray-300 rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-primary-main"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-xs text-gray-500 mb-0.5">Término</label>
+                    <input 
+                      v-model="form.termino" 
+                      type="date"
+                      class="w-full px-2 py-1.5 border border-gray-300 rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-primary-main"
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
-            
-            <!-- Ausências -->
-            <div>
-              <div class="flex justify-between items-center mb-2">
-                <label class="block text-sm font-medium text-text-primary">Ausências</label>
-                <button 
-                  type="button" 
-                  @click="adicionarAusencia" 
-                  class="text-primary-main hover:text-primary-light text-xs font-medium"
-                >
-                  + Adicionar
-                </button>
-              </div>
-              <div class="space-y-1.5">
-                <div v-for="(ausencia, index) in form.ausencias" :key="index" class="flex items-center space-x-2">
-                  <input 
-                    v-model="ausencia.data" 
-                    type="date" 
-                    required
-                    class="flex-1 px-2 py-1.5 border border-gray-300 rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-primary-main"
-                  />
+              
+              <!-- Férias -->
+              <div class="mb-3">
+                <div class="flex justify-between items-center mb-1.5">
+                  <label class="block text-xs font-medium text-gray-600">Férias</label>
                   <button 
                     type="button" 
-                    @click="removerAusencia(index)" 
-                    class="text-red-500 hover:text-red-700 p-0.5"
-                    title="Remover"
+                    @click="adicionarFerias" 
+                    class="text-primary-main hover:text-primary-light text-xs font-medium"
                   >
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                    </svg>
+                    + Adicionar
                   </button>
+                </div>
+                <div class="space-y-1.5">
+                  <div v-for="(ferias, index) in form.ferias" :key="index" class="grid grid-cols-[1fr_1fr_auto] gap-2 items-center">
+                    <input 
+                      v-model="ferias.inicio" 
+                      type="date" 
+                      required
+                      placeholder="Início"
+                      class="px-2 py-1.5 border border-gray-300 rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-primary-main"
+                    />
+                    <input 
+                      v-model="ferias.termino" 
+                      type="date" 
+                      required
+                      placeholder="Término"
+                      class="px-2 py-1.5 border border-gray-300 rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-primary-main"
+                    />
+                    <button 
+                      type="button" 
+                      @click="removerFerias(index)" 
+                      class="text-red-500 hover:text-red-700 p-1"
+                      title="Remover"
+                    >
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                      </svg>
+                    </button>
+                  </div>
+                  <div v-if="form.ferias.length === 0" class="text-xs text-gray-400 italic py-1">Nenhuma férias cadastrada</div>
+                </div>
+              </div>
+              
+              <!-- Ausências -->
+              <div>
+                <div class="flex justify-between items-center mb-1.5">
+                  <label class="block text-xs font-medium text-gray-600">Ausências</label>
+                  <button 
+                    type="button" 
+                    @click="adicionarAusencia" 
+                    class="text-primary-main hover:text-primary-light text-xs font-medium"
+                  >
+                    + Adicionar
+                  </button>
+                </div>
+                <div class="space-y-1.5">
+                  <div v-for="(ausencia, index) in form.ausencias" :key="index" class="grid grid-cols-[1fr_auto] gap-2 items-center">
+                    <input 
+                      v-model="ausencia.data" 
+                      type="date" 
+                      required
+                      class="px-2 py-1.5 border border-gray-300 rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-primary-main"
+                    />
+                    <button 
+                      type="button" 
+                      @click="removerAusencia(index)" 
+                      class="text-red-500 hover:text-red-700 p-1"
+                      title="Remover"
+                    >
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                      </svg>
+                    </button>
+                  </div>
+                  <div v-if="form.ausencias.length === 0" class="text-xs text-gray-400 italic py-1">Nenhuma ausência cadastrada</div>
                 </div>
               </div>
             </div>
@@ -746,20 +756,6 @@ export default {
           termino: colaborador.termino || null
         }
       } else {
-        // Format dates properly for date input (YYYY-MM-DD)
-        let inicioDefault = null
-        let terminoDefault = null
-        
-        if (this.yearStartDate) {
-          const startDate = new Date(this.yearStartDate)
-          inicioDefault = startDate.toISOString().split('T')[0]
-        }
-        
-        if (this.yearEndDate) {
-          const endDate = new Date(this.yearEndDate)
-          terminoDefault = endDate.toISOString().split('T')[0]
-        }
-        
         this.form = {
           nome: '',
           cargo_id: '',
@@ -769,8 +765,8 @@ export default {
           habilidades_ids: [],
           ausencias: [],
           ferias: [],
-          inicio: inicioDefault,
-          termino: terminoDefault
+          inicio: null,
+          termino: null
         }
       }
       this.showModal = true
