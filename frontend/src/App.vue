@@ -254,19 +254,7 @@
                   />
                 </div>
                 
-                <div class="border-t border-gray-200 pt-4 mt-4">
-                  <label class="flex items-center gap-2 cursor-pointer">
-                    <input 
-                      v-model="customizeExecution" 
-                      type="checkbox" 
-                      class="w-4 h-4 text-primary-main rounded border-gray-300 focus:ring-primary-main"
-                    />
-                    <span class="text-sm font-medium text-gray-700">Personalizar execução</span>
-                  </label>
-                  <p class="text-xs text-gray-500 mt-1 ml-6">Selecione projetos e colaboradores específicos</p>
-                </div>
-                
-                <div class="space-y-2 pt-2">
+                <div class="space-y-2 pt-4">
                   <div v-if="projetos.length === 0 || colaboradores.length === 0" class="bg-yellow-50 border border-yellow-300 rounded-md p-3 mb-2">
                     <div class="flex items-start gap-2">
                       <svg class="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
@@ -281,7 +269,7 @@
                   </div>
                   
                   <button 
-                    @click="prepareExecution" 
+                    @click="executarAlgoritmoDirectly" 
                     :disabled="loading || projetos.length === 0 || colaboradores.length === 0" 
                     class="bg-primary-main text-white px-4 py-2 rounded-md text-sm font-medium w-full disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary-light transition-colors shadow-sm"
                     type="button"
@@ -294,6 +282,15 @@
                       Executando...
                     </span>
                     <span v-else>Executar {{ params.algorithm.toUpperCase() }}</span>
+                  </button>
+                  
+                  <button 
+                    @click="showSelectionModal = true" 
+                    :disabled="projetos.length === 0 || colaboradores.length === 0"
+                    class="bg-purple-600 text-white px-4 py-2 rounded-md text-sm font-medium w-full hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+                    type="button"
+                  >
+                    Personalizar Execução
                   </button>
                   
                   <button 
@@ -723,7 +720,7 @@
             </div>
           </div>
           
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <!-- Projetos -->
             <div>
               <div class="flex justify-between items-center mb-2">
@@ -734,7 +731,7 @@
               </div>
               <div class="space-y-1 max-h-[400px] overflow-y-auto border rounded p-2">
                 <div 
-                  v-for="projeto in projetos" 
+                  v-for="projeto in sortedProjetos" 
                   :key="projeto.id" 
                   @click="toggleProject(projeto.id)"
                   class="flex items-center gap-2 cursor-pointer p-1.5 rounded transition-colors border"
@@ -762,21 +759,24 @@
               </div>
             </div>
             
-            <!-- Colaboradores -->
+            <!-- Colaboradores Squad -->
             <div>
               <div class="flex justify-between items-center mb-2">
-                <h4 class="text-sm font-medium text-text-primary">Colaboradores ({{ selectedCollaborators.length }}/{{ colaboradores.length }})</h4>
+                <h4 class="text-sm font-medium text-text-primary">Squad ({{ selectedCollaborators.length }}/{{ colaboradores.length }})</h4>
                 <button @click="toggleAllCollaborators" class="text-xs text-primary-main hover:underline">
                   {{ selectedCollaborators.length === colaboradores.length ? 'Desmarcar' : 'Selecionar' }} todos
                 </button>
               </div>
               <div class="space-y-1 max-h-[400px] overflow-y-auto border rounded p-2">
                 <div 
-                  v-for="colab in colaboradores" 
+                  v-for="colab in sortedColaboradores" 
                   :key="colab.id" 
                   @click="toggleCollaborator(colab.id)"
                   class="flex items-center gap-2 cursor-pointer p-1.5 rounded transition-colors border"
-                  :class="selectedCollaborators.includes(colab.id) ? 'bg-green-100 border-green-300' : 'hover:bg-gray-50 border-transparent'"
+                  :class="[
+                    selectedCollaborators.includes(colab.id) ? 'bg-green-100 border-green-300' : 'hover:bg-gray-50 border-transparent',
+                    hasMissingSkill(colab) && !selectedCollaborators.includes(colab.id) ? 'ring-2 ring-yellow-400' : ''
+                  ]"
                 >
                   <div class="flex items-center justify-center w-7 h-7 rounded flex-shrink-0 bg-gray-200">
                     <svg v-if="selectedCollaborators.includes(colab.id)" class="w-3.5 h-3.5 text-gray-700" fill="currentColor" viewBox="0 0 20 20">
@@ -789,6 +789,44 @@
                     </div>
                     <div v-if="getCollaboratorSkills(colab).length > 0" class="flex flex-wrap gap-1">
                       <span v-for="skill in getCollaboratorSkills(colab)" :key="skill" class="inline-block px-1.5 py-0.5 bg-green-100 text-green-700 rounded text-xs">
+                        {{ skill }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Transversais -->
+            <div>
+              <div class="flex justify-between items-center mb-2">
+                <h4 class="text-sm font-medium text-purple-600">Transversais ({{ selectedTransversais.length }}/{{ transversais.length }})</h4>
+                <button @click="toggleAllTransversais" class="text-xs text-purple-600 hover:underline">
+                  {{ selectedTransversais.length === transversais.length ? 'Desmarcar' : 'Selecionar' }} todos
+                </button>
+              </div>
+              <div class="space-y-1 max-h-[400px] overflow-y-auto border rounded p-2">
+                <div 
+                  v-for="colab in sortedTransversais" 
+                  :key="colab.id" 
+                  @click="toggleTransversal(colab.id)"
+                  class="flex items-center gap-2 cursor-pointer p-1.5 rounded transition-colors border"
+                  :class="[
+                    selectedTransversais.includes(colab.id) ? 'bg-purple-100 border-purple-300' : 'hover:bg-gray-50 border-transparent',
+                    hasMissingSkill(colab) && !selectedTransversais.includes(colab.id) ? 'ring-2 ring-yellow-400' : ''
+                  ]"
+                >
+                  <div class="flex items-center justify-center w-7 h-7 rounded flex-shrink-0 bg-purple-200">
+                    <svg v-if="selectedTransversais.includes(colab.id)" class="w-3.5 h-3.5 text-purple-700" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <div class="font-medium text-xs truncate mb-1">
+                      {{ colab.nome }} <span class="text-text-secondary font-normal">({{ colab.cargo?.nome || colab.cargo }})</span>
+                    </div>
+                    <div v-if="getCollaboratorSkills(colab).length > 0" class="flex flex-wrap gap-1">
+                      <span v-for="skill in getCollaboratorSkills(colab)" :key="skill" class="inline-block px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded text-xs">
                         {{ skill }}
                       </span>
                     </div>
@@ -854,7 +892,8 @@
         
         <div class="px-4 py-3 border-t flex justify-between items-center bg-gray-50">
           <div class="text-xs text-text-secondary">
-            {{ selectedProjects.length }} projeto(s), {{ selectedCollaborators.length + simulatedMembers.length }} colaborador(es)
+            {{ selectedProjects.length }} projeto(s), {{ selectedCollaborators.length + selectedTransversais.length + simulatedMembers.length }} colaborador(es)
+            <span v-if="selectedTransversais.length > 0" class="text-purple-600">(+{{ selectedTransversais.length }} transversais)</span>
             <span v-if="simulatedMembers.length > 0" class="text-purple-600">(+{{ simulatedMembers.length }} simulados)</span>
           </div>
           <div class="flex gap-2">
@@ -866,7 +905,7 @@
             </button>
             <button 
               @click="executarAlgoritmo" 
-              :disabled="selectedProjects.length === 0 || selectedCollaborators.length === 0"
+              :disabled="selectedProjects.length === 0 || (selectedCollaborators.length === 0 && selectedTransversais.length === 0)"
               class="px-3 py-1.5 text-xs bg-primary-main text-white rounded hover:bg-primary-light disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Executar
@@ -1174,7 +1213,6 @@ export default {
   data() {
     return {
       activeModule: 'roadmap',
-      customizeExecution: false,
       showSelectionModal: false,
       showSaveModal: false,
       showLoadModal: false,
@@ -1189,7 +1227,9 @@ export default {
       resultadosSalvos: [],
       selectedProjects: [],
       selectedCollaborators: [],
+      selectedTransversais: [],
       simulatedMembers: [],
+      executedColaboradores: [],
       newMember: { cargo_id: null, habilidade_names: [] },
       cargos: [],
       habilidades: [],
@@ -1273,11 +1313,28 @@ export default {
       return this.periodosRoadmaps.map(p => p.ano).sort((a, b) => b - a)
     },
     allColaboradoresWithSimulated() {
-      return [...this.colaboradores, ...this.simulatedMembers]
+      if (this.executedColaboradores.length > 0) {
+        return [...this.executedColaboradores, ...this.simulatedMembers]
+      }
+      const selectedSquadMembers = this.colaboradores.filter(c => this.selectedCollaborators.includes(c.id))
+      const selectedTransversalMembers = this.transversais.filter(c => this.selectedTransversais.includes(c.id))
+      return [...selectedSquadMembers, ...selectedTransversalMembers, ...this.simulatedMembers]
     },
     filteredHabilidadesForCargo() {
       if (!this.newMember.cargo_id) return []
       return this.habilidades.filter(h => h.cargo_id == this.newMember.cargo_id)
+    },
+    transversais() {
+      return this.allColaboradores.filter(c => c.transversal)
+    },
+    sortedProjetos() {
+      return [...this.projetos].sort((a, b) => a.nome.localeCompare(b.nome))
+    },
+    sortedColaboradores() {
+      return [...this.colaboradores].sort((a, b) => a.nome.localeCompare(b.nome))
+    },
+    sortedTransversais() {
+      return [...this.transversais].sort((a, b) => a.nome.localeCompare(b.nome))
     },
     missingSkills() {
       const requiredSkills = new Set()
@@ -1295,9 +1352,19 @@ export default {
           })
         })
       
-      // Get available skills from selected collaborators
+      // Get available skills from selected squad collaborators
       this.colaboradores
         .filter(c => this.selectedCollaborators.includes(c.id))
+        .forEach(colab => {
+          colab.habilidades?.forEach(hab => {
+            const skillName = hab.nome || hab
+            availableSkills.add(skillName)
+          })
+        })
+      
+      // Get available skills from selected transversal collaborators
+      this.transversais
+        .filter(c => this.selectedTransversais.includes(c.id))
         .forEach(colab => {
           colab.habilidades?.forEach(hab => {
             const skillName = hab.nome || hab
@@ -1339,6 +1406,8 @@ export default {
       if (this.projetos.length > 0 && this.selectedProjects.length === 0) {
         this.selectedProjects = this.projetos.map(p => p.id)
       }
+      // Transversais are NOT selected by default
+      this.selectedTransversais = []
     },
     toggleProject(id) {
       const index = this.selectedProjects.indexOf(id)
@@ -1368,6 +1437,21 @@ export default {
         this.selectedCollaborators = []
       } else {
         this.selectedCollaborators = this.colaboradores.map(c => c.id)
+      }
+    },
+    toggleTransversal(id) {
+      const index = this.selectedTransversais.indexOf(id)
+      if (index > -1) {
+        this.selectedTransversais.splice(index, 1)
+      } else {
+        this.selectedTransversais.push(id)
+      }
+    },
+    toggleAllTransversais() {
+      if (this.selectedTransversais.length === this.transversais.length) {
+        this.selectedTransversais = []
+      } else {
+        this.selectedTransversais = this.transversais.map(c => c.id)
       }
     },
     async carregarDados() {
@@ -1417,10 +1501,11 @@ export default {
       let filteredProjetos = []
       
       if (this.selectedSquadId) {
-        filteredColaboradores = filteredColaboradores.filter(c => c.squad?.id === this.selectedSquadId)
+        filteredColaboradores = filteredColaboradores.filter(c => c.squad?.id === this.selectedSquadId && !c.transversal)
         filteredProjetos = this.allProjetos.filter(p => p.squad?.id === this.selectedSquadId)
         localStorage.setItem('selectedSquadId', this.selectedSquadId.toString())
       } else {
+        filteredColaboradores = filteredColaboradores.filter(c => !c.transversal)
         filteredProjetos = this.allProjetos
         localStorage.removeItem('selectedSquadId')
       }
@@ -1517,15 +1602,12 @@ export default {
         this.newMember.habilidade_names.push(skillName)
       }
     },
-    prepareExecution() {
-      if (this.customizeExecution) {
-        this.showSelectionModal = true
-      } else {
-        this.selectedProjects = this.projetos.map(p => p.id)
-        this.selectedCollaborators = this.colaboradores.map(c => c.id)
-        this.simulatedMembers = []
-        this.executarAlgoritmo()
-      }
+    executarAlgoritmoDirectly() {
+      this.selectedProjects = this.projetos.map(p => p.id)
+      this.selectedCollaborators = this.colaboradores.map(c => c.id)
+      this.selectedTransversais = []
+      this.simulatedMembers = []
+      this.executarAlgoritmo()
     },
     async executarAlgoritmo() {
       this.showSelectionModal = false
@@ -1533,13 +1615,16 @@ export default {
       this.showProgress = true
       this.progressData = { current: 0, total: 1, percent: 0, fitness: 0 }
       
+      // Capture selected members BEFORE any data operations
+      const selectedSquadMembers = this.colaboradores.filter(c => this.selectedCollaborators.includes(c.id))
+      const selectedTransversalMembers = this.allColaboradores.filter(c => this.selectedTransversais.includes(c.id))
+      
       try {
-        await this.carregarDados()
-        
+        const colaborador_ids = [...selectedSquadMembers.map(c => c.id), ...selectedTransversalMembers.map(c => c.id)]
         const payload = {
           ...this.params,
           projeto_ids: this.selectedProjects,
-          colaborador_ids: this.selectedCollaborators,
+          colaborador_ids: colaborador_ids,
           simulated_members: this.simulatedMembers.map(m => ({
             nome: m.nome,
             cargo_id: m.cargo.id,
@@ -1590,6 +1675,8 @@ export default {
                 // Get full result from regular endpoint
                 const finalResponse = await axios.post(regularEndpoint, payload)
                 this.resultado = finalResponse.data
+                // Store executed collaborators for display (use captured members from before reload)
+                this.executedColaboradores = [...selectedSquadMembers, ...selectedTransversalMembers]
                 this.showProgress = false
                 this.progressLoading = false
                 this.loading = false
@@ -1638,6 +1725,10 @@ export default {
       const skills = colab.habilidades?.map(hab => hab.nome || hab) || []
       return skills.sort()
     },
+    hasMissingSkill(colab) {
+      const colabSkills = new Set(colab.habilidades?.map(h => h.nome || h) || [])
+      return this.missingSkills.some(skill => colabSkills.has(skill))
+    },
     async carregarResultadosSalvos() {
       try {
         const params = {}
@@ -1666,7 +1757,7 @@ export default {
         const paramsToSave = {
           ...this.params,
           roadmap_end_date: roadmapEndDate,
-          saved_colaboradores: this.colaboradores.filter(c => this.selectedCollaborators.includes(c.id)),
+          saved_colaboradores: this.executedColaboradores,
           simulated_members: this.simulatedMembers.map(m => ({
             nome: m.nome,
             cargo_id: m.cargo.id,
@@ -1712,7 +1803,8 @@ export default {
         
         // Restore saved collaborators (including deleted ones)
         if (saved.parametros.saved_colaboradores) {
-          this.colaboradores = saved.parametros.saved_colaboradores
+          this.executedColaboradores = saved.parametros.saved_colaboradores
+          console.log('Loaded executedColaboradores:', this.executedColaboradores.length)
         }
         
         // Restore simulated members if they exist

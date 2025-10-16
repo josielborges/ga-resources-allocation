@@ -80,7 +80,6 @@ class AlgorithmService:
                 inicio_dias = (inicio - ref_date).days
                 termino_dias = (termino - ref_date).days
                 ferias_convertidas.append((inicio_dias, termino_dias))
-                print(f"DEBUG: {colab['nome']} vacation: {inicio} to {termino} = days {inicio_dias} to {termino_dias} (ref={ref_date})")
             colab["ferias"] = ferias_convertidas
         
         return colaboradores
