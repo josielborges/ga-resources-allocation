@@ -346,9 +346,9 @@
 
 <script>
 import axios from 'axios'
-import ConfirmModal from './ConfirmModal.vue'
-import AlertModal from './AlertModal.vue'
-import HabilidadesSelect from './HabilidadesSelect.vue'
+import ConfirmModal from '../modals/ConfirmModal.vue'
+import AlertModal from '../modals/AlertModal.vue'
+import HabilidadesSelect from '../common/HabilidadesSelect.vue'
 import EtapasFlowchartDagre from './EtapasFlowchartDagre.vue'
 import Sortable from 'sortablejs'
 

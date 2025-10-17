@@ -122,7 +122,7 @@
 
 <script>
 import axios from 'axios'
-import ConfirmModal from './ConfirmModal.vue'
+import ConfirmModal from '../modals/ConfirmModal.vue'
 
 export default {
   name: 'PeriodosRoadmapsCrud',

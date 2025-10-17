@@ -205,8 +205,8 @@
 
 <script>
 import axios from 'axios'
-import ConfirmModal from './ConfirmModal.vue'
-import NotificationModal from './NotificationModal.vue'
+import ConfirmModal from '../modals/ConfirmModal.vue'
+import NotificationModal from '../modals/NotificationModal.vue'
 
 export default {
   name: 'CargosHabilidadesCrud',

@@ -1,382 +1,41 @@
 <template>
   <div class="h-screen bg-background-default font-sans overflow-hidden">
     <div class="flex h-full">
-      <!-- Menu Lateral -->
-      <div class="w-64 bg-gradient-to-b from-cyan-600 to-green-400 text-white overflow-y-auto flex flex-col">
-        <div class="p-4 flex-1">
-          <h2 class="text-lg font-semibold mb-6 cursor-pointer hover:text-white/90 transition-colors" @click="reloadApp">Roadmaps & Estimativas</h2>
-          <nav class="space-y-6">
-            <div v-for="section in menuSections" :key="section.title" class="space-y-1">
-              <div class="text-xs font-semibold text-white text-opacity-60 uppercase tracking-wider px-3 mb-2">
-                {{ section.title }}
-              </div>
-              <button 
-                v-for="item in section.items" 
-                :key="item.id"
-                @click="activeModule = item.id"
-                :class="[
-                  'w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors',
-                  activeModule === item.id 
-                    ? 'bg-white bg-opacity-20 text-white shadow-md' 
-                    : 'text-white hover:bg-white hover:bg-opacity-15'
-                ]"
-              >
-                <component :is="item.icon" class="w-5 h-5" />
-                {{ item.label }}
-              </button>
-            </div>
-          </nav>
-        </div>
-      </div>
+      <Sidebar :activeModule="activeModule" @update:activeModule="activeModule = $event" @reload="reloadApp" />
 
       <!-- Área do Roadmap com header estendido -->
       <div v-if="activeModule === 'roadmap'" class="flex-1 flex flex-col">
-        <!-- Header estendido -->
-        <div class="text-white px-6 py-4 shadow-sm flex-shrink-0 flex items-center justify-between" style="background: linear-gradient(to bottom, #0891B2, #0C94AD);">
-          <h1 class="text-xl font-semibold">{{ getModuleTitle() }}</h1>
-          <div class="flex items-center gap-3">
-            <select 
-              v-model="selectedTriboId" 
-              @change="onTriboChange"
-              class="px-3 py-1.5 border border-white border-opacity-30 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-white bg-white bg-opacity-20 text-white"
-            >
-              <option :value="null" class="text-gray-900">Tribo</option>
-              <option v-for="tribo in tribos" :key="tribo.id" :value="tribo.id" class="text-gray-900">
-                {{ tribo.nome }}
-              </option>
-            </select>
-            <SquadSelector v-model="selectedSquadId" :squads="filteredSquads" @update:modelValue="applySquadFilter" />
-            <select 
-              v-model="selectedYear" 
-              @change="applyYearFilter"
-              class="px-3 py-1.5 border border-white border-opacity-30 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-white bg-white bg-opacity-20 text-white"
-            >
-              <option :value="null" class="text-gray-900">Ano</option>
-              <option v-for="year in availableYears" :key="year" :value="year" class="text-gray-900">
-                {{ year }}
-              </option>
-            </select>
-          </div>
-        </div>
+        <HeaderFilters 
+          :title="getModuleTitle()"
+          :tribos="tribos"
+          :squads="filteredSquads"
+          :years="availableYears"
+          v-model:selectedTriboId="selectedTriboId"
+          v-model:selectedSquadId="selectedSquadId"
+          v-model:selectedYear="selectedYear"
+          @triboChange="onTriboChange"
+          @squadChange="applySquadFilter"
+          @yearChange="applyYearFilter"
+        />
         
         <!-- Conteúdo do roadmap -->
         <div class="flex flex-1 overflow-hidden">
-          <!-- Parâmetros Sidebar -->
-          <div v-if="selectedSquadId && selectedYear" class="w-72 bg-gray-50 border-r border-gray-200 flex-shrink-0 overflow-y-auto">
-            <div class="p-4 space-y-4">
-            <!-- Data Summary -->
-            <div class="bg-white rounded-md shadow-sm p-3">
-              <h4 class="text-sm font-semibold text-gray-900 mb-2">Dados Disponíveis</h4>
-              <div class="grid grid-cols-2 gap-2">
-                <div class="bg-blue-50 rounded p-2 text-center">
-                  <p class="text-2xl font-bold text-blue-700">{{ projetos.length }}</p>
-                  <p class="text-xs text-blue-600">Projetos</p>
-                </div>
-                <div class="bg-green-50 rounded p-2 text-center">
-                  <p class="text-2xl font-bold text-green-700">{{ colaboradores.length }}</p>
-                  <p class="text-xs text-green-600">Colaboradores</p>
-                </div>
-              </div>
-            </div>
-            
-            <div class="bg-white rounded-md shadow-sm p-4">
-              <h3 class="text-base font-semibold text-gray-900 mb-4">Parâmetros do Algoritmo</h3>
-              
-              <form class="space-y-4">
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Algoritmo</label>
-                  <select v-model="params.algorithm" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-primary-main">
-                    <option value="ga">Algoritmo Genético</option>
-                    <option value="aco">Colônia de Formigas</option>
-                  </select>
-                </div>
-                <!-- GA Parameters -->
-                <template v-if="params.algorithm === 'ga'">
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">População</label>
-                    <input 
-                      v-model="params.tam_pop" 
-                      type="range" 
-                      min="10" 
-                      max="100" 
-                      class="form-slider"
-                    />
-                    <div class="flex justify-between text-sm text-text-secondary mt-1">
-                      <span>10</span>
-                      <span class="font-medium">{{ params.tam_pop }}</span>
-                      <span>100</span>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Gerações</label>
-                    <input 
-                      v-model="params.n_gen" 
-                      type="range" 
-                      min="5" 
-                      max="1000" 
-                      class="form-slider"
-                    />
-                    <div class="flex justify-between text-sm text-text-secondary mt-1">
-                      <span>5</span>
-                      <span class="font-medium">{{ params.n_gen }}</span>
-                      <span>1000</span>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Crossover</label>
-                    <input 
-                      v-model="params.pc" 
-                      type="range" 
-                      min="0" 
-                      max="1" 
-                      step="0.1" 
-                      class="form-slider"
-                    />
-                    <div class="flex justify-between text-sm text-text-secondary mt-1">
-                      <span>0</span>
-                      <span class="font-medium">{{ params.pc }}</span>
-                      <span>1</span>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Mutação</label>
-                    <input 
-                      v-model="params.pm" 
-                      type="range" 
-                      min="0" 
-                      max="1" 
-                      step="0.1" 
-                      class="form-slider"
-                    />
-                    <div class="flex justify-between text-sm text-text-secondary mt-1">
-                      <span>0</span>
-                      <span class="font-medium">{{ params.pm }}</span>
-                      <span>1</span>
-                    </div>
-                  </div>
-                </template>
-                
-                <!-- ACO Parameters -->
-                <template v-else>
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Número de Formigas</label>
-                    <input 
-                      v-model="params.tam_pop" 
-                      type="range" 
-                      min="10" 
-                      max="50" 
-                      class="form-slider"
-                    />
-                    <div class="flex justify-between text-sm text-text-secondary mt-1">
-                      <span>10</span>
-                      <span class="font-medium">{{ params.tam_pop }}</span>
-                      <span>50</span>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Iterações Máximas</label>
-                    <input 
-                      v-model="params.n_gen" 
-                      type="range" 
-                      min="5" 
-                      max="50" 
-                      class="form-slider"
-                    />
-                    <div class="flex justify-between text-sm text-text-secondary mt-1">
-                      <span>5</span>
-                      <span class="font-medium">{{ params.n_gen }}</span>
-                      <span>50</span>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Alpha (Feromônio)</label>
-                    <input 
-                      v-model="params.alpha" 
-                      type="range" 
-                      min="0.1" 
-                      max="3" 
-                      step="0.1" 
-                      class="form-slider"
-                    />
-                    <div class="flex justify-between text-sm text-text-secondary mt-1">
-                      <span>0.1</span>
-                      <span class="font-medium">{{ params.alpha }}</span>
-                      <span>3</span>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Beta (Heurística)</label>
-                    <input 
-                      v-model="params.beta" 
-                      type="range" 
-                      min="0.1" 
-                      max="5" 
-                      step="0.1" 
-                      class="form-slider"
-                    />
-                    <div class="flex justify-between text-sm text-text-secondary mt-1">
-                      <span>0.1</span>
-                      <span class="font-medium">{{ params.beta }}</span>
-                      <span>5</span>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Rho (Evaporação)</label>
-                    <input 
-                      v-model="params.rho" 
-                      type="range" 
-                      min="0.1" 
-                      max="0.9" 
-                      step="0.1" 
-                      class="form-slider"
-                    />
-                    <div class="flex justify-between text-sm text-text-secondary mt-1">
-                      <span>0.1</span>
-                      <span class="font-medium">{{ params.rho }}</span>
-                      <span>0.9</span>
-                    </div>
-                  </div>
-                </template>
-                
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Data de Referência</label>
-                  <input 
-                    v-model="params.ref_date" 
-                    type="date" 
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-primary-main"
-                  />
-                </div>
-                
-                <div class="space-y-2 pt-4">
-                  <div v-if="projetos.length === 0 || colaboradores.length === 0" class="bg-yellow-50 border border-yellow-300 rounded-md p-3 mb-2">
-                    <div class="flex items-start gap-2">
-                      <svg class="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-                      </svg>
-                      <div class="text-xs text-yellow-800">
-                        <p class="font-medium mb-1">Dados insuficientes</p>
-                        <p v-if="projetos.length === 0">Nenhum projeto cadastrado para este ano</p>
-                        <p v-if="colaboradores.length === 0">Nenhum colaborador no squad</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <!-- <button 
-                    @click="executarAlgoritmoDirectly" 
-                    :disabled="loading || projetos.length === 0 || colaboradores.length === 0" 
-                    class="bg-primary-main text-white px-4 py-2 rounded-md text-sm font-medium w-full disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary-light transition-colors shadow-sm"
-                    type="button"
-                  >
-                    <span v-if="loading" class="flex items-center justify-center">
-                      <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Executando...
-                    </span>
-                    <span v-else>Executar {{ params.algorithm.toUpperCase() }}</span>
-                  </button> -->
-                  
-                  <button 
-                    @click="showSelectionModal = true" 
-                    :disabled="projetos.length === 0 || colaboradores.length === 0"
-                    class="bg-purple-600 text-white px-4 py-2 rounded-md text-sm font-medium w-full hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
-                    type="button"
-                  >
-                    Executar {{ params.algorithm.toUpperCase() }}
-                  </button>
-                  
-                  <button 
-                    @click="showComparisonParams = !showComparisonParams" 
-                    :disabled="projetos.length === 0 || colaboradores.length === 0"
-                    class="bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium w-full hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
-                    type="button"
-                  >
-                    {{ showComparisonParams ? 'Ocultar' : 'Configurar' }} Comparação
-                  </button>
-                </div>
-              </form>
-            </div>
-            
-            <!-- Comparison Parameters -->
-            <div v-if="showComparisonParams" class="bg-white rounded-md shadow-sm p-4">
-              <h4 class="text-sm font-semibold text-gray-900 mb-3">Parâmetros para Comparação</h4>
-                
-              <!-- GA Parameters -->
-              <div class="mb-4">
-                <h5 class="text-xs font-semibold text-blue-600 mb-2 uppercase tracking-wide">Algoritmo Genético</h5>
-                <div class="grid grid-cols-2 gap-2">
-                  <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">População</label>
-                    <input v-model="gaParams.tam_pop" type="number" min="10" max="100" class="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-500">
-                  </div>
-                  <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Gerações</label>
-                    <input v-model="gaParams.n_gen" type="number" min="10" max="500" class="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-500">
-                  </div>
-                  <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Crossover</label>
-                    <input v-model="gaParams.pc" type="number" min="0" max="1" step="0.1" class="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-500">
-                  </div>
-                  <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Mutação</label>
-                    <input v-model="gaParams.pm" type="number" min="0" max="1" step="0.1" class="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-500">
-                  </div>
-                </div>
-              </div>
-                
-              <!-- ACO Parameters -->
-              <div class="mb-4">
-                <h5 class="text-xs font-semibold text-green-600 mb-2 uppercase tracking-wide">Colônia de Formigas</h5>
-                <div class="grid grid-cols-2 gap-2">
-                  <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Formigas</label>
-                    <input v-model="acoParams.tam_pop" type="number" min="10" max="50" class="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-green-500">
-                  </div>
-                  <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Iterações</label>
-                    <input v-model="acoParams.n_gen" type="number" min="5" max="50" class="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-green-500">
-                  </div>
-                  <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Alpha</label>
-                    <input v-model="acoParams.alpha" type="number" min="0.1" max="3" step="0.1" class="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-green-500">
-                  </div>
-                  <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Beta</label>
-                    <input v-model="acoParams.beta" type="number" min="0.1" max="5" step="0.1" class="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-green-500">
-                  </div>
-                  <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Rho</label>
-                    <input v-model="acoParams.rho" type="number" min="0.1" max="0.9" step="0.1" class="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-green-500">
-                  </div>
-                </div>
-              </div>
-                
-              <button 
-                @click="compararAlgoritmos" 
-                :disabled="loading || projetos.length === 0 || colaboradores.length === 0" 
-                class="bg-purple-600 text-white px-4 py-2 rounded-md text-sm font-medium w-full disabled:opacity-50 disabled:cursor-not-allowed hover:bg-purple-700 transition-colors shadow-sm"
-                type="button"
-              >
-                  <span v-if="loading" class="flex items-center justify-center">
-                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Comparando...
-                  </span>
-                <span v-else>Executar Comparação</span>
-              </button>
-            </div>
-            </div>
-          </div>
+          <RoadmapSidebar
+            v-if="selectedSquadId && selectedYear"
+            :projetos="projetos"
+            :colaboradores="colaboradores"
+            :params="params"
+            :gaParams="gaParams"
+            :acoParams="acoParams"
+            :loading="loading"
+            :showComparisonParams="showComparisonParams"
+            @update:params="params = $event"
+            @update:gaParams="gaParams = $event"
+            @update:acoParams="acoParams = $event"
+            @update:showComparisonParams="showComparisonParams = $event"
+            @execute="showSelectionModal = true"
+            @compare="compararAlgoritmos"
+          />
           
           <!-- Conteúdo principal -->
           <div class="flex-1 p-4 overflow-y-auto">
@@ -585,33 +244,18 @@
 
       <!-- Main Content (outros módulos) -->
       <div v-else class="flex-1 flex flex-col">
-        <!-- Header (outros módulos) -->
-        <div class="text-white px-6 py-4 shadow-sm flex-shrink-0 flex items-center justify-between" style="background: linear-gradient(to bottom, #0891B2, #0C94AD);">
-          <h1 class="text-xl font-semibold">{{ getModuleTitle() }}</h1>
-          <div class="flex items-center gap-3">
-            <select 
-              v-model="selectedTriboId" 
-              @change="onTriboChange"
-              class="px-3 py-1.5 border border-white border-opacity-30 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-white bg-white bg-opacity-20 text-white"
-            >
-              <option :value="null" class="text-gray-900">Tribo</option>
-              <option v-for="tribo in tribos" :key="tribo.id" :value="tribo.id" class="text-gray-900">
-                {{ tribo.nome }}
-              </option>
-            </select>
-            <SquadSelector v-model="selectedSquadId" :squads="filteredSquads" @update:modelValue="applySquadFilter" />
-            <select 
-              v-model="selectedYear" 
-              @change="applyYearFilter"
-              class="px-3 py-1.5 border border-white border-opacity-30 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-white bg-white bg-opacity-20 text-white"
-            >
-              <option :value="null" class="text-gray-900">Ano</option>
-              <option v-for="year in availableYears" :key="year" :value="year" class="text-gray-900">
-                {{ year }}
-              </option>
-            </select>
-          </div>
-        </div>
+        <HeaderFilters 
+          :title="getModuleTitle()"
+          :tribos="tribos"
+          :squads="filteredSquads"
+          :years="availableYears"
+          v-model:selectedTriboId="selectedTriboId"
+          v-model:selectedSquadId="selectedSquadId"
+          v-model:selectedYear="selectedYear"
+          @triboChange="onTriboChange"
+          @squadChange="applySquadFilter"
+          @yearChange="applyYearFilter"
+        />
         
         <!-- Content -->
         <div class="flex-1 overflow-hidden">
@@ -1176,21 +820,29 @@
 
 <script>
 import axios from 'axios'
-import { CpuChipIcon, FolderIcon, UserGroupIcon, DocumentChartBarIcon, CogIcon, BriefcaseIcon, AcademicCapIcon } from '@heroicons/vue/24/outline'
-import DadosTab from './components/DadosTab.vue'
-import FitnessTab from './components/FitnessTab.vue'
-import ConflitosTab from './components/ConflitosTab.vue'
-import GanttTab from './components/GanttTab.vue'
-import CalendarioTab from './components/CalendarioTab.vue'
-import MapaAlocacaoTab from './components/MapaAlocacaoTab.vue'
-import ProjetosCrud from './components/ProjetosCrud.vue'
-import ColaboradoresCrud from './components/ColaboradoresCrud.vue'
-import CargosHabilidadesCrud from './components/CargosHabilidadesCrud.vue'
-import TribosSquadsCrud from './components/TribosSquadsCrud.vue'
-import PeriodosRoadmapsCrud from './components/PeriodosRoadmapsCrud.vue'
-import ConfirmModal from './components/ConfirmModal.vue'
-import SquadSelector from './components/SquadSelector.vue'
-import ProgressBar from './components/ProgressBar.vue'
+import { CpuChipIcon, FolderIcon, UserGroupIcon, BriefcaseIcon, AcademicCapIcon } from '@heroicons/vue/24/outline'
+import DadosTab from './components/tabs/DadosTab.vue'
+import FitnessTab from './components/tabs/FitnessTab.vue'
+import ConflitosTab from './components/tabs/ConflitosTab.vue'
+import GanttTab from './components/tabs/GanttTab.vue'
+import CalendarioTab from './components/tabs/CalendarioTab.vue'
+import MapaAlocacaoTab from './components/tabs/MapaAlocacaoTab.vue'
+import ProjetosCrud from './components/crud/ProjetosCrud.vue'
+import ColaboradoresCrud from './components/crud/ColaboradoresCrud.vue'
+import CargosHabilidadesCrud from './components/crud/CargosHabilidadesCrud.vue'
+import TribosSquadsCrud from './components/crud/TribosSquadsCrud.vue'
+import PeriodosRoadmapsCrud from './components/crud/PeriodosRoadmapsCrud.vue'
+import ConfirmModal from './components/modals/ConfirmModal.vue'
+import SelectionModal from './components/modals/SelectionModal.vue'
+import SaveResultModal from './components/modals/SaveResultModal.vue'
+import LoadResultModal from './components/modals/LoadResultModal.vue'
+import SquadSelector from './components/common/SquadSelector.vue'
+import ProgressBar from './components/common/ProgressBar.vue'
+import Sidebar from './components/layout/Sidebar.vue'
+import HeaderFilters from './components/layout/HeaderFilters.vue'
+import RoadmapSidebar from './components/roadmap/RoadmapSidebar.vue'
+import EmptyState from './components/common/EmptyState.vue'
+import { useRoadmap } from './composables/useRoadmap'
 
 export default {
   name: 'App',
@@ -1207,13 +859,18 @@ export default {
     TribosSquadsCrud,
     PeriodosRoadmapsCrud,
     ConfirmModal,
+    SelectionModal,
+    SaveResultModal,
+    LoadResultModal,
     SquadSelector,
     ProgressBar,
+    Sidebar,
+    HeaderFilters,
+    RoadmapSidebar,
+    EmptyState,
     CpuChipIcon,
     FolderIcon,
     UserGroupIcon,
-    DocumentChartBarIcon,
-    CogIcon,
     BriefcaseIcon,
     AcademicCapIcon
   },
