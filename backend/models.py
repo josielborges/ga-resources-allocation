@@ -25,6 +25,8 @@ class SimulatedMember(BaseModel):
     nome: str
     cargo_id: int
     habilidade_names: List[str]
+    inicio: Optional[date] = None
+    termino: Optional[date] = None
 
 class AlgoritmoParams(BaseModel):
     tam_pop: int = 20

@@ -144,19 +144,31 @@ class ACOService:
             projeto_ids=params.get("projeto_ids")
         )
         
+        ref_date = datetime.datetime.strptime(params["ref_date"], "%Y-%m-%d").date()
+        colaboradores = self.convert_absences(colaboradores, ref_date)
+        
         simulated_members = params.get("simulated_members", [])
         for sim_member in simulated_members:
             cargo = crud.get_cargo(db, sim_member["cargo_id"])
+            inicio = None
+            termino = None
+            if sim_member.get("inicio"):
+                inicio_date = datetime.datetime.strptime(sim_member["inicio"], "%Y-%m-%d").date() if isinstance(sim_member["inicio"], str) else sim_member["inicio"]
+                inicio = (inicio_date - ref_date).days
+            if sim_member.get("termino"):
+                termino_date = datetime.datetime.strptime(sim_member["termino"], "%Y-%m-%d").date() if isinstance(sim_member["termino"], str) else sim_member["termino"]
+                termino = (termino_date - ref_date).days
+            
             colaboradores.append({
                 "id": f"sim_{sim_member['nome']}",
                 "nome": sim_member["nome"],
                 "cargo": cargo.nome if cargo else "Unknown",
                 "habilidades": sim_member.get("habilidade_names", []),
-                "ausencias": []
+                "ausencias": [],
+                "inicio": inicio,
+                "termino": termino,
+                "ferias": []
             })
-        
-        ref_date = datetime.datetime.strptime(params["ref_date"], "%Y-%m-%d").date()
-        colaboradores = self.convert_absences(colaboradores, ref_date)
         tarefas_globais = self.build_global_tasks(projetos)
         
         project_deadlines = {}
@@ -187,21 +199,32 @@ class ACOService:
             projeto_ids=params.get("projeto_ids")
         )
         
-        # Add simulated members
+        ref_date = datetime.datetime.strptime(params["ref_date"], "%Y-%m-%d").date()
+        colaboradores = self.convert_absences(colaboradores, ref_date)
+        
+        # Add simulated members AFTER converting absences
         simulated_members = params.get("simulated_members", [])
         for sim_member in simulated_members:
             cargo = crud.get_cargo(db, sim_member["cargo_id"])
+            inicio = None
+            termino = None
+            if sim_member.get("inicio"):
+                inicio_date = datetime.datetime.strptime(sim_member["inicio"], "%Y-%m-%d").date() if isinstance(sim_member["inicio"], str) else sim_member["inicio"]
+                inicio = (inicio_date - ref_date).days
+            if sim_member.get("termino"):
+                termino_date = datetime.datetime.strptime(sim_member["termino"], "%Y-%m-%d").date() if isinstance(sim_member["termino"], str) else sim_member["termino"]
+                termino = (termino_date - ref_date).days
+            
             colaboradores.append({
                 "id": f"sim_{sim_member['nome']}",
                 "nome": sim_member["nome"],
                 "cargo": cargo.nome if cargo else "Unknown",
                 "habilidades": sim_member.get("habilidade_names", []),
-                "ausencias": []
+                "ausencias": [],
+                "inicio": inicio,
+                "termino": termino,
+                "ferias": []
             })
-        
-        ref_date = datetime.datetime.strptime(params["ref_date"], "%Y-%m-%d").date()
-        
-        colaboradores = self.convert_absences(colaboradores, ref_date)
         tarefas_globais = self.build_global_tasks(projetos)
         
         # Build project deadlines dict

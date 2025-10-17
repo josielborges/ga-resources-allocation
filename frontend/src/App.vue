@@ -268,7 +268,7 @@
                     </div>
                   </div>
                   
-                  <button 
+                  <!-- <button 
                     @click="executarAlgoritmoDirectly" 
                     :disabled="loading || projetos.length === 0 || colaboradores.length === 0" 
                     class="bg-primary-main text-white px-4 py-2 rounded-md text-sm font-medium w-full disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary-light transition-colors shadow-sm"
@@ -282,7 +282,7 @@
                       Executando...
                     </span>
                     <span v-else>Executar {{ params.algorithm.toUpperCase() }}</span>
-                  </button>
+                  </button> -->
                   
                   <button 
                     @click="showSelectionModal = true" 
@@ -290,7 +290,7 @@
                     class="bg-purple-600 text-white px-4 py-2 rounded-md text-sm font-medium w-full hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
                     type="button"
                   >
-                    Personalizar Execução
+                    Executar {{ params.algorithm.toUpperCase() }}
                   </button>
                   
                   <button 
@@ -693,7 +693,7 @@
     <div v-if="showSelectionModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" @click.self="showSelectionModal = false">
       <div class="bg-white rounded-lg shadow-xl max-w-5xl w-full mx-4 max-h-[90vh] flex flex-col">
         <div class="px-6 py-3 border-b flex justify-between items-center">
-          <h3 class="text-base font-semibold text-text-primary">Personalizar Execução</h3>
+          <h3 class="text-base font-semibold text-text-primary">Executar geração do Roadmap</h3>
           <button @click="showSelectionModal = false" class="text-text-secondary hover:text-text-primary">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -848,10 +848,13 @@
                         <div class="font-medium text-xs truncate mb-1">
                           {{ member.nome }} <span class="text-text-secondary font-normal">({{ member.cargo.nome }})</span>
                         </div>
-                        <div class="flex flex-wrap gap-1">
+                        <div class="flex flex-wrap gap-1 mb-1">
                           <span v-for="hab in member.habilidades" :key="hab.id" class="inline-block px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded text-xs">
                             {{ hab.nome }}
                           </span>
+                        </div>
+                        <div class="text-xs text-gray-600">
+                          {{ formatDate(member.inicio) }} - {{ formatDate(member.termino) }}
                         </div>
                       </div>
                       <button @click="removeSimulatedMember(member.id)" class="text-red-600 hover:text-red-800 flex-shrink-0">
@@ -883,6 +886,10 @@
                     <span v-if="!newMember.cargo_id" class="text-xs text-gray-400">Selecione um cargo</span>
                     <span v-else-if="filteredHabilidadesForCargo.length === 0" class="text-xs text-gray-400">Sem habilidades</span>
                   </div>
+                  <div class="grid grid-cols-2 gap-1">
+                    <input v-model="newMember.inicio" type="date" class="px-2 py-1 border rounded text-xs" placeholder="Início">
+                    <input v-model="newMember.termino" type="date" class="px-2 py-1 border rounded text-xs" placeholder="Término">
+                  </div>
                   <button @click="addSimulatedMember" class="w-full px-2 py-1 bg-purple-600 text-white rounded text-xs hover:bg-purple-700">Adicionar</button>
                 </div>
               </div>
@@ -905,7 +912,7 @@
             </button>
             <button 
               @click="executarAlgoritmo" 
-              :disabled="selectedProjects.length === 0 || (selectedCollaborators.length === 0 && selectedTransversais.length === 0)"
+              :disabled="selectedProjects.length === 0 || (selectedCollaborators.length === 0 && selectedTransversais.length === 0 && simulatedMembers.length === 0)"
               class="px-3 py-1.5 text-xs bg-primary-main text-white rounded hover:bg-primary-light disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Executar
@@ -1230,7 +1237,7 @@ export default {
       selectedTransversais: [],
       simulatedMembers: [],
       executedColaboradores: [],
-      newMember: { cargo_id: null, habilidade_names: [] },
+      newMember: { cargo_id: null, habilidade_names: [], inicio: '', termino: '' },
       cargos: [],
       habilidades: [],
       params: {
@@ -1395,6 +1402,20 @@ export default {
     },
     projetos() {
       this.initializeSelections()
+    },
+    selectedYear() {
+      // Update default dates for new member form when year changes
+      if (!this.newMember.inicio && !this.newMember.termino) {
+        this.newMember.inicio = this.getYearStartDate()
+        this.newMember.termino = this.getYearEndDate()
+      }
+    },
+    showSelectionModal(newVal) {
+      // Set default dates when modal opens
+      if (newVal && !this.newMember.inicio && !this.newMember.termino) {
+        this.newMember.inicio = this.getYearStartDate()
+        this.newMember.termino = this.getYearEndDate()
+      }
     }
   },
 
@@ -1578,15 +1599,24 @@ export default {
       const habilidades = this.habilidades.filter(h => this.newMember.habilidade_names.includes(h.nome))
       const cargoSimCount = this.simulatedMembers.filter(m => m.cargo.id === cargo.id).length + 1
       
+      // Use provided dates or default to year period
+      const inicio = this.newMember.inicio || this.getYearStartDate()
+      const termino = this.newMember.termino || this.getYearEndDate()
+      
       this.simulatedMembers.push({
         id: `sim_${Date.now()}`,
         nome: `${cargo.nome} Simulado ${cargoSimCount}`,
         cargo: cargo,
         habilidades: habilidades,
+        inicio: inicio,
+        termino: termino,
         simulated: true
       })
       
-      this.newMember = { cargo_id: null, habilidade_names: [] }
+      // Reset form but keep default dates
+      const defaultInicio = this.getYearStartDate()
+      const defaultTermino = this.getYearEndDate()
+      this.newMember = { cargo_id: null, habilidade_names: [], inicio: defaultInicio, termino: defaultTermino }
     },
     removeSimulatedMember(id) {
       const index = this.simulatedMembers.findIndex(m => m.id === id)
@@ -1628,9 +1658,13 @@ export default {
           simulated_members: this.simulatedMembers.map(m => ({
             nome: m.nome,
             cargo_id: m.cargo.id,
-            habilidade_names: m.habilidades.map(h => h.nome)
+            habilidade_names: m.habilidades.map(h => h.nome),
+            inicio: m.inicio || null,
+            termino: m.termino || null
           }))
         }
+        
+        console.log('Payload:', JSON.stringify(payload, null, 2))
         
         // Use streaming endpoint for both GA and ACO
         const streamEndpoint = this.params.algorithm === 'ga' ? '/api/executar-algoritmo-stream' : '/api/executar-aco-stream'
@@ -1659,7 +1693,8 @@ export default {
               const data = JSON.parse(line.slice(6))
               
               if (data.error) {
-                console.error('Erro:', data.error)
+                console.error('Erro no stream:', data.error)
+                alert('Erro ao executar algoritmo: ' + data.error)
                 this.showProgress = false
                 this.loading = false
                 return
@@ -1688,7 +1723,8 @@ export default {
           }
         }
       } catch (error) {
-        console.error('Erro ao executar algoritmo')
+        console.error('Erro ao executar algoritmo:', error)
+        alert('Erro ao executar algoritmo: ' + error.message)
         this.showProgress = false
         this.loading = false
       }
@@ -1763,7 +1799,9 @@ export default {
             cargo_id: m.cargo.id,
             cargo: m.cargo,
             habilidade_names: m.habilidades.map(h => h.nome),
-            habilidades: m.habilidades
+            habilidades: m.habilidades,
+            inicio: m.inicio,
+            termino: m.termino
           }))
         }
         
@@ -1814,6 +1852,8 @@ export default {
             nome: m.nome,
             cargo: m.cargo || this.cargos.find(c => c.id === m.cargo_id),
             habilidades: m.habilidades || this.habilidades.filter(h => m.habilidade_names.includes(h.nome)),
+            inicio: m.inicio,
+            termino: m.termino,
             simulated: true
           }))
         } else {
@@ -1883,6 +1923,11 @@ export default {
       if (!this.selectedYear) return null
       const periodo = this.periodosRoadmaps.find(p => p.ano === this.selectedYear)
       return periodo?.termino || null
+    },
+    formatDate(dateStr) {
+      if (!dateStr) return 'N/A'
+      const date = new Date(dateStr + 'T00:00:00')
+      return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
     }
   }
 }
