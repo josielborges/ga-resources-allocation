@@ -15,7 +15,7 @@ def get_projeto(db: Session, projeto_id: int):
     return db.query(models.Projeto).filter(models.Projeto.id == projeto_id).first()
 
 def create_projeto(db: Session, projeto: schemas.ProjetoCreate):
-    db_projeto = models.Projeto(nome=projeto.nome, color=projeto.color, termino=projeto.termino, squad_id=projeto.squad_id, ano=projeto.ano)
+    db_projeto = models.Projeto(nome=projeto.nome, color=projeto.color, inicio=projeto.inicio, termino=projeto.termino, squad_id=projeto.squad_id, ano=projeto.ano)
     db.add(db_projeto)
     db.commit()
     db.refresh(db_projeto)
@@ -63,6 +63,7 @@ def update_projeto(db: Session, projeto_id: int, projeto: schemas.ProjetoCreate)
     
     db_projeto.nome = projeto.nome
     db_projeto.color = projeto.color
+    db_projeto.inicio = projeto.inicio
     db_projeto.termino = projeto.termino
     db_projeto.squad_id = projeto.squad_id
     db_projeto.ano = projeto.ano

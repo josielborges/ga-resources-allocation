@@ -139,10 +139,11 @@ class AntColonyOptimization:
             pheromones[task_idx][collab_id] += deposit
     
     def local_search(self, solution: List[int], tasks: List[Dict], 
-                    collaborators: List[Dict], project_deadlines: Dict[str, int] = None) -> List[int]:
+                    collaborators: List[Dict], project_deadlines: Dict[str, int] = None,
+                    project_start_dates: Dict[str, int] = None) -> List[int]:
         """Apply local search to improve solution"""
         improved_solution = solution[:]
-        current_fitness = self.evaluator.evaluate(improved_solution, tasks, collaborators, project_deadlines)[0]
+        current_fitness = self.evaluator.evaluate(improved_solution, tasks, collaborators, project_deadlines, project_start_dates)[0]
         
         collaborator_ids = [c["id"] for c in collaborators]
         
@@ -154,7 +155,7 @@ class AntColonyOptimization:
             for new_collab in collaborator_ids:
                 if new_collab != original_collab:
                     improved_solution[i] = new_collab
-                    new_fitness = self.evaluator.evaluate(improved_solution, tasks, collaborators, project_deadlines)[0]
+                    new_fitness = self.evaluator.evaluate(improved_solution, tasks, collaborators, project_deadlines, project_start_dates)[0]
                     
                     if new_fitness < current_fitness:
                         current_fitness = new_fitness
@@ -165,7 +166,8 @@ class AntColonyOptimization:
         return improved_solution
     
     async def run_with_progress(self, num_ants: int, max_iterations: int, tasks: List[Dict], 
-           collaborators: List[Dict], project_deadlines: Dict[str, int] = None) -> AsyncGenerator[Dict, None]:
+           collaborators: List[Dict], project_deadlines: Dict[str, int] = None,
+           project_start_dates: Dict[str, int] = None) -> AsyncGenerator[Dict, None]:
         num_tasks = len(tasks)
         collaborator_ids = [c["id"] for c in collaborators]
         pheromones = self.initialize_pheromones(num_tasks, collaborator_ids)
@@ -182,9 +184,9 @@ class AntColonyOptimization:
                 solution = self.construct_solution(tasks, collaborators, pheromones)
                 local_search_prob = 0.5 * (1.0 - iteration / max_iterations)
                 if random.random() < local_search_prob:
-                    solution = self.local_search(solution, tasks, collaborators, project_deadlines)
+                    solution = self.local_search(solution, tasks, collaborators, project_deadlines, project_start_dates)
                 
-                fitness, penalties, violations = self.evaluator.evaluate(solution, tasks, collaborators, project_deadlines)
+                fitness, penalties, violations = self.evaluator.evaluate(solution, tasks, collaborators, project_deadlines, project_start_dates)
                 solutions.append(solution)
                 fitnesses.append(fitness)
                 penalties_list.append(penalties)
@@ -216,7 +218,8 @@ class AntColonyOptimization:
         }
     
     def run(self, num_ants: int, max_iterations: int, tasks: List[Dict], 
-           collaborators: List[Dict], project_deadlines: Dict[str, int] = None) -> Tuple[List[int], float, List[float], Dict, Dict]:
+           collaborators: List[Dict], project_deadlines: Dict[str, int] = None,
+           project_start_dates: Dict[str, int] = None) -> Tuple[List[int], float, List[float], Dict, Dict]:
         """Run ACO algorithm"""
         
         num_tasks = len(tasks)
@@ -245,9 +248,9 @@ class AntColonyOptimization:
                 # Apply local search with decreasing probability
                 local_search_prob = 0.5 * (1.0 - iteration / max_iterations)
                 if random.random() < local_search_prob:
-                    solution = self.local_search(solution, tasks, collaborators, project_deadlines)
+                    solution = self.local_search(solution, tasks, collaborators, project_deadlines, project_start_dates)
                 
-                fitness, penalties, violations = self.evaluator.evaluate(solution, tasks, collaborators, project_deadlines)
+                fitness, penalties, violations = self.evaluator.evaluate(solution, tasks, collaborators, project_deadlines, project_start_dates)
                 
                 solutions.append(solution)
                 fitnesses.append(fitness)

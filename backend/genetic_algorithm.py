@@ -64,7 +64,8 @@ class GeneticAlgorithm:
     
     async def run_with_progress(self, pop_size: int, generations: int, crossover_prob: float, 
            mutation_prob: float, tasks: List[Dict], 
-           collaborators: List[Dict], project_deadlines: Dict[str, int] = None) -> AsyncGenerator[Dict, None]:
+           collaborators: List[Dict], project_deadlines: Dict[str, int] = None,
+           project_start_dates: Dict[str, int] = None) -> AsyncGenerator[Dict, None]:
         
         num_tasks = len(tasks)
         collaborator_ids = [c["id"] for c in collaborators]
@@ -76,7 +77,7 @@ class GeneticAlgorithm:
         best_violations = {}
         
         for generation in range(generations):
-            evaluations = [self.evaluator.evaluate(ind, tasks, collaborators, project_deadlines) 
+            evaluations = [self.evaluator.evaluate(ind, tasks, collaborators, project_deadlines, project_start_dates) 
                          for ind in population]
             fitnesses = [eval_result[0] for eval_result in evaluations]
             penalties = [eval_result[1] for eval_result in evaluations]
@@ -131,7 +132,8 @@ class GeneticAlgorithm:
     
     def run(self, pop_size: int, generations: int, crossover_prob: float, 
            mutation_prob: float, tasks: List[Dict], 
-           collaborators: List[Dict], project_deadlines: Dict[str, int] = None) -> Tuple[List[int], float, List[float], Dict, Dict]:
+           collaborators: List[Dict], project_deadlines: Dict[str, int] = None,
+           project_start_dates: Dict[str, int] = None) -> Tuple[List[int], float, List[float], Dict, Dict]:
         
         num_tasks = len(tasks)
         collaborator_ids = [c["id"] for c in collaborators]
@@ -148,7 +150,7 @@ class GeneticAlgorithm:
         
         for generation in range(generations):
             # Evaluate population
-            evaluations = [self.evaluator.evaluate(ind, tasks, collaborators, project_deadlines) 
+            evaluations = [self.evaluator.evaluate(ind, tasks, collaborators, project_deadlines, project_start_dates) 
                          for ind in population]
             fitnesses = [eval_result[0] for eval_result in evaluations]
             penalties = [eval_result[1] for eval_result in evaluations]

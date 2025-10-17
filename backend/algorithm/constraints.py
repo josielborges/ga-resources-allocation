@@ -20,6 +20,7 @@ class ConstraintValidator:
         "resource_idle_time": 100,
         "bottleneck_delay": 300,
         "deadline_violation": 1000,
+        "project_start_violation": 1000,
         "work_period_violation": 5000,
         "vacation_conflict": 2000
     }
@@ -200,6 +201,24 @@ class ConstraintValidator:
                     "dias_atraso": days_late,
                     "termino_planejado": deadline,
                     "termino_real": project_end
+                }
+            ))
+        return violations
+    
+    @classmethod
+    def validate_project_start(cls, project_name: str, project_start: int, required_start: int) -> List[ConstraintViolation]:
+        """Validate project start date constraint"""
+        violations = []
+        if required_start is not None and project_start < required_start:
+            days_early = required_start - project_start
+            violations.append(ConstraintViolation(
+                type="project_start_violation",
+                penalty=cls.PENALTIES["project_start_violation"] * days_early,
+                details={
+                    "projeto": project_name,
+                    "dias_antecipado": days_early,
+                    "inicio_planejado": required_start,
+                    "inicio_real": project_start
                 }
             ))
         return violations

@@ -53,6 +53,7 @@ class AlgorithmService:
             projetos.append({
                 "nome": proj.nome,
                 "color": proj.color,
+                "inicio": proj.inicio,
                 "termino": proj.termino,
                 "etapas": etapas
             })
@@ -172,6 +173,7 @@ class AlgorithmService:
     
     async def execute_algorithm_stream(self, params: Dict, db: Session) -> AsyncGenerator[Dict, None]:
         """Execute genetic algorithm with progress streaming"""
+        print("[GA] Starting stream execution")
         colaboradores, projetos = self.load_data_from_db(
             db, 
             colaborador_ids=params.get("colaborador_ids"),
@@ -207,17 +209,38 @@ class AlgorithmService:
         tarefas_globais = self.build_global_tasks(projetos)
         
         project_deadlines = {}
+        project_start_dates = {}
         for proj in projetos:
+            if proj.get("inicio"):
+                delta = proj["inicio"] - ref_date
+                project_start_dates[proj["nome"]] = delta.days
             if proj.get("termino"):
                 delta = proj["termino"] - ref_date
                 project_deadlines[proj["nome"]] = delta.days
         
         # Run GA with progress callback
+        print(f"[GA] Running algorithm with {len(tarefas_globais)} tasks, {len(colaboradores)} collaborators")
         async for progress in self.ga.run_with_progress(
             params["tam_pop"], params["n_gen"], params["pc"], params["pm"], 
-            tarefas_globais, colaboradores, project_deadlines
+            tarefas_globais, colaboradores, project_deadlines, project_start_dates
         ):
-            yield progress
+            if progress.get("type") == "complete":
+                print("[GA] Algorithm complete, building schedule")
+                schedule = self.scheduler.build_schedule(
+                    progress["best_solution"], tarefas_globais, colaboradores, ref_date
+                )
+                print(f"[GA] Schedule built: {len(schedule)} tasks")
+                yield {
+                    "type": "complete",
+                    "tarefas": schedule,
+                    "melhor_fitness": progress["best_fitness"],
+                    "historico_fitness": [],
+                    "penalidades": progress["best_penalties"],
+                    "ocorrencias_penalidades": progress["best_violations"]
+                }
+                print("[GA] Complete result yielded")
+            else:
+                yield progress
     
     def execute_algorithm(self, params: Dict, db: Session) -> Dict:
         """Execute genetic algorithm with given parameters"""
@@ -255,9 +278,13 @@ class AlgorithmService:
             })
         tarefas_globais = self.build_global_tasks(projetos)
         
-        # Build project deadlines dict
+        # Build project deadlines and start dates dict
         project_deadlines = {}
+        project_start_dates = {}
         for proj in projetos:
+            if proj.get("inicio"):
+                delta = proj["inicio"] - ref_date
+                project_start_dates[proj["nome"]] = delta.days
             if proj.get("termino"):
                 delta = proj["termino"] - ref_date
                 project_deadlines[proj["nome"]] = delta.days
@@ -265,7 +292,7 @@ class AlgorithmService:
         # Run genetic algorithm
         best_solution, best_fitness, fitness_history, penalties, violations = self.ga.run(
             params["tam_pop"], params["n_gen"], params["pc"], params["pm"], 
-            tarefas_globais, colaboradores, project_deadlines
+            tarefas_globais, colaboradores, project_deadlines, project_start_dates
         )
         
         # Build schedule
@@ -286,6 +313,7 @@ class AlgorithmService:
             "gaps_projeto": 0,
             "makespan": 0,
             "deadline_violation": 0,
+            "project_start_violation": 0,
             "work_period_violation": 0,
             "vacation_conflict": 0
         }
@@ -297,18 +325,36 @@ class AlgorithmService:
             "resource_idle_time": [],
             "gaps_projeto": [],
             "deadline_violation": [],
+            "project_start_violation": [],
             "work_period_violation": [],
             "vacation_conflict": []
         }
+        
+        # Track project starts and ends from schedule
+        project_starts_schedule = {}
+        project_ends_schedule = {}
         
         for task_schedule in schedule:
             task = next((t for t in tarefas_globais if t["projeto"] == task_schedule["projeto"] and t["nome"] == task_schedule["nome_tarefa"]), None)
             if not task:
                 continue
             
-            collaborator = next(c for c in colaboradores if c["nome"] == task_schedule["colaborador"])
+            project = task_schedule["projeto"]
             start_day = task_schedule["inicio_dias"]
-            end_day = task_schedule["fim_dias"] + 1
+            end_day = task_schedule["fim_dias"]
+            
+            # Track earliest start and latest end per project
+            if project not in project_starts_schedule:
+                project_starts_schedule[project] = start_day
+            else:
+                project_starts_schedule[project] = min(project_starts_schedule[project], start_day)
+            
+            if project not in project_ends_schedule:
+                project_ends_schedule[project] = end_day
+            else:
+                project_ends_schedule[project] = max(project_ends_schedule[project], end_day)
+            
+            collaborator = next(c for c in colaboradores if c["nome"] == task_schedule["colaborador"])
             
             skill_violations = validator.validate_skills(task, collaborator)
             for v in skill_violations:
@@ -320,7 +366,7 @@ class AlgorithmService:
                 final_penalties["cargo_incorreto"] += v.penalty
                 final_violations["cargo_incorreto"].append(v.details)
             
-            availability_violations = validator.validate_availability(collaborator, start_day, end_day, task)
+            availability_violations = validator.validate_availability(collaborator, start_day, end_day + 1, task)
             for v in availability_violations:
                 if v.type == "vacation_conflict":
                     final_penalties["vacation_conflict"] += v.penalty
@@ -331,6 +377,26 @@ class AlgorithmService:
                 elif v.type == "absence_conflict":
                     final_penalties["ausencias"] += v.penalty
                     final_violations["ausencias"].append(v.details)
+        
+        # Validate project start dates
+        for project_name, actual_start in project_starts_schedule.items():
+            if project_name in project_start_dates:
+                required_start = project_start_dates[project_name]
+                if actual_start < required_start:
+                    start_violations = validator.validate_project_start(project_name, actual_start, required_start)
+                    for v in start_violations:
+                        final_penalties["project_start_violation"] += v.penalty
+                        final_violations["project_start_violation"].append(v.details)
+        
+        # Validate project deadlines
+        for project_name, actual_end in project_ends_schedule.items():
+            if project_name in project_deadlines:
+                deadline = project_deadlines[project_name]
+                if actual_end > deadline:
+                    deadline_violations = validator.validate_deadline(project_name, actual_end, deadline)
+                    for v in deadline_violations:
+                        final_penalties["deadline_violation"] += v.penalty
+                        final_violations["deadline_violation"].append(v.details)
         
         
         return {

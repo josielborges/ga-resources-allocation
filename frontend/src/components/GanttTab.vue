@@ -133,6 +133,12 @@
               <td class="px-3 py-1.5">
                 <div class="gantt-timeline-compact">
                   <div 
+                    v-if="projetosComDeadline[projeto.nome]?.inicio_dias !== null"
+                    :style="getStartStyle(projetosComDeadline[projeto.nome].inicio_dias)"
+                    :title="`Início: ${projetosComDeadline[projeto.nome].inicio}`"
+                    class="start-marker"
+                  ></div>
+                  <div 
                     class="gantt-bar-compact" 
                     :style="getGanttStyleAgrupado(projeto)"
                     :title="`${projeto.nome} (${projeto.total_tarefas} tarefas, ${projeto.duracao_total} dias)`"
@@ -140,7 +146,7 @@
                     <span class="gantt-text-compact">{{ projeto.duracao_total }}d</span>
                   </div>
                   <div 
-                    v-if="projetosComDeadline[projeto.nome]"
+                    v-if="projetosComDeadline[projeto.nome]?.deadline_dias !== null"
                     :style="getDeadlineStyle(projetosComDeadline[projeto.nome].deadline_dias)"
                     :title="`Prazo: ${projetosComDeadline[projeto.nome].deadline}`"
                     class="deadline-marker"
@@ -180,6 +186,12 @@
               <td class="px-3 py-1.5">
                 <div class="gantt-timeline-intervals">
                   <div 
+                    v-if="projetosComDeadline[projeto.nome]?.inicio_dias !== null"
+                    :style="getStartStyle(projetosComDeadline[projeto.nome].inicio_dias)"
+                    :title="`Início: ${projetosComDeadline[projeto.nome].inicio}`"
+                    class="start-marker"
+                  ></div>
+                  <div 
                     v-for="(intervalo, idx) in projeto.intervalos" 
                     :key="idx"
                     class="gantt-interval" 
@@ -189,7 +201,7 @@
                     <span class="gantt-interval-text">{{ intervalo.duracao }}d</span>
                   </div>
                   <div 
-                    v-if="projetosComDeadline[projeto.nome]"
+                    v-if="projetosComDeadline[projeto.nome]?.deadline_dias !== null"
                     :style="getDeadlineStyle(projetosComDeadline[projeto.nome].deadline_dias)"
                     :title="`Prazo: ${projetosComDeadline[projeto.nome].deadline}`"
                     class="deadline-marker"
@@ -233,6 +245,12 @@
               <td class="px-3 py-1.5">
                 <div class="gantt-timeline-compact">
                   <div 
+                    v-if="projetosComDeadline[tarefa.projeto]?.inicio_dias !== null"
+                    :style="getStartStyle(projetosComDeadline[tarefa.projeto].inicio_dias)"
+                    :title="`Início: ${projetosComDeadline[tarefa.projeto].inicio}`"
+                    class="start-marker"
+                  ></div>
+                  <div 
                     class="gantt-bar-compact" 
                     :style="getGanttStyle(tarefa)"
                     :title="`${tarefa.nome_tarefa} (${tarefa.duracao_dias} dias)`"
@@ -240,7 +258,7 @@
                     <span class="gantt-text-compact">{{ tarefa.duracao_dias }}d</span>
                   </div>
                   <div 
-                    v-if="projetosComDeadline[tarefa.projeto]"
+                    v-if="projetosComDeadline[tarefa.projeto]?.deadline_dias !== null"
                     :style="getDeadlineStyle(projetosComDeadline[tarefa.projeto].deadline_dias)"
                     :title="`Prazo: ${projetosComDeadline[tarefa.projeto].deadline}`"
                     class="deadline-marker"
@@ -429,11 +447,11 @@ export default {
     projetosComDeadline() {
       const map = {}
       this.projetos.forEach(p => {
-        if (p.termino) {
-          map[p.nome] = {
-            deadline: p.termino,
-            deadline_dias: this.calcularDiasDesdeReferencia(p.termino)
-          }
+        map[p.nome] = {
+          deadline: p.termino || null,
+          deadline_dias: p.termino ? this.calcularDiasDesdeReferencia(p.termino) : null,
+          inicio: p.inicio || null,
+          inicio_dias: p.inicio ? this.calcularDiasDesdeReferencia(p.inicio) : null
         }
       })
       return map
@@ -450,8 +468,9 @@ export default {
         'gaps_projeto': 'Intervalos entre Tarefas',
         'resource_idle_time': 'Tempo Ocioso de Recursos',
         'deadline_violation': 'Violação de Prazo',
+        'project_start_violation': 'Violação de Data de Início',
         'makespan': 'Duração Total do Projeto',
-        'work_period_violation': 'Vioçação de Período de Trabalho',
+        'work_period_violation': 'Violação de Período de Trabalho',
         'vacation_conflict': 'Conflito com Férias'
       }
       return translations[key] || key
@@ -550,6 +569,18 @@ export default {
         bottom: '0',
         width: '2px',
         backgroundColor: '#dc2626',
+        zIndex: 10
+      }
+    },
+    getStartStyle(startDias) {
+      const proporcao = (startDias / this.duracaoMaxima) * 100
+      return {
+        left: `${Math.max(0, proporcao)}%`,
+        position: 'absolute',
+        top: '0',
+        bottom: '0',
+        width: '2px',
+        backgroundColor: '#16a34a',
         zIndex: 10
       }
     },
@@ -653,5 +684,27 @@ export default {
   border-left: 4px solid transparent;
   border-right: 4px solid transparent;
   border-top: 6px solid #dc2626;
+}
+
+.start-marker {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background-color: #16a34a;
+  z-index: 10;
+  cursor: help;
+}
+
+.start-marker::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: -3px;
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 6px solid #16a34a;
 }
 </style>

@@ -101,6 +101,7 @@ class Projeto(Base):
     id = Column(Integer, primary_key=True, index=True)
     nome = Column(String, index=True)
     color = Column(String)
+    inicio = Column(Date, nullable=True)
     termino = Column(Date, nullable=True)
     squad_id = Column(Integer, ForeignKey("squads.id", ondelete="RESTRICT"), nullable=True)
     ano = Column(Integer, nullable=True)

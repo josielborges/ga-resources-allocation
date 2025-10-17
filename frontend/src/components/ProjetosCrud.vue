@@ -29,6 +29,7 @@
             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Squad</th>
             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Etapas</th>
             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duração Total</th>
+            <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Inicio Mínimo</th>
             <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Deadline</th>
             <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
           </tr>
@@ -52,6 +53,9 @@
             </td>
             <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
               {{ projeto.etapas.reduce((total, etapa) => total + etapa.duracao_dias, 0) }} dias
+            </td>
+            <td class="px-4 py-2 text-center whitespace-nowrap text-sm text-gray-600">
+              {{ projeto.inicio ? formatarData(projeto.inicio) : '-' }}
             </td>
             <td class="px-4 py-2 text-center whitespace-nowrap text-sm text-gray-600">
               {{ projeto.termino ? formatarData(projeto.termino) : '-' }}
@@ -101,7 +105,7 @@
           <div class="space-y-4">
             <!-- Dados do Projeto -->
             <div class="grid grid-cols-12 gap-4">
-              <div class="col-span-4">
+              <div class="col-span-3">
                 <label class="block text-sm font-medium mb-1">Nome do Projeto</label>
                 <input 
                   v-model="form.nome" 
@@ -125,7 +129,16 @@
                 </select>
               </div>
               
-              <div class="col-span-5">
+              <div class="col-span-3">
+                <label class="block text-sm font-medium mb-1">Início minimo (Opcional)</label>
+                <input 
+                  v-model="form.inicio" 
+                  type="date" 
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-primary-main"
+                />
+              </div>
+              
+              <div class="col-span-3">
                 <label class="block text-sm font-medium mb-1">Deadline (Opcional)</label>
                 <input 
                   v-model="form.termino" 
@@ -373,6 +386,7 @@ export default {
       form: {
         nome: '',
         color: '#3B82F6',
+        inicio: null,
         termino: null,
         squad_id: null,
         etapas: []
@@ -468,6 +482,7 @@ export default {
         this.form = {
           nome: projeto.nome,
           color: projeto.color,
+          inicio: projeto.inicio || null,
           termino: projeto.termino || null,
           squad_id: projeto.squad_id || null,
           etapas: projeto.etapas
@@ -500,6 +515,7 @@ export default {
         this.form = {
           nome: '',
           color: '#3B82F6',
+          inicio: null,
           termino: null,
           squad_id: this.selectedSquadId,
           etapas: []

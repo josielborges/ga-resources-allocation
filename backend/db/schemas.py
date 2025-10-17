@@ -133,6 +133,7 @@ class Etapa(EtapaBase):
 class ProjetoBase(BaseModel):
     nome: str
     color: str
+    inicio: Optional[date] = None
     termino: Optional[date] = None
     squad_id: Optional[int] = None
     ano: Optional[int] = None

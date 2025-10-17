@@ -89,14 +89,21 @@ export default {
         'gaps_projeto': 'Intervalos entre Tarefas',
         'resource_idle_time': 'Tempo Ocioso de Recursos',
         'deadline_violation': 'Violação de Prazo',
+        'project_start_violation': 'Violação de Data de Início',
         'makespan': 'Duração Total do Projeto',
-        'work_period_violation': 'Vioçação de Período de Trabalho',
+        'work_period_violation': 'Violação de Período de Trabalho',
         'vacation_conflict': 'Conflito com Férias'
       }
       return translations[key] || key
     },
     formatValue(key, value, tipo) {
       if (tipo === 'deadline_violation' && (key === 'termino_planejado' || key === 'termino_real') && this.refDate) {
+        const refDate = new Date(this.refDate)
+        const targetDate = new Date(refDate)
+        targetDate.setDate(targetDate.getDate() + value)
+        return `${targetDate.toLocaleDateString('pt-BR')} (${value} dias)`
+      }
+      if (tipo === 'project_start_violation' && (key === 'inicio_planejado' || key === 'inicio_real') && this.refDate) {
         const refDate = new Date(this.refDate)
         const targetDate = new Date(refDate)
         targetDate.setDate(targetDate.getDate() + value)
