@@ -133,7 +133,7 @@
               <td class="px-3 py-1.5">
                 <div class="gantt-timeline-compact">
                   <div 
-                    v-if="projetosComDeadline[projeto.nome]?.inicio_dias !== null"
+                    v-if="projetosComDeadline[projeto.nome] && projetosComDeadline[projeto.nome].inicio_dias !== null"
                     :style="getStartStyle(projetosComDeadline[projeto.nome].inicio_dias)"
                     :title="`Início: ${projetosComDeadline[projeto.nome].inicio}`"
                     class="start-marker"
@@ -146,7 +146,7 @@
                     <span class="gantt-text-compact">{{ projeto.duracao_total }}d</span>
                   </div>
                   <div 
-                    v-if="projetosComDeadline[projeto.nome]?.deadline_dias !== null"
+                    v-if="projetosComDeadline[projeto.nome] && projetosComDeadline[projeto.nome].deadline_dias !== null"
                     :style="getDeadlineStyle(projetosComDeadline[projeto.nome].deadline_dias)"
                     :title="`Prazo: ${projetosComDeadline[projeto.nome].deadline}`"
                     class="deadline-marker"
@@ -186,7 +186,7 @@
               <td class="px-3 py-1.5">
                 <div class="gantt-timeline-intervals">
                   <div 
-                    v-if="projetosComDeadline[projeto.nome]?.inicio_dias !== null"
+                    v-if="projetosComDeadline[projeto.nome] && projetosComDeadline[projeto.nome].inicio_dias !== null"
                     :style="getStartStyle(projetosComDeadline[projeto.nome].inicio_dias)"
                     :title="`Início: ${projetosComDeadline[projeto.nome].inicio}`"
                     class="start-marker"
@@ -201,7 +201,7 @@
                     <span class="gantt-interval-text">{{ intervalo.duracao }}d</span>
                   </div>
                   <div 
-                    v-if="projetosComDeadline[projeto.nome]?.deadline_dias !== null"
+                    v-if="projetosComDeadline[projeto.nome] && projetosComDeadline[projeto.nome].deadline_dias !== null"
                     :style="getDeadlineStyle(projetosComDeadline[projeto.nome].deadline_dias)"
                     :title="`Prazo: ${projetosComDeadline[projeto.nome].deadline}`"
                     class="deadline-marker"
@@ -245,7 +245,7 @@
               <td class="px-3 py-1.5">
                 <div class="gantt-timeline-compact">
                   <div 
-                    v-if="projetosComDeadline[tarefa.projeto]?.inicio_dias !== null"
+                    v-if="projetosComDeadline[tarefa.projeto] && projetosComDeadline[tarefa.projeto].inicio_dias !== null"
                     :style="getStartStyle(projetosComDeadline[tarefa.projeto].inicio_dias)"
                     :title="`Início: ${projetosComDeadline[tarefa.projeto].inicio}`"
                     class="start-marker"
@@ -258,7 +258,7 @@
                     <span class="gantt-text-compact">{{ tarefa.duracao_dias }}d</span>
                   </div>
                   <div 
-                    v-if="projetosComDeadline[tarefa.projeto]?.deadline_dias !== null"
+                    v-if="projetosComDeadline[tarefa.projeto] && projetosComDeadline[tarefa.projeto].deadline_dias !== null"
                     :style="getDeadlineStyle(projetosComDeadline[tarefa.projeto].deadline_dias)"
                     :title="`Prazo: ${projetosComDeadline[tarefa.projeto].deadline}`"
                     class="deadline-marker"
@@ -446,12 +446,16 @@ export default {
     },
     projetosComDeadline() {
       const map = {}
-      this.projetos.forEach(p => {
-        map[p.nome] = {
-          deadline: p.termino || null,
-          deadline_dias: p.termino ? this.calcularDiasDesdeReferencia(p.termino) : null,
-          inicio: p.inicio || null,
-          inicio_dias: p.inicio ? this.calcularDiasDesdeReferencia(p.inicio) : null
+      // Get unique project names from tasks
+      const projectNames = [...new Set(this.tarefas.map(t => t.projeto))]
+      
+      projectNames.forEach(nome => {
+        const projeto = this.projetos.find(p => p.nome === nome)
+        map[nome] = {
+          deadline: projeto?.termino || null,
+          deadline_dias: projeto?.termino ? this.calcularDiasDesdeReferencia(projeto.termino) : null,
+          inicio: projeto?.inicio || null,
+          inicio_dias: projeto?.inicio ? this.calcularDiasDesdeReferencia(projeto.inicio) : null
         }
       })
       return map
