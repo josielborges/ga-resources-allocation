@@ -40,19 +40,18 @@
                 <p class="text-gray-500">Por favor, selecione um ano no filtro acima para visualizar os projetos</p>
               </div>
             </div>
-            <div v-else-if="!resultado" class="mt-6 space-y-4">
-              <div class="bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg shadow-md p-6 border border-purple-200">
-                <div class="text-center mb-6">
-                  <h3 class="text-2xl font-bold text-gray-900 mb-2">Geração de Roadmap</h3>
-                  <p class="text-sm text-gray-600">Selecione um squad e ano para executar a geração do roadmap ou comparar algoritmos</p>
-                </div>
-                <div class="flex gap-4 justify-center">
+            <div v-else-if="!resultado" class="space-y-6 p-6">
+              <!-- Actions Section -->
+              <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-purple-500">
+                <h2 class="text-xl font-bold text-gray-900 mb-2">Gerador de Roadmap</h2>
+                <p class="text-sm text-gray-600 mb-4">Otimize a alocação de recursos usando algoritmos genéticos e colônia de formigas</p>
+                <div class="flex gap-3">
                   <button 
                     @click="showSelectionModal = true" 
                     :disabled="!selectedSquadId || !selectedYear"
-                    class="group relative bg-gradient-to-r from-purple-600 to-purple-700 text-white px-8 py-4 rounded-lg font-semibold hover:from-purple-700 hover:to-purple-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:transform-none flex items-center gap-3"
+                    class="bg-purple-600 text-white px-5 py-2.5 rounded-lg font-medium hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md flex items-center gap-2"
                   >
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
                     <span>Executar Algoritmo</span>
@@ -60,98 +59,139 @@
                   <button 
                     @click="showComparisonModal = true" 
                     :disabled="!selectedSquadId || !selectedYear"
-                    class="group relative bg-gradient-to-r from-green-600 to-emerald-600 text-white px-8 py-4 rounded-lg font-semibold hover:from-green-700 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:transform-none flex items-center gap-3"
+                    class="bg-green-600 text-white px-5 py-2.5 rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md flex items-center gap-2"
                   >
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                     </svg>
-                    <span>Comparar GA vs ACO</span>
+                    <span>Comparar Algoritmos</span>
                   </button>
                 </div>
               </div>
-              
-              <div v-if="resultadosSalvos.length > 0">
-                <h4 class="text-base font-semibold text-gray-900 mb-3">Últimas Execuções Salvas</h4>
-                <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
-                  <div 
-                    v-for="resultado in resultadosSalvos.slice(0, 6)" 
-                    :key="resultado.id" 
-                    @click="carregarResultado(resultado.id)"
-                    class="bg-white border rounded-lg p-4 hover:shadow-md transition-all cursor-pointer group"
-                  >
-                    <div class="flex items-start justify-between mb-2">
-                      <h5 class="font-semibold text-gray-900 text-sm group-hover:text-primary-main transition-colors line-clamp-2">{{ resultado.nome }}</h5>
-                      <span class="text-xs px-2 py-0.5 rounded flex-shrink-0 ml-2" :class="resultado.algoritmo === 'ga' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'">{{ resultado.algoritmo.toUpperCase() }}</span>
+
+              <!-- Stats Grid -->
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div @click="showColaboradoresModal = true" class="bg-white rounded-xl shadow-md hover:shadow-xl transition-all cursor-pointer p-6 border-l-4 border-blue-500">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <p class="text-sm text-gray-600 font-medium mb-1">Colaboradores</p>
+                      <p class="text-3xl font-bold text-gray-900">{{ colaboradores.length }}</p>
+                      <p class="text-xs text-gray-500 mt-1">Squad selecionado</p>
                     </div>
-                    <div class="text-xs text-gray-600 space-y-1">
-                      <p><span class="font-medium">Fitness:</span> {{ resultado.melhor_fitness.toFixed(2) }}</p>
-                      <p v-if="resultado.parametros?.projeto_ids" class="flex items-center gap-1">
-                        <span class="font-medium">Projetos:</span> {{ resultado.parametros.projeto_ids.length }}
-                      </p>
-                      <p v-if="getRoadmapEndDate(resultado)">
-                        <span class="font-medium">Término:</span> {{ getRoadmapEndDate(resultado) }}
-                      </p>
-                      <p><span class="font-medium">Salvo em:</span> {{ new Date(resultado.data_execucao).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) }}</p>
-                    </div>
-                  </div>
-                </div>
-                <button 
-                  @click="showLoadModal = true" 
-                  class="mt-3 text-sm text-primary-main hover:underline"
-                >
-                  Ver todos ({{ resultadosSalvos.length }})
-                </button>
-              </div>
-              
-              <div class="bg-white rounded-md shadow-sm p-4">
-                <h4 class="text-base font-semibold text-gray-900 mb-3">Dados do Sistema</h4>
-                <div class="grid grid-cols-2 gap-3">
-                  <div @click="showColaboradoresModal = true" class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-3 border border-blue-200 cursor-pointer hover:shadow-md transition-all">
-                    <div class="flex items-center justify-between">
-                      <div>
-                        <p class="text-xs text-blue-600 font-medium mb-1">Colaboradores</p>
-                        <p class="text-2xl font-bold text-blue-700">{{ colaboradores.length }}</p>
-                      </div>
-                      <svg class="w-8 h-8 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                    <div class="bg-blue-100 p-3 rounded-lg">
+                      <svg class="w-8 h-8 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
                       </svg>
                     </div>
                   </div>
-                  <div @click="showProjetosModal = true" class="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-3 border border-green-200 cursor-pointer hover:shadow-md transition-all">
-                    <div class="flex items-center justify-between">
-                      <div>
-                        <p class="text-xs text-green-600 font-medium mb-1">Projetos</p>
-                        <p class="text-2xl font-bold text-green-700">{{ projetos.length }}</p>
-                      </div>
-                      <svg class="w-8 h-8 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                </div>
+                
+                <div @click="showProjetosModal = true" class="bg-white rounded-xl shadow-md hover:shadow-xl transition-all cursor-pointer p-6 border-l-4 border-green-500">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <p class="text-sm text-gray-600 font-medium mb-1">Projetos</p>
+                      <p class="text-3xl font-bold text-gray-900">{{ projetos.length }}</p>
+                      <p class="text-xs text-gray-500 mt-1">Ano {{ selectedYear }}</p>
+                    </div>
+                    <div class="bg-green-100 p-3 rounded-lg">
+                      <svg class="w-8 h-8 text-green-600" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"/>
                       </svg>
                     </div>
                   </div>
-                  <div @click="showCargosModal = true" class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-3 border border-purple-200 cursor-pointer hover:shadow-md transition-all">
-                    <div class="flex items-center justify-between">
-                      <div>
-                        <p class="text-xs text-purple-600 font-medium mb-1">Cargos</p>
-                        <p class="text-2xl font-bold text-purple-700">{{ cargos.length }}</p>
-                      </div>
-                      <svg class="w-8 h-8 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
+                </div>
+                
+                <div @click="showCargosModal = true" class="bg-white rounded-xl shadow-md hover:shadow-xl transition-all cursor-pointer p-6 border-l-4 border-purple-500">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <p class="text-sm text-gray-600 font-medium mb-1">Cargos</p>
+                      <p class="text-3xl font-bold text-gray-900">{{ cargos.length }}</p>
+                      <p class="text-xs text-gray-500 mt-1">Disponíveis</p>
+                    </div>
+                    <div class="bg-purple-100 p-3 rounded-lg">
+                      <svg class="w-8 h-8 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clip-rule="evenodd"/>
                         <path d="M2 13.692V16a2 2 0 002 2h12a2 2 0 002-2v-2.308A24.974 24.974 0 0110 15c-2.796 0-5.487-.46-8-1.308z"/>
                       </svg>
                     </div>
                   </div>
-                  <div @click="showHabilidadesModal = true" class="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-3 border border-orange-200 cursor-pointer hover:shadow-md transition-all">
-                    <div class="flex items-center justify-between">
-                      <div>
-                        <p class="text-xs text-orange-600 font-medium mb-1">Habilidades</p>
-                        <p class="text-2xl font-bold text-orange-700">{{ habilidades.length }}</p>
-                      </div>
-                      <svg class="w-8 h-8 text-orange-400" fill="currentColor" viewBox="0 0 20 20">
+                </div>
+                
+                <div @click="showHabilidadesModal = true" class="bg-white rounded-xl shadow-md hover:shadow-xl transition-all cursor-pointer p-6 border-l-4 border-orange-500">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <p class="text-sm text-gray-600 font-medium mb-1">Habilidades</p>
+                      <p class="text-3xl font-bold text-gray-900">{{ habilidades.length }}</p>
+                      <p class="text-xs text-gray-500 mt-1">Cadastradas</p>
+                    </div>
+                    <div class="bg-orange-100 p-3 rounded-lg">
+                      <svg class="w-8 h-8 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
                       </svg>
                     </div>
                   </div>
                 </div>
+              </div>
+
+              <!-- Recent Executions -->
+              <div v-if="resultadosSalvos.length > 0" class="bg-white rounded-xl shadow-md p-6">
+                <div class="flex items-center justify-between mb-4">
+                  <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                      <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/>
+                    </svg>
+                    Execuções Recentes
+                  </h3>
+                  <button 
+                    @click="showLoadModal = true" 
+                    class="text-sm text-purple-600 hover:text-purple-800 font-medium flex items-center gap-1"
+                  >
+                    Ver todos ({{ resultadosSalvos.length }})
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div 
+                    v-for="resultado in resultadosSalvos.slice(0, 6)" 
+                    :key="resultado.id" 
+                    @click="carregarResultado(resultado.id)"
+                    class="bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-gray-200 rounded-lg p-4 hover:shadow-lg hover:border-purple-300 transition-all cursor-pointer group"
+                  >
+                    <div class="flex items-start justify-between mb-3">
+                      <h5 class="font-semibold text-gray-900 text-sm group-hover:text-purple-600 transition-colors line-clamp-2 flex-1">{{ resultado.nome }}</h5>
+                      <span class="text-xs px-2 py-1 rounded-full font-bold flex-shrink-0 ml-2" :class="resultado.algoritmo === 'ga' ? 'bg-blue-500 text-white' : 'bg-green-500 text-white'">{{ resultado.algoritmo.toUpperCase() }}</span>
+                    </div>
+                    <div class="space-y-2">
+                      <div class="flex items-center justify-between text-xs">
+                        <span class="text-gray-600">Fitness</span>
+                        <span class="font-bold text-gray-900">{{ resultado.melhor_fitness.toFixed(2) }}</span>
+                      </div>
+                      <div v-if="resultado.parametros?.projeto_ids" class="flex items-center justify-between text-xs">
+                        <span class="text-gray-600">Projetos</span>
+                        <span class="font-bold text-gray-900">{{ resultado.parametros.projeto_ids.length }}</span>
+                      </div>
+                      <div v-if="getRoadmapEndDate(resultado)" class="flex items-center justify-between text-xs">
+                        <span class="text-gray-600">Término</span>
+                        <span class="font-bold text-gray-900">{{ getRoadmapEndDate(resultado) }}</span>
+                      </div>
+                      <div class="pt-2 border-t border-gray-300">
+                        <p class="text-xs text-gray-500">{{ new Date(resultado.data_execucao).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) }}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Quick Info -->
+              <div v-else class="bg-white rounded-xl shadow-md p-8 text-center">
+                <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <h3 class="text-xl font-semibold text-gray-700 mb-2">Nenhuma execução salva</h3>
+                <p class="text-gray-500">Execute um algoritmo e salve o resultado para vê-lo aqui</p>
               </div>
             </div>
 
