@@ -20,23 +20,6 @@
         
         <!-- Conteúdo do roadmap -->
         <div class="flex flex-1 overflow-hidden">
-          <RoadmapSidebar
-            v-if="selectedSquadId && selectedYear"
-            :projetos="projetos"
-            :colaboradores="colaboradores"
-            :params="params"
-            :gaParams="gaParams"
-            :acoParams="acoParams"
-            :loading="loading"
-            :showComparisonParams="showComparisonParams"
-            @update:params="params = $event"
-            @update:gaParams="gaParams = $event"
-            @update:acoParams="acoParams = $event"
-            @update:showComparisonParams="showComparisonParams = $event"
-            @execute="showSelectionModal = true"
-            @compare="compararAlgoritmos"
-          />
-          
           <!-- Conteúdo principal -->
           <div class="flex-1 p-4 overflow-y-auto">
             <div v-if="!selectedSquadId" class="flex items-center justify-center h-full">
@@ -58,12 +41,32 @@
               </div>
             </div>
             <div v-else-if="!resultado" class="mt-6 space-y-4">
-              <div class="bg-semantic-info-light border border-semantic-info-main rounded-md p-3">
-                <div class="flex items-center">
-                  <svg class="w-4 h-4 text-semantic-info-main mr-2" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
-                  </svg>
-                  <span class="text-semantic-info-main text-sm">Configure os parâmetros e execute o algoritmo</span>
+              <div class="bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg shadow-md p-6 border border-purple-200">
+                <div class="text-center mb-6">
+                  <h3 class="text-2xl font-bold text-gray-900 mb-2">Geração de Roadmap</h3>
+                  <p class="text-sm text-gray-600">Selecione um squad e ano para executar a geração do roadmap ou comparar algoritmos</p>
+                </div>
+                <div class="flex gap-4 justify-center">
+                  <button 
+                    @click="showSelectionModal = true" 
+                    :disabled="!selectedSquadId || !selectedYear"
+                    class="group relative bg-gradient-to-r from-purple-600 to-purple-700 text-white px-8 py-4 rounded-lg font-semibold hover:from-purple-700 hover:to-purple-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:transform-none flex items-center gap-3"
+                  >
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    <span>Executar Algoritmo</span>
+                  </button>
+                  <button 
+                    @click="showComparisonModal = true" 
+                    :disabled="!selectedSquadId || !selectedYear"
+                    class="group relative bg-gradient-to-r from-green-600 to-emerald-600 text-white px-8 py-4 rounded-lg font-semibold hover:from-green-700 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:transform-none flex items-center gap-3"
+                  >
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    <span>Comparar GA vs ACO</span>
+                  </button>
                 </div>
               </div>
               
@@ -333,6 +336,26 @@
       </div>
     </div>
     
+    <!-- Skill Coverage Warning (Right Side) -->
+    <div v-if="showSelectionModal && missingSkills.length > 0" class="fixed top-20 right-4 z-[60] max-w-sm w-full">
+      <div class="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-4 shadow-xl">
+        <div class="flex items-start gap-3">
+          <svg class="w-6 h-6 text-yellow-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+          </svg>
+          <div class="flex-1">
+            <p class="text-sm font-semibold text-yellow-900">Habilidades não cobertas</p>
+            <p class="text-xs text-yellow-800 mt-1">Os projetos selecionados requerem habilidades que nenhum colaborador selecionado possui:</p>
+            <div class="flex flex-wrap gap-1 mt-2">
+              <span v-for="skill in missingSkills" :key="skill" class="inline-block px-2 py-1 bg-yellow-200 text-yellow-900 rounded text-xs font-medium">
+                {{ skill }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
     <!-- Modal de Seleção -->
     <div v-if="showSelectionModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" @click.self="showSelectionModal = false">
       <div class="bg-white rounded-lg shadow-xl max-w-5xl w-full mx-4 max-h-[90vh] flex flex-col">
@@ -346,19 +369,64 @@
         </div>
         
         <div class="flex-1 overflow-y-auto p-4">
-          <!-- Skill Coverage Warning -->
-          <div v-if="missingSkills.length > 0" class="mb-4 bg-yellow-50 border border-yellow-300 rounded p-3">
-            <div class="flex items-start gap-2">
-              <svg class="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-              </svg>
-              <div class="flex-1">
-                <p class="text-sm font-medium text-yellow-800">Habilidades não cobertas</p>
-                <p class="text-xs text-yellow-700 mt-1">Os projetos selecionados requerem habilidades que nenhum colaborador selecionado possui:</p>
-                <div class="flex flex-wrap gap-1 mt-2">
-                  <span v-for="skill in missingSkills" :key="skill" class="inline-block px-2 py-0.5 bg-yellow-200 text-yellow-800 rounded text-xs font-medium">
-                    {{ skill }}
-                  </span>
+          
+          <!-- Algorithm Parameters -->
+          <div class="mb-3 bg-gray-50 rounded-md p-3 border border-gray-200">
+            <div class="flex items-center gap-3">
+              <h4 class="text-xs font-semibold text-gray-700">Parâmetros:</h4>
+              <select v-model="params.algorithm" class="px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-primary-main">
+                <option value="ga">Algoritmo Genético</option>
+                <option value="aco">Colônia de Formigas</option>
+              </select>
+              <div class="flex items-center gap-2 flex-1">
+                <span class="text-xs text-gray-600 cursor-help" :title="params.algorithm === 'ga' ? 'Número de soluções candidatas em cada geração' : 'Número de formigas explorando soluções'">População:</span>
+                <input v-model.number="params.tam_pop" type="range" :min="10" :max="params.algorithm === 'ga' ? 100 : 50" class="form-slider flex-1" />
+                <span class="text-xs font-medium text-gray-700 w-8 text-right">{{ params.tam_pop }}</span>
+              </div>
+              <div class="flex items-center gap-2 flex-1">
+                <span class="text-xs text-gray-600 cursor-help" :title="params.algorithm === 'ga' ? 'Número de ciclos evolutivos do algoritmo' : 'Número de ciclos de busca do algoritmo'">{{ params.algorithm === 'ga' ? 'Gerações:' : 'Iterações:' }}</span>
+                <input v-model.number="params.n_gen" type="range" :min="5" :max="params.algorithm === 'ga' ? 1000 : 50" class="form-slider flex-1" />
+                <span class="text-xs font-medium text-gray-700 w-8 text-right">{{ params.n_gen }}</span>
+              </div>
+              <button 
+                @click="showAdvancedParams = !showAdvancedParams"
+                class="text-xs text-gray-500 hover:text-gray-700 transition-colors"
+                title="Parâmetros Avançados"
+              >
+                <svg class="w-4 h-4 transition-transform" :class="{ 'rotate-90': showAdvancedParams }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+            
+            <div v-if="showAdvancedParams" class="pt-2 border-t border-gray-300">
+              <div v-if="params.algorithm === 'ga'" class="flex items-center gap-3">
+                <div class="flex items-center gap-2 flex-1">
+                  <span class="text-xs text-gray-600 cursor-help" title="Probabilidade de combinar genes de dois indivíduos">Crossover:</span>
+                  <input v-model.number="params.pc" type="range" min="0" max="1" step="0.1" class="form-slider flex-1" />
+                  <span class="text-xs font-medium text-gray-700 w-8 text-right">{{ params.pc }}</span>
+                </div>
+                <div class="flex items-center gap-2 flex-1">
+                  <span class="text-xs text-gray-600 cursor-help" title="Probabilidade de alterar genes aleatoriamente">Mutação:</span>
+                  <input v-model.number="params.pm" type="range" min="0" max="1" step="0.1" class="form-slider flex-1" />
+                  <span class="text-xs font-medium text-gray-700 w-8 text-right">{{ params.pm }}</span>
+                </div>
+              </div>
+              <div v-else class="flex items-center gap-3">
+                <div class="flex items-center gap-2 flex-1">
+                  <span class="text-xs text-gray-600 cursor-help" title="Influência do feromônio na escolha do caminho">Alpha:</span>
+                  <input v-model.number="params.alpha" type="range" min="0.1" max="3" step="0.1" class="form-slider flex-1" />
+                  <span class="text-xs font-medium text-gray-700 w-8 text-right">{{ params.alpha }}</span>
+                </div>
+                <div class="flex items-center gap-2 flex-1">
+                  <span class="text-xs text-gray-600 cursor-help" title="Influência da heurística (distância) na escolha">Beta:</span>
+                  <input v-model.number="params.beta" type="range" min="0.1" max="5" step="0.1" class="form-slider flex-1" />
+                  <span class="text-xs font-medium text-gray-700 w-8 text-right">{{ params.beta }}</span>
+                </div>
+                <div class="flex items-center gap-2 flex-1">
+                  <span class="text-xs text-gray-600 cursor-help" title="Taxa de evaporação do feromônio">Rho:</span>
+                  <input v-model.number="params.rho" type="range" min="0.1" max="0.9" step="0.1" class="form-slider flex-1" />
+                  <span class="text-xs font-medium text-gray-700 w-8 text-right">{{ params.rho }}</span>
                 </div>
               </div>
             </div>
@@ -654,6 +722,62 @@
       </div>
     </div>
     
+    <!-- Comparison Modal -->
+    <div v-if="showComparisonModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" @click.self="showComparisonModal = false">
+      <div class="bg-white rounded-lg shadow-xl max-w-3xl w-full mx-4">
+        <div class="px-6 py-3 border-b flex justify-between items-center">
+          <h3 class="text-base font-semibold text-text-primary">Comparar Algoritmos (GA vs ACO)</h3>
+          <button @click="showComparisonModal = false" class="text-text-secondary hover:text-text-primary">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        
+        <div class="p-6">
+          <div class="grid grid-cols-2 gap-6">
+            <!-- GA Parameters -->
+            <div class="bg-blue-50 rounded-lg p-4">
+              <h4 class="text-sm font-semibold text-blue-900 mb-4">Algoritmo Genético (GA)</h4>
+              <div class="space-y-4">
+                <ParamSlider label="População" :value="gaParams.tam_pop" :min="10" :max="100" @update="gaParams.tam_pop = $event" />
+                <ParamSlider label="Gerações" :value="gaParams.n_gen" :min="5" :max="1000" @update="gaParams.n_gen = $event" />
+                <ParamSlider label="Crossover" :value="gaParams.pc" :min="0" :max="1" :step="0.1" @update="gaParams.pc = $event" />
+                <ParamSlider label="Mutação" :value="gaParams.pm" :min="0" :max="1" :step="0.1" @update="gaParams.pm = $event" />
+              </div>
+            </div>
+            
+            <!-- ACO Parameters -->
+            <div class="bg-green-50 rounded-lg p-4">
+              <h4 class="text-sm font-semibold text-green-900 mb-4">Colônia de Formigas (ACO)</h4>
+              <div class="space-y-4">
+                <ParamSlider label="Formigas" :value="acoParams.tam_pop" :min="10" :max="50" @update="acoParams.tam_pop = $event" />
+                <ParamSlider label="Iterações" :value="acoParams.n_gen" :min="5" :max="50" @update="acoParams.n_gen = $event" />
+                <ParamSlider label="Alpha (Feromônio)" :value="acoParams.alpha" :min="0.1" :max="3" :step="0.1" @update="acoParams.alpha = $event" />
+                <ParamSlider label="Beta (Heurística)" :value="acoParams.beta" :min="0.1" :max="5" :step="0.1" @update="acoParams.beta = $event" />
+                <ParamSlider label="Rho (Evaporação)" :value="acoParams.rho" :min="0.1" :max="0.9" :step="0.1" @update="acoParams.rho = $event" />
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="px-6 py-3 border-t flex justify-end gap-2 bg-gray-50">
+          <button 
+            @click="showComparisonModal = false" 
+            class="px-4 py-2 text-sm border border-gray-300 rounded hover:bg-gray-100"
+          >
+            Cancelar
+          </button>
+          <button 
+            @click="compararAlgoritmos" 
+            class="px-4 py-2 text-sm bg-green-600 text-white rounded hover:bg-green-700"
+          >
+            Executar Comparação
+          </button>
+        </div>
+      </div>
+    </div>
+    
     <!-- Confirm Delete Modal -->
     <ConfirmModal
       :show="showConfirmDelete"
@@ -840,8 +964,8 @@ import SquadSelector from './components/common/SquadSelector.vue'
 import ProgressBar from './components/common/ProgressBar.vue'
 import Sidebar from './components/layout/Sidebar.vue'
 import HeaderFilters from './components/layout/HeaderFilters.vue'
-import RoadmapSidebar from './components/roadmap/RoadmapSidebar.vue'
 import EmptyState from './components/common/EmptyState.vue'
+import ParamSlider from './components/roadmap/ParamSlider.vue'
 import { useRoadmap } from './composables/useRoadmap'
 
 export default {
@@ -866,8 +990,8 @@ export default {
     ProgressBar,
     Sidebar,
     HeaderFilters,
-    RoadmapSidebar,
     EmptyState,
+    ParamSlider,
     CpuChipIcon,
     FolderIcon,
     UserGroupIcon,
@@ -885,6 +1009,8 @@ export default {
       showProjetosModal: false,
       showCargosModal: false,
       showHabilidadesModal: false,
+      showComparisonModal: false,
+      showAdvancedParams: false,
       expandedProjects: {},
       resultadoToDelete: null,
       saveResultName: '',
@@ -899,8 +1025,8 @@ export default {
       habilidades: [],
       params: {
         algorithm: 'ga',
-        tam_pop: 50,
-        n_gen: 200,
+        tam_pop: 500,
+        n_gen: 3000,
         pc: 0.7,
         pm: 0.3,
         alpha: 1.0,
@@ -1310,6 +1436,7 @@ export default {
         const colaborador_ids = [...selectedSquadMembers.map(c => c.id), ...selectedTransversalMembers.map(c => c.id)]
         const payload = {
           ...this.params,
+          ref_date: this.getYearStartDate() || this.params.ref_date,
           projeto_ids: this.selectedProjects,
           colaborador_ids: colaborador_ids,
           simulated_members: this.simulatedMembers.map(m => ({
@@ -1387,10 +1514,11 @@ export default {
       }
     },
     async compararAlgoritmos() {
+      this.showComparisonModal = false
       this.loading = true
       try {
         const comparisonParams = {
-          ref_date: this.params.ref_date,
+          ref_date: this.getYearStartDate() || this.params.ref_date,
           ga_params: this.gaParams,
           aco_params: this.acoParams
         }
