@@ -119,12 +119,21 @@
           <tbody class="bg-white divide-y divide-gray-200">
             <tr v-for="(projeto, index) in projetosAgrupados" :key="projeto.nome" :class="index % 2 === 0 ? 'bg-gray-50' : 'bg-white'" class="hover:bg-blue-50">
               <td class="px-3 py-1.5 text-sm">
-                <span 
-                  class="px-2 py-0.5 text-white text-xs font-medium rounded"
-                  :style="{ backgroundColor: getProjectColor(projeto.nome) }"
-                >
-                  {{ projeto.nome }}
-                </span>
+                <div class="flex items-center gap-1">
+                  <span 
+                    class="px-2 py-0.5 text-white text-xs font-medium rounded"
+                    :style="{ backgroundColor: getProjectColor(projeto.nome) }"
+                  >
+                    {{ projeto.nome }}
+                  </span>
+                  <span 
+                    v-if="projetosComDeadline[projeto.nome] && (projetosComDeadline[projeto.nome].deadline_beyond_schedule || projetosComDeadline[projeto.nome].inicio_beyond_schedule || projetosComDeadline[projeto.nome].using_actual_start)"
+                    class="text-amber-500 text-xs"
+                    :title="getDateInconsistencyMessage(projeto.nome)"
+                  >
+                    ⚠️
+                  </span>
+                </div>
               </td>
               <td class="px-3 py-1.5 text-xs text-gray-600">{{ projeto.data_inicio }}</td>
               <td class="px-3 py-1.5 text-xs text-gray-600">{{ projeto.data_fim }}</td>
@@ -173,12 +182,21 @@
           <tbody class="bg-white divide-y divide-gray-200">
             <tr v-for="(projeto, index) in projetosComIntervalos" :key="projeto.nome" :class="index % 2 === 0 ? 'bg-gray-50' : 'bg-white'" class="hover:bg-blue-50">
               <td class="px-3 py-1.5 text-sm">
-                <span 
-                  class="px-2 py-0.5 text-white text-xs font-medium rounded"
-                  :style="{ backgroundColor: getProjectColor(projeto.nome) }"
-                >
-                  {{ projeto.nome }}
-                </span>
+                <div class="flex items-center gap-1">
+                  <span 
+                    class="px-2 py-0.5 text-white text-xs font-medium rounded"
+                    :style="{ backgroundColor: getProjectColor(projeto.nome) }"
+                  >
+                    {{ projeto.nome }}
+                  </span>
+                  <span 
+                    v-if="projetosComDeadline[projeto.nome] && (projetosComDeadline[projeto.nome].deadline_beyond_schedule || projetosComDeadline[projeto.nome].inicio_beyond_schedule || projetosComDeadline[projeto.nome].using_actual_start)"
+                    class="text-amber-500 text-xs"
+                    :title="getDateInconsistencyMessage(projeto.nome)"
+                  >
+                    ⚠️
+                  </span>
+                </div>
               </td>
               <td class="px-3 py-1.5 text-xs text-gray-600">{{ projeto.data_inicio }}</td>
               <td class="px-3 py-1.5 text-xs text-gray-600">{{ projeto.data_fim }}</td>
@@ -451,15 +469,32 @@ export default {
       
       projectNames.forEach(nome => {
         const projeto = this.projetos.find(p => p.nome === nome)
+        const projetoAgrupado = this.projetosAgrupados.find(p => p.nome === nome)
+        
+        // Only show start marker if project has configured start date in database
+        const hasConfiguredStart = projeto?.inicio != null
+        const deadlineDias = projeto?.termino ? this.calcularDiasDesdeReferencia(projeto.termino) : null
+        
+        // For start dates: only use actual execution if there's a configured start date to compare against
+        const inicioDias = hasConfiguredStart ? 
+                          (projetoAgrupado ? projetoAgrupado.inicio_dias : this.calcularDiasDesdeReferencia(projeto.inicio)) :
+                          null
+        
         map[nome] = {
           deadline: projeto?.termino || null,
-          deadline_dias: projeto?.termino ? this.calcularDiasDesdeReferencia(projeto.termino) : null,
-          inicio: projeto?.inicio || null,
-          inicio_dias: projeto?.inicio ? this.calcularDiasDesdeReferencia(projeto.inicio) : null
+          deadline_dias: deadlineDias,
+          deadline_beyond_schedule: deadlineDias && deadlineDias > this.duracaoMaxima,
+          inicio: hasConfiguredStart ? 
+                 (projetoAgrupado ? this.formatDateFromDays(projetoAgrupado.inicio_dias) : projeto.inicio) : 
+                 null,
+          inicio_dias: inicioDias,
+          inicio_beyond_schedule: inicioDias && inicioDias > this.duracaoMaxima,
+          using_actual_start: hasConfiguredStart && !!projetoAgrupado,
+          has_configured_start: hasConfiguredStart
         }
       })
       return map
-    }
+    },
   },
   methods: {
     translatePenalty(key) {
@@ -555,16 +590,28 @@ export default {
         border: '1px solid rgba(255,255,255,0.2)'
       }
     },
+    formatDateFromDays(days) {
+      const refDate = new Date(this.refDate)
+      const targetDate = new Date(refDate)
+      targetDate.setDate(targetDate.getDate() + days)
+      return targetDate.toISOString().split('T')[0] // Returns YYYY-MM-DD format
+    },
     calcularDiasDesdeReferencia(dataStr) {
-      if (!this.tarefas || this.tarefas.length === 0) return 0
-      const primeiraData = this.tarefas[0].data_inicio
-      const [diaRef, mesRef, anoRef] = primeiraData.split('/')
-      const dataRef = new Date(anoRef, mesRef - 1, diaRef)
+      if (!dataStr) return 0
+      
+      // Use the refDate prop instead of first task date for consistency
+      const refDate = new Date(this.refDate)
       const [ano, mes, dia] = dataStr.split('-')
-      const dataDeadline = new Date(ano, mes - 1, dia)
-      return Math.floor((dataDeadline - dataRef) / (1000 * 60 * 60 * 24))
+      const targetDate = new Date(ano, mes - 1, dia)
+      
+      return Math.floor((targetDate - refDate) / (1000 * 60 * 60 * 24))
     },
     getDeadlineStyle(deadlineDias) {
+      // Don't show deadline marker if it's beyond the actual schedule
+      if (deadlineDias > this.duracaoMaxima) {
+        return { display: 'none' }
+      }
+      
       const proporcao = (deadlineDias / this.duracaoMaxima) * 100
       return {
         left: `${Math.max(0, proporcao)}%`,
@@ -577,6 +624,11 @@ export default {
       }
     },
     getStartStyle(startDias) {
+      // Don't show start marker if it's beyond the actual schedule
+      if (startDias > this.duracaoMaxima) {
+        return { display: 'none' }
+      }
+      
       const proporcao = (startDias / this.duracaoMaxima) * 100
       return {
         left: `${Math.max(0, proporcao)}%`,
@@ -587,6 +639,28 @@ export default {
         backgroundColor: '#16a34a',
         zIndex: 10
       }
+    },
+    getDateInconsistencyMessage(projectName) {
+      const project = this.projetosComDeadline[projectName]
+      if (!project) return ''
+      
+      const messages = []
+      if (project.deadline_beyond_schedule) {
+        const deadlineDate = new Date(project.deadline).toLocaleDateString('pt-BR')
+        messages.push(`Deadline configurado (${deadlineDate}) está além do cronograma executado`)
+      }
+      if (project.inicio_beyond_schedule) {
+        const startDate = new Date(project.inicio).toLocaleDateString('pt-BR')
+        messages.push(`Data de início configurada (${startDate}) está além do cronograma executado`)
+      }
+      if (project.has_configured_start && project.using_actual_start) {
+        messages.push(`Usando data de início real da execução (algoritmo ajustou devido a restrições)`)
+      }
+      if (!project.has_configured_start) {
+        messages.push(`Projeto sem data de início configurada - usando execução livre`)
+      }
+      
+      return messages.join('. ')
     },
     formatViolationValue(violationType, key, value) {
       if (violationType === 'deadline_violation' && (key === 'termino_planejado' || key === 'termino_real')) {

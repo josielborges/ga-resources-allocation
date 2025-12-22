@@ -173,7 +173,9 @@ class ConstraintProgramming:
             
             # Apply project start date constraint (hard)
             if project_start_dates and task["projeto"] in project_start_dates:
-                min_start = max(min_start, project_start_dates[task["projeto"]])
+                project_min_start = project_start_dates[task["projeto"]]
+                min_start = max(min_start, project_min_start)
+                print(f"Task {task_id} ({task['projeto']}): Applied project start constraint, min_start = {min_start} (project requires >= {project_min_start})")
             
             # Apply collaborator start date constraints (hard) - NEW FIX
             # Find the minimum start date among all potential collaborators

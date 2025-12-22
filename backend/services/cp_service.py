@@ -314,6 +314,10 @@ class CPService:
                         inicio_days = (inicio_days - ref_date).days
                     project_start_dates[projeto["nome"]] = inicio_days
             
+            # Debug: Print project constraints
+            print(f"[CP DEBUG] Project start dates: {project_start_dates}")
+            print(f"[CP DEBUG] Project deadlines: {project_deadlines}")
+            
             # Configure CP algorithm with enhanced parameters (streaming)
             time_limit = params.get("time_limit_seconds", 600)  # Increased default
             makespan_weight = params.get("makespan_weight", 200)  # Increased focus on makespan
@@ -415,6 +419,10 @@ class CPService:
                     if isinstance(inicio_days, datetime.date):
                         inicio_days = (inicio_days - ref_date).days
                     project_start_dates[projeto["nome"]] = inicio_days
+            
+            # Debug: Print project constraints
+            print(f"[CP DEBUG] Project start dates: {project_start_dates}")
+            print(f"[CP DEBUG] Project deadlines: {project_deadlines}")
             
             # Configure CP algorithm with enhanced parameters (synchronous)
             time_limit = params.get("time_limit_seconds", 600)  # Increased default
