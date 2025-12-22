@@ -1116,7 +1116,7 @@ export default {
       cargos: [],
       habilidades: [],
       params: {
-        algorithm: 'ga',
+        algorithm: 'cp',
         tam_pop: 50,
         n_gen: 300,
         pc: 0.7,

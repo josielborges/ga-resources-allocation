@@ -197,7 +197,7 @@ class CPService:
         
         return filtered_colaboradores, filtered_projetos
     
-    def add_simulated_members(self, colaboradores: List[Dict], simulated_members: List[Dict]) -> List[Dict]:
+    def add_simulated_members(self, colaboradores: List[Dict], simulated_members: List[Dict], db: Session, ref_date: datetime.date) -> List[Dict]:
         """Add simulated team members to collaborators list"""
         if not simulated_members:
             return colaboradores
@@ -205,19 +205,56 @@ class CPService:
         # Find the highest existing ID
         max_id = max([c["id"] for c in colaboradores]) if colaboradores else 0
         
+        # Load cargos and habilidades for mapping
+        cargos_db = crud.get_cargos(db)
+        habilidades_db = crud.get_habilidades(db)
+        
+        cargo_map = {c.id: c.nome for c in cargos_db}
+        habilidade_map = {h.nome: h for h in habilidades_db}
+        
         # Add simulated members with new IDs
         for i, member in enumerate(simulated_members):
+            # Map cargo_id to cargo name
+            cargo_id = member.get("cargo_id")
+            cargo_nome = cargo_map.get(cargo_id, "") if cargo_id else ""
+            
+            # Map habilidade names to set
+            habilidade_names = member.get("habilidade_names", [])
+            habilidades_set = set(habilidade_names)
+            
+            # Convert date strings to days since reference date
+            inicio_days = None
+            termino_days = None
+            
+            if member.get("inicio"):
+                if isinstance(member["inicio"], str):
+                    inicio_date = datetime.datetime.strptime(member["inicio"], "%Y-%m-%d").date()
+                    inicio_days = (inicio_date - ref_date).days
+                elif isinstance(member["inicio"], datetime.date):
+                    inicio_days = (member["inicio"] - ref_date).days
+                else:
+                    inicio_days = member["inicio"]  # Already an integer
+            
+            if member.get("termino"):
+                if isinstance(member["termino"], str):
+                    termino_date = datetime.datetime.strptime(member["termino"], "%Y-%m-%d").date()
+                    termino_days = (termino_date - ref_date).days
+                elif isinstance(member["termino"], datetime.date):
+                    termino_days = (member["termino"] - ref_date).days
+                else:
+                    termino_days = member["termino"]  # Already an integer
+            
             new_member = {
                 "id": max_id + i + 1,
                 "nome": member["nome"],
-                "cargo": member["cargo"],
-                "habilidades": set(member["habilidades"]),
+                "cargo": cargo_nome,
+                "habilidades": habilidades_set,
                 "ausencias": set(),
                 "ferias": [],
                 "transversal": member.get("transversal", False),
                 "squad_id": member.get("squad_id"),
-                "inicio": member.get("inicio"),
-                "termino": member.get("termino")
+                "inicio": inicio_days,
+                "termino": termino_days
             }
             colaboradores.append(new_member)
         
@@ -247,7 +284,7 @@ class CPService:
             
             # Add simulated members
             simulated_members = params.get("simulated_members", [])
-            colaboradores = self.add_simulated_members(colaboradores, simulated_members)
+            colaboradores = self.add_simulated_members(colaboradores, simulated_members, db, ref_date)
             
             # Build global tasks
             tarefas_globais = self.build_global_tasks(projetos)
@@ -351,7 +388,7 @@ class CPService:
             
             # Add simulated members
             simulated_members = params.get("simulated_members", [])
-            colaboradores = self.add_simulated_members(colaboradores, simulated_members)
+            colaboradores = self.add_simulated_members(colaboradores, simulated_members, db, ref_date)
             
             # Build global tasks
             tarefas_globais = self.build_global_tasks(projetos)
