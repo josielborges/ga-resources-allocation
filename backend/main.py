@@ -5,15 +5,30 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 import json
 import datetime
+import math
 from typing import List, Dict, Any
 from models import *
 from services.ga_service import AlgorithmService
 from services.aco_service import ACOService
+from services.cp_service import CPService
 from algorithm_comparison import AlgorithmComparison
 from utils.config import lifespan, settings
 from db.database import get_db
 from db import crud
 from db import schemas
+
+def sanitize_for_json(obj):
+    """Sanitize object to be JSON serializable"""
+    if isinstance(obj, dict):
+        return {k: sanitize_for_json(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [sanitize_for_json(item) for item in obj]
+    elif isinstance(obj, float):
+        if math.isinf(obj) or math.isnan(obj):
+            return 999999999
+        return obj
+    else:
+        return obj
 
 app = FastAPI(title="Resource Allocation API",
               openapi_url=settings.OPENAPI_URL,
@@ -30,6 +45,7 @@ app.add_middleware(
 
 algorithm_service = AlgorithmService()
 aco_service = ACOService()
+cp_service = CPService()
 comparison_service = AlgorithmComparison()
 
 def load_data():
@@ -262,6 +278,62 @@ async def executar_algoritmo(params: AlgoritmoParams, db: Session = Depends(get_
     except Exception as e:
         import traceback
         print(f"Error in executar_algoritmo: {str(e)}")
+        print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/executar-cp-stream")
+async def executar_cp_stream(params: AlgoritmoParams, db: Session = Depends(get_db)):
+    async def event_generator():
+        try:
+            async for event in cp_service.execute_algorithm_stream(
+                {
+                    "ref_date": params.ref_date,
+                    "time_limit_seconds": getattr(params, 'time_limit_seconds', 300),
+                    "makespan_weight": getattr(params, 'makespan_weight', 150),
+                    "projeto_ids": params.projeto_ids,
+                    "colaborador_ids": params.colaborador_ids,
+                    "simulated_members": [m.dict() for m in params.simulated_members] if params.simulated_members else []
+                },
+                db
+            ):
+                # Sanitize event before JSON serialization
+                sanitized_event = sanitize_for_json(event)
+                yield f"data: {json.dumps(sanitized_event)}\n\n"
+        except Exception as e:
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+    
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no"
+        }
+    )
+
+@app.post("/api/executar-cp")
+async def executar_cp(params: AlgoritmoParams, db: Session = Depends(get_db)):
+    try:
+        result = cp_service.execute_algorithm({
+            "ref_date": params.ref_date,
+            "time_limit_seconds": getattr(params, 'time_limit_seconds', 300),
+            "makespan_weight": getattr(params, 'makespan_weight', 150),
+            "projeto_ids": params.projeto_ids,
+            "colaborador_ids": params.colaborador_ids,
+            "simulated_members": [m.dict() for m in params.simulated_members] if params.simulated_members else []
+        }, db)
+        
+        return ResultadoAlgoritmo(
+            tarefas=result["tarefas"],
+            melhor_fitness=result["melhor_fitness"],
+            historico_fitness=result["historico_fitness"],
+            penalidades=result["penalidades"],
+            ocorrencias_penalidades=result["ocorrencias_penalidades"]
+        )
+        
+    except Exception as e:
+        import traceback
+        print(f"Error in executar_cp: {str(e)}")
         print(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
 

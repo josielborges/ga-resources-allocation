@@ -1,19 +1,20 @@
 # Resource Allocation System - Development Guide
 
 ## System Overview
-Hybrid optimization system using **Genetic Algorithm (GA)** and **Ant Colony Optimization (ACO)** for Resource-Constrained Project Scheduling Problem (RCPSP). Allocates workers to project tasks based on skills, positions, availability, and dependencies.
+Hybrid optimization system using **Genetic Algorithm (GA)**, **Ant Colony Optimization (ACO)**, and **Constraint Programming (CP)** for Resource-Constrained Project Scheduling Problem (RCPSP). Allocates workers to project tasks based on skills, positions, availability, and dependencies.
 
 ## Tech Stack
 - **Backend**: FastAPI + SQLAlchemy + Alembic + PostgreSQL
 - **Frontend**: Vue.js + Element Plus + Chart.js + FullCalendar
 - **Database**: PostgreSQL (localhost:5439)
-- **Algorithms**: GA and ACO for optimization
+- **Algorithms**: GA, ACO, and CP-SAT for optimization
 
 ## Architecture
 
 ### Core Algorithm Components
 - `genetic_algorithm.py`: Evolutionary optimization (tournament selection, crossover, mutation)
 - `ant_colony_optimization.py`: Pheromone-based optimization with local search
+- `constraint_programming.py`: Exact optimization using Google OR-Tools CP-SAT solver
 - `algorithm/evaluator.py`: Fitness calculation with multi-constraint penalties
 - `algorithm/scheduler.py`: Task timing with predecessor constraints
 - `algorithm/constraints.py`: Validation and penalty calculation
@@ -21,7 +22,8 @@ Hybrid optimization system using **Genetic Algorithm (GA)** and **Ant Colony Opt
 ### Services Layer
 - `services/algorithm_service.py`: GA execution wrapper
 - `services/aco_service.py`: ACO execution wrapper
-- Both load DB data, convert formats, build task lists, execute algorithms
+- `services/cp_service.py`: CP execution wrapper
+- All services load DB data, convert formats, build task lists, execute algorithms
 
 ### Database Schema
 **Tables**: cargos, habilidades, colaboradores, ausencias, projetos, etapas
@@ -51,7 +53,7 @@ Hybrid optimization system using **Genetic Algorithm (GA)** and **Ant Colony Opt
 1. **Service layer** handles data transformation (DB ↔ Algorithm format)
 2. **Evaluator** calculates fitness - add new penalties there
 3. **Scheduler** handles timing - modify for new scheduling rules
-4. **Keep algorithms pure** - no DB access in GA/ACO classes
+4. **Keep algorithms pure** - no DB access in GA/ACO/CP classes
 
 ### Constraint Penalties (Current Values)
 - Missing skills: 10,000
@@ -65,6 +67,27 @@ Hybrid optimization system using **Genetic Algorithm (GA)** and **Ant Colony Opt
 ### Algorithm Parameters
 **GA**: pop_size, generations, crossover_prob, mutation_prob (0.15)
 **ACO**: num_ants, iterations, alpha (1.0), beta (2.0), rho (0.5), q0 (0.9)
+**CP**: time_limit_seconds (300), makespan_weight (150)
+
+### Algorithm Characteristics
+**GA (Genetic Algorithm)**:
+- Metaheuristic: No guarantee of optimal solution
+- Good for exploration of solution space
+- Handles soft constraints through penalties
+- Suitable for large, complex problems
+
+**ACO (Ant Colony Optimization)**:
+- Metaheuristic: No guarantee of optimal solution
+- Good balance between exploration and exploitation
+- Uses pheromone trails and heuristics
+- Includes local search for improvement
+
+**CP (Constraint Programming)**:
+- Exact method: Finds optimal solution or proves infeasibility
+- Handles hard constraints natively
+- May not find solution if problem is over-constrained
+- Best for smaller problems or when optimality is required
+- Uses Google OR-Tools CP-SAT solver
 
 ### Data Flow
 Database → CRUD → Service → Algorithm → Schedule → API → Frontend
@@ -72,9 +95,10 @@ Database → CRUD → Service → Algorithm → Schedule → API → Frontend
 ### Testing Algorithms
 1. Use `/api/executar-algoritmo` for GA
 2. Use `/api/executar-aco` for ACO
-3. Use `/api/comparar-algoritmos` for comparison
-4. Check fitness_history for convergence
-5. Validate no constraint violations in results
+3. Use `/api/executar-cp` for CP
+4. Use `/api/comparar-algoritmos` for comparison
+5. Check fitness_history for convergence
+6. Validate no constraint violations in results
 
 ### Common Pitfalls
 - Don't modify task order without considering predecessors
@@ -82,6 +106,7 @@ Database → CRUD → Service → Algorithm → Schedule → API → Frontend
 - Don't forget to convert absence dates to integer days
 - Don't create circular dependencies in etapa_predecessora
 - Always refresh DB objects after commit
+- CP may fail if problem is infeasible - check constraints
 
 ### File Locations
 - Migrations: `backend/db/alembic/versions/`

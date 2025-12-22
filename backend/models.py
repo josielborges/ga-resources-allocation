@@ -37,6 +37,14 @@ class AlgoritmoParams(BaseModel):
     projeto_ids: Optional[List[int]] = None
     colaborador_ids: Optional[List[int]] = None
     simulated_members: Optional[List[SimulatedMember]] = None
+    # ACO specific parameters
+    alpha: Optional[float] = 1.0
+    beta: Optional[float] = 2.0
+    rho: Optional[float] = 0.5
+    q0: Optional[float] = 0.9
+    # CP specific parameters
+    time_limit_seconds: Optional[int] = 300
+    makespan_weight: Optional[int] = 150
 
 class ResultadoTarefa(BaseModel):
     projeto: str

@@ -4,6 +4,7 @@ from typing import List, Dict, Tuple, AsyncGenerator
 from sqlalchemy.orm import Session
 from ant_colony_optimization import AntColonyOptimization
 from algorithm.scheduler import TaskScheduler
+from utils.result_saver import ResultSaver
 from db import crud
 
 class ACOService:
@@ -12,6 +13,7 @@ class ACOService:
     def __init__(self):
         self.aco = AntColonyOptimization()
         self.scheduler = TaskScheduler()
+        self.result_saver = ResultSaver()
     
     def load_data_from_db(self, db: Session, colaborador_ids: List[int] = None, projeto_ids: List[int] = None) -> Tuple[List[Dict], List[Dict]]:
         """Load and format data from database with optional filtering"""
@@ -379,6 +381,33 @@ class ACOService:
                     for v in deadline_violations:
                         final_penalties["deadline_violation"] += v.penalty
                         final_violations["deadline_violation"].append(v.details)
+        
+        # Save result to file for analysis
+        try:
+            formatted_result = self.result_saver.format_algorithm_result(
+                algorithm_name="ACO",
+                solution=best_solution,
+                fitness=best_fitness,
+                fitness_history=fitness_history,
+                penalties=final_penalties,
+                violations=final_violations,
+                tasks=tarefas_globais,
+                collaborators=colaboradores,
+                schedule=schedule
+            )
+            
+            self.result_saver.save_result(
+                algorithm_name="ACO",
+                result_data=formatted_result,
+                params=params,
+                metadata={
+                    "total_tasks": len(tarefas_globais),
+                    "total_collaborators": len(colaboradores),
+                    "execution_time": "N/A"
+                }
+            )
+        except Exception as e:
+            print(f"Warning: Failed to save ACO result to file: {e}")
         
         return {
             "tarefas": schedule,

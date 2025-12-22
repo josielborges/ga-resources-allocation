@@ -443,16 +443,18 @@
               <select v-model="params.algorithm" class="px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-primary-main">
                 <option value="ga">Algoritmo Genético</option>
                 <option value="aco">Colônia de Formigas</option>
+                <option value="cp">Constraint Programming</option>
               </select>
               <div class="flex items-center gap-2 flex-1">
-                <span class="text-xs text-gray-600 cursor-help" :title="params.algorithm === 'ga' ? 'Número de soluções candidatas em cada geração' : 'Número de formigas explorando soluções'">População:</span>
-                <input v-model.number="params.tam_pop" type="range" :min="10" :max="params.algorithm === 'ga' ? 100 : 50" class="form-slider flex-1" />
-                <span class="text-xs font-medium text-gray-700 w-8 text-right">{{ params.tam_pop }}</span>
+                <span class="text-xs text-gray-600 cursor-help" :title="params.algorithm === 'ga' ? 'Número de soluções candidatas em cada geração' : params.algorithm === 'aco' ? 'Número de formigas explorando soluções' : 'Não aplicável para CP'">População:</span>
+                <input v-model.number="params.tam_pop" type="range" :min="10" :max="params.algorithm === 'ga' ? 100 : 50" class="form-slider flex-1" :disabled="params.algorithm === 'cp'" />
+                <span class="text-xs font-medium text-gray-700 w-8 text-right">{{ params.algorithm === 'cp' ? 'N/A' : params.tam_pop }}</span>
               </div>
               <div class="flex items-center gap-2 flex-1">
-                <span class="text-xs text-gray-600 cursor-help" :title="params.algorithm === 'ga' ? 'Número de ciclos evolutivos do algoritmo' : 'Número de ciclos de busca do algoritmo'">{{ params.algorithm === 'ga' ? 'Gerações:' : 'Iterações:' }}</span>
-                <input v-model.number="params.n_gen" type="range" :min="5" :max="params.algorithm === 'ga' ? 1000 : 50" class="form-slider flex-1" />
-                <span class="text-xs font-medium text-gray-700 w-8 text-right">{{ params.n_gen }}</span>
+                <span class="text-xs text-gray-600 cursor-help" :title="params.algorithm === 'ga' ? 'Número de ciclos evolutivos do algoritmo' : params.algorithm === 'aco' ? 'Número de ciclos de busca do algoritmo' : 'Tempo limite em segundos'">{{ params.algorithm === 'cp' ? 'Tempo Limite:' : params.algorithm === 'ga' ? 'Gerações:' : 'Iterações:' }}</span>
+                <input v-if="params.algorithm === 'cp'" v-model.number="params.time_limit_seconds" type="range" :min="30" :max="600" class="form-slider flex-1" />
+                <input v-else v-model.number="params.n_gen" type="range" :min="5" :max="params.algorithm === 'ga' ? 1000 : 50" class="form-slider flex-1" />
+                <span class="text-xs font-medium text-gray-700 w-8 text-right">{{ params.algorithm === 'cp' ? params.time_limit_seconds + 's' : params.n_gen }}</span>
               </div>
               <button 
                 @click="showAdvancedParams = !showAdvancedParams"
@@ -478,7 +480,7 @@
                   <span class="text-xs font-medium text-gray-700 w-8 text-right">{{ params.pm }}</span>
                 </div>
               </div>
-              <div v-else class="flex items-center gap-3">
+              <div v-else-if="params.algorithm === 'aco'" class="flex items-center gap-3">
                 <div class="flex items-center gap-2 flex-1">
                   <span class="text-xs text-gray-600 cursor-help" title="Influência do feromônio na escolha do caminho">Alpha:</span>
                   <input v-model.number="params.alpha" type="range" min="0.1" max="3" step="0.1" class="form-slider flex-1" />
@@ -493,6 +495,23 @@
                   <span class="text-xs text-gray-600 cursor-help" title="Taxa de evaporação do feromônio">Rho:</span>
                   <input v-model.number="params.rho" type="range" min="0.1" max="0.9" step="0.1" class="form-slider flex-1" />
                   <span class="text-xs font-medium text-gray-700 w-8 text-right">{{ params.rho }}</span>
+                </div>
+              </div>
+              <div v-else-if="params.algorithm === 'cp'" class="space-y-3">
+                <div class="flex items-center gap-3">
+                  <div class="flex items-center gap-2 flex-1">
+                    <span class="text-xs text-gray-600 cursor-help" title="Peso da duração total do projeto na função objetivo">Peso Makespan:</span>
+                    <input v-model.number="params.makespan_weight" type="range" min="100" max="500" step="10" class="form-slider flex-1" />
+                    <span class="text-xs font-medium text-gray-700 w-12 text-right">{{ params.makespan_weight }}</span>
+                  </div>
+                  <div class="flex items-center gap-2 flex-1">
+                    <span class="text-xs text-gray-600 cursor-help" title="Peso do balanceamento de carga entre colaboradores">Balanceamento:</span>
+                    <input v-model.number="params.load_balancing_weight" type="range" min="10" max="100" step="5" class="form-slider flex-1" />
+                    <span class="text-xs font-medium text-gray-700 w-12 text-right">{{ params.load_balancing_weight }}</span>
+                  </div>
+                </div>
+                <div class="text-xs text-gray-500">
+                  <p><strong>CP Otimizado:</strong> Foca em reduzir tempo total e distribuir trabalho equilibradamente. Maior peso = maior prioridade na otimização.</p>
                 </div>
               </div>
             </div>
@@ -1005,7 +1024,7 @@
     <!-- Progress Bar -->
     <ProgressBar 
       :show="showProgress"
-      :title="params.algorithm === 'ga' ? 'Executando Algoritmo Genético' : 'Executando Colônia de Formigas'"
+      :title="params.algorithm === 'ga' ? 'Executando Algoritmo Genético' : params.algorithm === 'aco' ? 'Executando Colônia de Formigas' : 'Executando Constraint Programming'"
       :current="progressData.current"
       :total="progressData.total"
       :percent="progressData.percent"
@@ -1105,6 +1124,9 @@ export default {
         alpha: 1.0,
         beta: 2.0,
         rho: 0.5,
+        time_limit_seconds: 600,  // Increased for CP
+        makespan_weight: 200,     // Increased focus on makespan
+        load_balancing_weight: 50, // New parameter for load balancing
         ref_date: '2025-01-01'
       },
       gaParams: {
@@ -1523,9 +1545,18 @@ export default {
         
         console.log('Payload:', JSON.stringify(payload, null, 2))
         
-        // Use streaming endpoint for both GA and ACO
-        const streamEndpoint = this.params.algorithm === 'ga' ? '/api/executar-algoritmo-stream' : '/api/executar-aco-stream'
-        const regularEndpoint = this.params.algorithm === 'ga' ? '/api/executar-algoritmo' : '/api/executar-aco'
+        // Use streaming endpoint for GA, ACO, and CP
+        let streamEndpoint, regularEndpoint
+        if (this.params.algorithm === 'ga') {
+          streamEndpoint = '/api/executar-algoritmo-stream'
+          regularEndpoint = '/api/executar-algoritmo'
+        } else if (this.params.algorithm === 'aco') {
+          streamEndpoint = '/api/executar-aco-stream'
+          regularEndpoint = '/api/executar-aco'
+        } else if (this.params.algorithm === 'cp') {
+          streamEndpoint = '/api/executar-cp-stream'
+          regularEndpoint = '/api/executar-cp'
+        }
         
         const response = await fetch(streamEndpoint, {
           method: 'POST',
