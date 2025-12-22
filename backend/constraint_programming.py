@@ -175,6 +175,23 @@ class ConstraintProgramming:
             if project_start_dates and task["projeto"] in project_start_dates:
                 min_start = max(min_start, project_start_dates[task["projeto"]])
             
+            # Apply collaborator start date constraints (hard) - NEW FIX
+            # Find the minimum start date among all potential collaborators
+            earliest_collab_start = None
+            for collab_id in collab_ids:
+                collab = collab_map[collab_id]
+                if collab.get("inicio") is not None and collab["inicio"] > 0:
+                    if earliest_collab_start is None:
+                        earliest_collab_start = collab["inicio"]
+                    else:
+                        earliest_collab_start = min(earliest_collab_start, collab["inicio"])
+            
+            # If all collaborators have start dates, enforce the earliest one as minimum
+            # This ensures the task cannot start before any collaborator is available
+            if earliest_collab_start is not None:
+                min_start = max(min_start, earliest_collab_start)
+                print(f"Task {task_id}: Applying collaborator start constraint, min_start = {min_start}")
+            
             # Calculate max_start ensuring valid domain - FIXED LOGIC
             # Ensure we have enough horizon for this task
             required_horizon = min_start + duration
@@ -287,6 +304,19 @@ class ConstraintProgramming:
                 is_assigned = model.NewBoolVar(f'interval_assigned_{task_id}_{collab_id}')
                 model.Add(variables['task_assignments'][task_id] == collab_id).OnlyEnforceIf(is_assigned)
                 model.Add(variables['task_assignments'][task_id] != collab_id).OnlyEnforceIf(is_assigned.Not())
+                
+                # HARD CONSTRAINT: If assigned to this collaborator, respect their start date
+                collab = collab_map[collab_id]
+                if collab.get("inicio") is not None and collab["inicio"] > 0:
+                    # Task cannot start before collaborator's start date if assigned to them
+                    model.Add(variables['task_starts'][task_id] >= collab["inicio"]).OnlyEnforceIf(is_assigned)
+                    print(f"Added hard constraint: Task {task_id} assigned to collab {collab_id} must start >= day {collab['inicio']}")
+                
+                # HARD CONSTRAINT: If assigned to this collaborator, respect their end date
+                if collab.get("termino") is not None and collab["termino"] < max_horizon:
+                    # Task must end before collaborator's end date if assigned to them
+                    model.Add(variables['task_ends'][task_id] <= collab["termino"]).OnlyEnforceIf(is_assigned)
+                    print(f"Added hard constraint: Task {task_id} assigned to collab {collab_id} must end <= day {collab['termino']}")
                 
                 interval = model.NewOptionalIntervalVar(
                     variables['task_starts'][task_id],
@@ -450,36 +480,15 @@ class ConstraintProgramming:
                 model.Add(variables['task_assignments'][task_id] == collab_id).OnlyEnforceIf(is_assigned)
                 model.Add(variables['task_assignments'][task_id] != collab_id).OnlyEnforceIf(is_assigned.Not())
                 
-                # Work period constraints (soft - allow violations with penalty)
+                # Work period constraints - now handled as hard constraints above
+                # Only add soft penalties for edge cases or preferences
                 if collab.get("inicio") is not None and collab["inicio"] > 0:
-                    # Soft constraint: prefer to start after inicio
-                    starts_early = model.NewBoolVar(f'starts_early_{task_id}_{collab_id}')
-                    model.Add(variables['task_starts'][task_id] < collab["inicio"]).OnlyEnforceIf(starts_early)
-                    model.Add(variables['task_starts'][task_id] >= collab["inicio"]).OnlyEnforceIf(starts_early.Not())
-                    
-                    # Add penalty if starts early and is assigned
-                    early_penalty = model.NewBoolVar(f'early_penalty_{task_id}_{collab_id}')
-                    model.AddBoolAnd([is_assigned, starts_early]).OnlyEnforceIf(early_penalty)
-                    
-                    penalty_var = model.NewIntVar(0, 1000, f'early_pen_val_{task_id}_{collab_id}')
-                    model.Add(penalty_var == 1000).OnlyEnforceIf(early_penalty)
-                    model.Add(penalty_var == 0).OnlyEnforceIf(early_penalty.Not())
-                    vacation_penalties.append(penalty_var)
+                    # This is now a hard constraint, so no soft penalty needed
+                    pass
                 
                 if collab.get("termino") is not None and collab["termino"] < max_horizon:
-                    # Soft constraint: prefer to end before termino
-                    ends_late = model.NewBoolVar(f'ends_late_{task_id}_{collab_id}')
-                    model.Add(variables['task_ends'][task_id] > collab["termino"]).OnlyEnforceIf(ends_late)
-                    model.Add(variables['task_ends'][task_id] <= collab["termino"]).OnlyEnforceIf(ends_late.Not())
-                    
-                    # Add penalty if ends late and is assigned
-                    late_penalty = model.NewBoolVar(f'late_penalty_{task_id}_{collab_id}')
-                    model.AddBoolAnd([is_assigned, ends_late]).OnlyEnforceIf(late_penalty)
-                    
-                    penalty_var = model.NewIntVar(0, 1000, f'late_pen_val_{task_id}_{collab_id}')
-                    model.Add(penalty_var == 1000).OnlyEnforceIf(late_penalty)
-                    model.Add(penalty_var == 0).OnlyEnforceIf(late_penalty.Not())
-                    vacation_penalties.append(penalty_var)
+                    # This is now a hard constraint, so no soft penalty needed
+                    pass
                 
                 # Absence constraints (hard - cannot work during absences)
                 ausencias = collab.get("ausencias", set())

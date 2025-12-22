@@ -441,9 +441,9 @@
             <div class="flex items-center gap-3">
               <h4 class="text-xs font-semibold text-gray-700">Parâmetros:</h4>
               <select v-model="params.algorithm" class="px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-primary-main">
+                <option value="cp">Constraint Programming</option>
                 <option value="ga">Algoritmo Genético</option>
                 <option value="aco">Colônia de Formigas</option>
-                <option value="cp">Constraint Programming</option>
               </select>
               <div class="flex items-center gap-2 flex-1">
                 <span class="text-xs text-gray-600 cursor-help" :title="params.algorithm === 'ga' ? 'Número de soluções candidatas em cada geração' : params.algorithm === 'aco' ? 'Número de formigas explorando soluções' : 'Não aplicável para CP'">População:</span>

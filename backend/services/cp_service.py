@@ -17,8 +17,10 @@ class CPService:
         )
         self.result_saver = ResultSaver()
     
-    def load_data_from_db(self, db: Session):
+    def load_data_from_db(self, db: Session, ref_date: datetime.date = None):
         """Load collaborators and projects from database"""
+        if ref_date is None:
+            ref_date = datetime.date(2024, 1, 1)  # Default fallback
         colaboradores_db = crud.get_colaboradores(db)
         projetos_db = crud.get_projetos(db)
         
@@ -40,19 +42,19 @@ class CPService:
             
             # Add work period dates
             if col.inicio:
-                colaborador_data["inicio"] = (col.inicio - datetime.date(2024, 1, 1)).days
+                colaborador_data["inicio"] = (col.inicio - ref_date).days
             if col.termino:
-                colaborador_data["termino"] = (col.termino - datetime.date(2024, 1, 1)).days
+                colaborador_data["termino"] = (col.termino - ref_date).days
             
             # Add absences
             for ausencia in col.ausencias:
-                days_since_ref = (ausencia.data - datetime.date(2024, 1, 1)).days
+                days_since_ref = (ausencia.data - ref_date).days
                 colaborador_data["ausencias"].add(days_since_ref)
             
             # Add vacation periods
             for ferias in col.ferias:
-                inicio_days = (ferias.inicio - datetime.date(2024, 1, 1)).days
-                termino_days = (ferias.termino - datetime.date(2024, 1, 1)).days
+                inicio_days = (ferias.inicio - ref_date).days
+                termino_days = (ferias.termino - ref_date).days
                 colaborador_data["ferias"].append((inicio_days, termino_days))
             
             colaboradores.append(colaborador_data)
@@ -71,9 +73,9 @@ class CPService:
             
             # Add project dates if available
             if proj.inicio:
-                projeto_data["inicio"] = (proj.inicio - datetime.date(2024, 1, 1)).days
+                projeto_data["inicio"] = (proj.inicio - ref_date).days
             if proj.termino:
-                projeto_data["termino"] = (proj.termino - datetime.date(2024, 1, 1)).days
+                projeto_data["termino"] = (proj.termino - ref_date).days
             
             # Add stages
             for etapa in sorted(proj.etapas, key=lambda e: e.ordem):
@@ -224,11 +226,11 @@ class CPService:
     async def execute_algorithm_stream(self, params: Dict, db: Session) -> AsyncGenerator[Dict, None]:
         """Execute CP algorithm with streaming progress"""
         try:
-            # Load data
-            colaboradores, projetos = self.load_data_from_db(db)
-            
-            # Parse reference date
+            # Parse reference date first
             ref_date = datetime.datetime.strptime(params["ref_date"], "%Y-%m-%d").date()
+            
+            # Load data with correct reference date
+            colaboradores, projetos = self.load_data_from_db(db, ref_date)
             
             # Convert dates
             colaboradores = self.convert_absences(colaboradores, ref_date)
@@ -328,11 +330,11 @@ class CPService:
     def execute_algorithm(self, params: Dict, db: Session) -> Dict:
         """Execute CP algorithm (synchronous version)"""
         try:
-            # Load data
-            colaboradores, projetos = self.load_data_from_db(db)
-            
-            # Parse reference date
+            # Parse reference date first
             ref_date = datetime.datetime.strptime(params["ref_date"], "%Y-%m-%d").date()
+            
+            # Load data with correct reference date
+            colaboradores, projetos = self.load_data_from_db(db, ref_date)
             
             # Convert dates
             colaboradores = self.convert_absences(colaboradores, ref_date)
