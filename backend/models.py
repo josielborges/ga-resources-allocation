@@ -29,19 +29,10 @@ class SimulatedMember(BaseModel):
     termino: Optional[date] = None
 
 class AlgoritmoParams(BaseModel):
-    tam_pop: int = 20
-    n_gen: int = 100
-    pc: float = 0.7
-    pm: float = 0.3
     ref_date: str = "2025-01-01"
     projeto_ids: Optional[List[int]] = None
     colaborador_ids: Optional[List[int]] = None
     simulated_members: Optional[List[SimulatedMember]] = None
-    # ACO specific parameters
-    alpha: Optional[float] = 1.0
-    beta: Optional[float] = 2.0
-    rho: Optional[float] = 0.5
-    q0: Optional[float] = 0.9
     # CP specific parameters
     time_limit_seconds: Optional[int] = 300
     makespan_weight: Optional[int] = 150

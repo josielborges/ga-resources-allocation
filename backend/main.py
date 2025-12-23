@@ -8,10 +8,7 @@ import datetime
 import math
 from typing import List, Dict, Any
 from models import *
-from services.ga_service import AlgorithmService
-from services.aco_service import ACOService
 from services.cp_service import CPService
-from algorithm_comparison import AlgorithmComparison
 from utils.config import lifespan, settings
 from db.database import get_db
 from db import crud
@@ -43,10 +40,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-algorithm_service = AlgorithmService()
-aco_service = ACOService()
 cp_service = CPService()
-comparison_service = AlgorithmComparison()
 
 def load_data():
     with open("data/colaborators.json", "r") as f:
@@ -223,63 +217,7 @@ async def delete_colaborador(colaborador_id: int, db: Session = Depends(get_db))
         raise HTTPException(status_code=404, detail="Colaborador não encontrado")
     return {"message": "Colaborador deletado com sucesso"}
 
-@app.post("/api/executar-algoritmo-stream")
-async def executar_algoritmo_stream(params: AlgoritmoParams, db: Session = Depends(get_db)):
-    async def event_generator():
-        try:
-            async for event in algorithm_service.execute_algorithm_stream(
-                {
-                    "ref_date": params.ref_date,
-                    "tam_pop": params.tam_pop,
-                    "n_gen": params.n_gen,
-                    "pc": params.pc,
-                    "pm": params.pm,
-                    "projeto_ids": params.projeto_ids,
-                    "colaborador_ids": params.colaborador_ids,
-                    "simulated_members": [m.dict() for m in params.simulated_members] if params.simulated_members else []
-                }, 
-                db
-            ):
-                yield f"data: {json.dumps(event)}\n\n"
-        except Exception as e:
-            yield f"data: {json.dumps({'error': str(e)})}\n\n"
-    
-    return StreamingResponse(
-        event_generator(), 
-        media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "X-Accel-Buffering": "no"
-        }
-    )
 
-@app.post("/api/executar-algoritmo")
-async def executar_algoritmo(params: AlgoritmoParams, db: Session = Depends(get_db)):
-    try:
-        result = algorithm_service.execute_algorithm({
-            "ref_date": params.ref_date,
-            "tam_pop": params.tam_pop,
-            "n_gen": params.n_gen,
-            "pc": params.pc,
-            "pm": params.pm,
-            "projeto_ids": params.projeto_ids,
-            "colaborador_ids": params.colaborador_ids,
-            "simulated_members": [m.dict() for m in params.simulated_members] if params.simulated_members else []
-        }, db)
-        
-        return ResultadoAlgoritmo(
-            tarefas=result["tarefas"],
-            melhor_fitness=result["melhor_fitness"],
-            historico_fitness=result["historico_fitness"],
-            penalidades=result["penalidades"],
-            ocorrencias_penalidades=result["ocorrencias_penalidades"]
-        )
-        
-    except Exception as e:
-        import traceback
-        print(f"Error in executar_algoritmo: {str(e)}")
-        print(traceback.format_exc())
-        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/executar-cp-stream")
 async def executar_cp_stream(params: AlgoritmoParams, db: Session = Depends(get_db)):
@@ -337,88 +275,9 @@ async def executar_cp(params: AlgoritmoParams, db: Session = Depends(get_db)):
         print(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/api/executar-aco-stream")
-async def executar_aco_stream(params: AlgoritmoParams, db: Session = Depends(get_db)):
-    async def event_generator():
-        try:
-            async for event in aco_service.execute_algorithm_stream(
-                {
-                    "ref_date": params.ref_date,
-                    "tam_pop": params.tam_pop,
-                    "n_gen": params.n_gen,
-                    "alpha": getattr(params, 'alpha', 1.0),
-                    "beta": getattr(params, 'beta', 2.0),
-                    "rho": getattr(params, 'rho', 0.5),
-                    "q0": getattr(params, 'q0', 0.9),
-                    "projeto_ids": params.projeto_ids,
-                    "colaborador_ids": params.colaborador_ids,
-                    "simulated_members": [m.dict() for m in params.simulated_members] if params.simulated_members else []
-                },
-                db
-            ):
-                yield f"data: {json.dumps(event)}\n\n"
-        except Exception as e:
-            yield f"data: {json.dumps({'error': str(e)})}\n\n"
-    
-    return StreamingResponse(
-        event_generator(),
-        media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "X-Accel-Buffering": "no"
-        }
-    )
 
-@app.post("/api/executar-aco")
-async def executar_aco(params: AlgoritmoParams, db: Session = Depends(get_db)):
-    try:
-        result = aco_service.execute_algorithm({
-            "ref_date": params.ref_date,
-            "tam_pop": params.tam_pop,
-            "n_gen": params.n_gen,
-            "alpha": getattr(params, 'alpha', 1.0),
-            "beta": getattr(params, 'beta', 2.0),
-            "rho": getattr(params, 'rho', 0.5),
-            "q0": getattr(params, 'q0', 0.9),
-            "projeto_ids": params.projeto_ids,
-            "colaborador_ids": params.colaborador_ids,
-            "simulated_members": [m.dict() for m in params.simulated_members] if params.simulated_members else []
-        }, db)
-        
-        return ResultadoAlgoritmo(
-            tarefas=result["tarefas"],
-            melhor_fitness=result["melhor_fitness"],
-            historico_fitness=result["historico_fitness"],
-            penalidades=result["penalidades"],
-            ocorrencias_penalidades=result["ocorrencias_penalidades"]
-        )
-        
-    except Exception as e:
-        import traceback
-        print(f"Error in executar_aco: {str(e)}")
-        print(traceback.format_exc())
-        raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/api/comparar-algoritmos")
-async def comparar_algoritmos(request: dict, db: Session = Depends(get_db)):
-    try:
-        colaboradores, projetos = aco_service.load_data_from_db(db)
-        ref_date = datetime.datetime.strptime(request["ref_date"], "%Y-%m-%d").date()
-        
-        colaboradores = aco_service.convert_absences(colaboradores, ref_date)
-        tarefas_globais = aco_service.build_global_tasks(projetos)
-        
-        ga_params = request.get("ga_params", {})
-        aco_params = request.get("aco_params", {})
-        
-        comparison_result = comparison_service.run_comparison(
-            tarefas_globais, colaboradores, ga_params, aco_params, runs=3
-        )
-        
-        return comparison_result
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.post("/api/resultados-salvos", response_model=schemas.ResultadoSalvo)
 async def salvar_resultado(resultado: schemas.ResultadoSalvoCreate, db: Session = Depends(get_db)):

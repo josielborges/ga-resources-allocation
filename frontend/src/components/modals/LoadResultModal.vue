@@ -34,7 +34,7 @@
             </button>
             <div class="flex items-start justify-between mb-2 pr-6">
               <h5 class="font-semibold text-gray-900 text-sm line-clamp-2 flex-1">{{ resultado.nome }}</h5>
-              <span class="text-xs px-2 py-0.5 rounded flex-shrink-0 ml-2" :class="resultado.algoritmo === 'ga' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'">{{ resultado.algoritmo.toUpperCase() }}</span>
+              <span class="text-xs px-2 py-0.5 rounded flex-shrink-0 ml-2 bg-purple-100 text-purple-700">{{ resultado.algoritmo ? resultado.algoritmo.toUpperCase() : 'CP' }}</span>
             </div>
             <div class="text-xs text-gray-600 space-y-1">
               <p><span class="font-medium">Fitness:</span> {{ resultado.melhor_fitness.toFixed(2) }}</p>
