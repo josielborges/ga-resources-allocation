@@ -54,7 +54,10 @@ class CPService:
             # Add vacation periods
             for ferias in col.ferias:
                 inicio_days = (ferias.inicio - ref_date).days
-                termino_days = (ferias.termino - ref_date).days
+                # Add +1 to termino because the algorithm expects exclusive end
+                # If vacation is 16/01 to 25/01 (both inclusive), we need (15, 26)
+                # so the algorithm blocks days 15-25 (16/01 to 26/01 exclusive)
+                termino_days = (ferias.termino - ref_date).days + 1
                 colaborador_data["ferias"].append((inicio_days, termino_days))
             
             colaboradores.append(colaborador_data)
@@ -114,7 +117,8 @@ class CPService:
                     if isinstance(inicio, datetime.date):
                         inicio = (inicio - ref_date).days
                     if isinstance(termino, datetime.date):
-                        termino = (termino - ref_date).days
+                        # Add +1 to termino because the algorithm expects exclusive end
+                        termino = (termino - ref_date).days + 1
                     new_ferias.append((inicio, termino))
                 else:
                     new_ferias.append(ferias)
@@ -344,12 +348,12 @@ class CPService:
                         if solver is not None and variables:
                             print("Using CP-specific schedule building with exact timing")
                             schedule = self.cp.scheduler.build_schedule_from_cp_solution(
-                                event["best_solution"], tarefas_globais, colaboradores, ref_date, solver, variables
+                                event["best_solution"], tarefas_globais, colaboradores, ref_date, solver, variables, project_start_dates
                             )
                         else:
                             print("Using standard schedule building (fallback)")
                             schedule = self.cp.scheduler.build_schedule(
-                                event["best_solution"], tarefas_globais, colaboradores, ref_date
+                                event["best_solution"], tarefas_globais, colaboradores, ref_date, project_start_dates
                             )
                         
                         # Return final result with schedule
@@ -454,12 +458,12 @@ class CPService:
             if solver is not None and variables:
                 print("Using CP-specific schedule building with exact timing")
                 schedule = self.cp.scheduler.build_schedule_from_cp_solution(
-                    best_solution, tarefas_globais, colaboradores, ref_date, solver, variables
+                    best_solution, tarefas_globais, colaboradores, ref_date, solver, variables, project_start_dates
                 )
             else:
                 print("Using standard schedule building (fallback)")
                 schedule = self.cp.scheduler.build_schedule(
-                    best_solution, tarefas_globais, colaboradores, ref_date
+                    best_solution, tarefas_globais, colaboradores, ref_date, project_start_dates
                 )
             
             # Validate and recalculate penalties for consistency

@@ -45,23 +45,7 @@
                   <!-- Background base -->
                   <div class="absolute w-full h-6 bg-gray-100 rounded top-0"></div>
                   
-                  <!-- Férias (background layer) -->
-                  <div 
-                    v-for="ferias in getFeriasMes(colaborador, mes.numero)" 
-                    :key="ferias.id"
-                    class="absolute h-6 rounded top-0"
-                    :style="{
-                      left: ferias.left + '%',
-                      width: ferias.width + '%',
-                      backgroundColor: '#FFE4B5',
-                      zIndex: 1,
-                      border: '1px solid #F59E0B'
-                    }"
-                    :title="ferias.tooltip"
-                  >
-                  </div>
-                  
-                  <!-- Tarefas (middle layer) -->
+                  <!-- Tarefas (bottom layer) -->
                   <div 
                     v-for="alocacao in getAlocacoesMes(colaborador, mes.numero)" 
                     :key="alocacao.id"
@@ -70,10 +54,28 @@
                       left: alocacao.left + '%',
                       width: alocacao.width + '%',
                       backgroundColor: alocacao.cor,
-                      zIndex: 2,
+                      zIndex: 1,
                       opacity: 0.9
                     }"
                     :title="alocacao.tooltip"
+                  >
+                  </div>
+                  
+                  <!-- Férias (middle layer - visible over tasks) -->
+                  <div 
+                    v-for="ferias in getFeriasMes(colaborador, mes.numero)" 
+                    :key="ferias.id"
+                    class="absolute h-6 rounded top-0"
+                    :style="{
+                      left: ferias.left + '%',
+                      width: ferias.width + '%',
+                      backgroundColor: '#FEE2E2',
+                      backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 3px, #DC2626 3px, #DC2626 4px)',
+                      zIndex: 2,
+                      border: '2px solid #DC2626',
+                      opacity: 0.95
+                    }"
+                    :title="ferias.tooltip"
                   >
                   </div>
                   
@@ -84,7 +86,10 @@
                     class="absolute w-1 h-6 top-0"
                     :style="{
                       left: ausencia.left + '%',
-                      backgroundColor: '#FF6B6B',
+                      backgroundColor: '#1F2937',
+                      backgroundImage: 'radial-gradient(circle, #FFFFFF 25%, transparent 25%), radial-gradient(circle, #FFFFFF 25%, transparent 25%)',
+                      backgroundSize: '4px 4px',
+                      backgroundPosition: '0 0, 2px 2px',
                       zIndex: 3
                     }"
                     :title="ausencia.tooltip"
@@ -123,11 +128,26 @@
             <h4 class="text-xs font-medium text-gray-900 mb-1.5">Disponibilidade</h4>
             <div class="space-y-1">
               <div class="flex items-center space-x-2">
-                <div class="w-4 h-2.5 rounded" style="background-color: #FFE4B5;"></div>
+                <div 
+                  class="w-4 h-2.5 rounded border-2" 
+                  style="
+                    background-color: #FEE2E2;
+                    background-image: repeating-linear-gradient(45deg, transparent, transparent 3px, #DC2626 3px, #DC2626 4px);
+                    border-color: #DC2626;
+                  "
+                ></div>
                 <span class="text-xs text-gray-700">🏖️ Férias</span>
               </div>
               <div class="flex items-center space-x-2">
-                <div class="w-1 h-2.5" style="background-color: #FF6B6B;"></div>
+                <div 
+                  class="w-1 h-2.5" 
+                  style="
+                    background-color: #1F2937;
+                    background-image: radial-gradient(circle, #FFFFFF 25%, transparent 25%), radial-gradient(circle, #FFFFFF 25%, transparent 25%);
+                    background-size: 4px 4px;
+                    background-position: 0 0, 2px 2px;
+                  "
+                ></div>
                 <span class="text-xs text-gray-700">🚫 Ausências</span>
               </div>
               <div class="flex items-center space-x-2">
