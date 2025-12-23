@@ -45,7 +45,10 @@ class ResultadoTarefa(BaseModel):
     fim_dias: int
     data_fim: str
     colaborador: str
+    colaborador_id: Optional[int] = None
     duracao_dias: int
+    ferias: Optional[List[Dict]] = []
+    ausencias: Optional[List[Dict]] = []
 
 class ResultadoAlgoritmo(BaseModel):
     tarefas: List[ResultadoTarefa]

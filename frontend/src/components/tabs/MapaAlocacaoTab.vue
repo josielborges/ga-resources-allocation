@@ -39,19 +39,55 @@
                 v-for="mes in mesesDoAno" 
                 :key="mes.numero"
                 class="px-0.5 py-1.5 border-l border-gray-100 relative"
-                style="width: 70px; height: 32px;"
+                style="width: 70px; height: 40px;"
               >
-                <div class="relative w-full h-5 bg-gray-100 rounded">
+                <div class="relative w-full h-full">
+                  <!-- Background base -->
+                  <div class="absolute w-full h-6 bg-gray-100 rounded top-0"></div>
+                  
+                  <!-- Férias (background layer) -->
+                  <div 
+                    v-for="ferias in getFeriasMes(colaborador, mes.numero)" 
+                    :key="ferias.id"
+                    class="absolute h-6 rounded top-0"
+                    :style="{
+                      left: ferias.left + '%',
+                      width: ferias.width + '%',
+                      backgroundColor: '#FFE4B5',
+                      zIndex: 1,
+                      border: '1px solid #F59E0B'
+                    }"
+                    :title="ferias.tooltip"
+                  >
+                  </div>
+                  
+                  <!-- Tarefas (middle layer) -->
                   <div 
                     v-for="alocacao in getAlocacoesMes(colaborador, mes.numero)" 
                     :key="alocacao.id"
-                    class="absolute h-5 rounded"
+                    class="absolute h-6 rounded top-0"
                     :style="{
                       left: alocacao.left + '%',
                       width: alocacao.width + '%',
-                      backgroundColor: alocacao.cor
+                      backgroundColor: alocacao.cor,
+                      zIndex: 2,
+                      opacity: 0.9
                     }"
                     :title="alocacao.tooltip"
+                  >
+                  </div>
+                  
+                  <!-- Ausências (top layer - small markers) -->
+                  <div 
+                    v-for="ausencia in getAusenciasMes(colaborador, mes.numero)" 
+                    :key="ausencia.id"
+                    class="absolute w-1 h-6 top-0"
+                    :style="{
+                      left: ausencia.left + '%',
+                      backgroundColor: '#FF6B6B',
+                      zIndex: 3
+                    }"
+                    :title="ausencia.tooltip"
                   >
                   </div>
                 </div>
@@ -63,18 +99,42 @@
 
       <!-- Legenda -->
       <div class="bg-gray-50 border-t border-gray-200 p-2">
-        <h4 class="text-xs font-medium text-gray-900 mb-1.5">Legenda de Projetos</h4>
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-1">
-          <div 
-            v-for="projeto in projetosLegenda" 
-            :key="projeto.nome"
-            class="flex items-center space-x-1"
-          >
-            <div 
-              class="w-2.5 h-2.5 rounded"
-              :style="{ backgroundColor: projeto.color }"
-            ></div>
-            <span class="text-xs text-gray-700 truncate">{{ projeto.nome }}</span>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Legenda de Projetos -->
+          <div>
+            <h4 class="text-xs font-medium text-gray-900 mb-1.5">Projetos</h4>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-1">
+              <div 
+                v-for="projeto in projetosLegenda" 
+                :key="projeto.nome"
+                class="flex items-center space-x-1"
+              >
+                <div 
+                  class="w-2.5 h-2.5 rounded"
+                  :style="{ backgroundColor: projeto.color }"
+                ></div>
+                <span class="text-xs text-gray-700 truncate">{{ projeto.nome }}</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Legenda de Disponibilidade -->
+          <div>
+            <h4 class="text-xs font-medium text-gray-900 mb-1.5">Disponibilidade</h4>
+            <div class="space-y-1">
+              <div class="flex items-center space-x-2">
+                <div class="w-4 h-2.5 rounded" style="background-color: #FFE4B5;"></div>
+                <span class="text-xs text-gray-700">🏖️ Férias</span>
+              </div>
+              <div class="flex items-center space-x-2">
+                <div class="w-1 h-2.5" style="background-color: #FF6B6B;"></div>
+                <span class="text-xs text-gray-700">🚫 Ausências</span>
+              </div>
+              <div class="flex items-center space-x-2">
+                <div class="w-4 h-2.5 rounded bg-gray-100"></div>
+                <span class="text-xs text-gray-700">⚪ Disponível</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -103,8 +163,6 @@ export default {
     colaboradoresUnicos() {
       return this.colaboradores.map(c => c.nome).sort()
     },
-    
-
     
     projetosLegenda() {
       const projetosUnicos = [...new Set(this.tarefas.map(t => t.projeto))]
@@ -138,6 +196,96 @@ export default {
     parseData(dataStr) {
       const [dia, mes, ano] = dataStr.split('/')
       return new Date(ano, mes - 1, dia)
+    },
+    
+    getFeriasMes(colaborador, numeroMes) {
+      // Get vacation data from any task of this collaborator (they all have the same vacation info)
+      const tarefasColaborador = this.tarefas.filter(t => t.colaborador === colaborador)
+      if (tarefasColaborador.length === 0) return []
+      
+      // Use the first task to get vacation info (all tasks have the same collaborator vacation data)
+      const primeiraTask = tarefasColaborador[0]
+      if (!primeiraTask || !primeiraTask.ferias || primeiraTask.ferias.length === 0) {
+        return []
+      }
+      
+      const feriasArray = []
+      
+      primeiraTask.ferias.forEach((ferias, index) => {
+        const dataInicio = this.parseData(ferias.data_inicio)
+        const dataFim = this.parseData(ferias.data_fim)
+        
+        const mesInicio = dataInicio.getMonth() + 1
+        const mesFim = dataFim.getMonth() + 1
+        
+        // Simple check: if vacation overlaps with this month
+        if (numeroMes >= mesInicio && numeroMes <= mesFim) {
+          const diasNoMes = new Date(dataInicio.getFullYear(), numeroMes, 0).getDate()
+          
+          let diaInicioMes, diaFimMes
+          
+          if (numeroMes === mesInicio && numeroMes === mesFim) {
+            // Vacation starts and ends in the same month
+            diaInicioMes = dataInicio.getDate()
+            diaFimMes = dataFim.getDate()
+          } else if (numeroMes === mesInicio) {
+            // Vacation starts in this month
+            diaInicioMes = dataInicio.getDate()
+            diaFimMes = diasNoMes
+          } else if (numeroMes === mesFim) {
+            // Vacation ends in this month
+            diaInicioMes = 1
+            diaFimMes = dataFim.getDate()
+          } else {
+            // Vacation spans the entire month
+            diaInicioMes = 1
+            diaFimMes = diasNoMes
+          }
+          
+          const left = ((diaInicioMes - 1) / diasNoMes) * 100
+          const width = ((diaFimMes - diaInicioMes + 1) / diasNoMes) * 100
+          
+          feriasArray.push({
+            id: `ferias-${colaborador}-${index}-${numeroMes}`,
+            left: Math.max(0, left),
+            width: Math.min(100 - left, width),
+            tooltip: `🏖️ Férias: ${ferias.data_inicio} - ${ferias.data_fim} (${ferias.duracao_dias} dias)`
+          })
+        }
+      })
+      
+      return feriasArray
+    },
+    
+    getAusenciasMes(colaborador, numeroMes) {
+      // Get absence data from any task of this collaborator (they all have the same absence info)
+      const tarefasColaborador = this.tarefas.filter(t => t.colaborador === colaborador)
+      if (tarefasColaborador.length === 0) return []
+      
+      // Use the first task to get absence info (all tasks have the same collaborator absence data)
+      const primeiraTask = tarefasColaborador[0]
+      if (!primeiraTask || !primeiraTask.ausencias || primeiraTask.ausencias.length === 0) return []
+      
+      const ausenciasArray = []
+      
+      primeiraTask.ausencias.forEach((ausencia, index) => {
+        const dataAusencia = this.parseData(ausencia.data)
+        const mesAusencia = dataAusencia.getMonth() + 1
+        
+        if (numeroMes === mesAusencia) {
+          const diasNoMes = new Date(dataAusencia.getFullYear(), numeroMes, 0).getDate()
+          const diaAusencia = dataAusencia.getDate()
+          const left = ((diaAusencia - 1) / diasNoMes) * 100
+          
+          ausenciasArray.push({
+            id: `ausencia-${colaborador}-${index}-${numeroMes}`,
+            left: Math.max(0, left),
+            tooltip: `🚫 Ausência: ${ausencia.data}`
+          })
+        }
+      })
+      
+      return ausenciasArray
     },
     
     getAlocacoesMes(colaborador, numeroMes) {

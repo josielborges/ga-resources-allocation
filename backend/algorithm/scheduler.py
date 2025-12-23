@@ -31,9 +31,11 @@ class TaskScheduler:
                 return True
             # Check if day falls within any vacation period
             ferias_list = collaborator.get("ferias", [])
-            for ferias_inicio, ferias_fim in ferias_list:
-                if ferias_inicio <= day < ferias_fim:
-                    return True
+            for ferias_item in ferias_list:
+                if isinstance(ferias_item, (tuple, list)) and len(ferias_item) == 2:
+                    ferias_inicio, ferias_fim = ferias_item
+                    if ferias_inicio <= day < ferias_fim:
+                        return True
             return False
         
         # Skip blocked days at start
@@ -61,6 +63,10 @@ class TaskScheduler:
                                        collaborators: List[Dict], ref_date: datetime.date,
                                        solver: 'cp_model.CpSolver', variables: Dict) -> List[Dict]:
         """Build schedule from CP solution using the exact timing calculated by the solver"""
+        
+        if solver is None or variables is None:
+            return TaskScheduler.build_schedule(solution, tasks, collaborators, ref_date)
+        
         schedule = []
         
         # Get collaborator mapping
@@ -72,7 +78,7 @@ class TaskScheduler:
             task_id = task["task_id"]
             
             # Get the exact start and end times calculated by the CP solver
-            if task_id in variables['task_starts'] and task_id in variables['task_ends']:
+            if variables and task_id in variables.get('task_starts', {}) and task_id in variables.get('task_ends', {}):
                 start_day = solver.Value(variables['task_starts'][task_id])
                 end_day = solver.Value(variables['task_ends'][task_id])
             else:
@@ -91,6 +97,36 @@ class TaskScheduler:
             start_date = (ref_date + datetime.timedelta(days=start_day)).strftime("%d/%m/%Y")
             end_date = (ref_date + datetime.timedelta(days=end_day - 1)).strftime("%d/%m/%Y")
             
+            # Prepare vacation and absence information for this collaborator
+            ferias_info = []
+            ausencias_info = []
+            
+            # Process vacation periods - handle tuple format from database
+            ferias_list = collaborator.get("ferias", [])
+            
+            for ferias_item in ferias_list:
+                if isinstance(ferias_item, (tuple, list)) and len(ferias_item) == 2:
+                    # Handle tuple/list format: (inicio_dias, fim_dias)
+                    ferias_inicio, ferias_fim = ferias_item
+                    ferias_start_date = (ref_date + datetime.timedelta(days=ferias_inicio)).strftime("%d/%m/%Y")
+                    ferias_end_date = (ref_date + datetime.timedelta(days=ferias_fim - 1)).strftime("%d/%m/%Y")
+                    ferias_info.append({
+                        "inicio_dias": ferias_inicio,
+                        "fim_dias": ferias_fim - 1,
+                        "data_inicio": ferias_start_date,
+                        "data_fim": ferias_end_date,
+                        "duracao_dias": ferias_fim - ferias_inicio
+                    })
+            
+            ausencias_set = collaborator.get("ausencias", set())
+            for ausencia_day in sorted(ausencias_set):
+                ausencia_date = (ref_date + datetime.timedelta(days=ausencia_day)).strftime("%d/%m/%Y")
+                ausencias_info.append({
+                    "dia": ausencia_day,
+                    "data": ausencia_date
+                })
+            
+            
             schedule.append({
                 "projeto": task["projeto"],
                 "nome_tarefa": task["nome"],
@@ -99,7 +135,10 @@ class TaskScheduler:
                 "fim_dias": end_day - 1,  # CP uses end_day as exclusive, we need inclusive
                 "data_fim": end_date,
                 "colaborador": collaborator["nome"],
-                "duracao_dias": task["duracao_dias"]
+                "colaborador_id": collaborator["id"],
+                "duracao_dias": task["duracao_dias"],
+                "ferias": ferias_info,
+                "ausencias": ausencias_info
             })
             
         return schedule
@@ -130,6 +169,35 @@ class TaskScheduler:
             start_date = (ref_date + datetime.timedelta(days=start_day)).strftime("%d/%m/%Y")
             end_date = (ref_date + datetime.timedelta(days=end_day - 1)).strftime("%d/%m/%Y")
             
+            # Prepare vacation and absence information for this collaborator
+            ferias_info = []
+            ausencias_info = []
+            
+            # Process vacation periods - handle tuple format from database
+            ferias_list = collaborator.get("ferias", [])
+            for ferias_item in ferias_list:
+                if isinstance(ferias_item, (tuple, list)) and len(ferias_item) == 2:
+                    # Handle tuple/list format: (inicio_dias, fim_dias)
+                    ferias_inicio, ferias_fim = ferias_item
+                    ferias_start_date = (ref_date + datetime.timedelta(days=ferias_inicio)).strftime("%d/%m/%Y")
+                    ferias_end_date = (ref_date + datetime.timedelta(days=ferias_fim - 1)).strftime("%d/%m/%Y")
+                    ferias_info.append({
+                        "inicio_dias": ferias_inicio,
+                        "fim_dias": ferias_fim - 1,
+                        "data_inicio": ferias_start_date,
+                        "data_fim": ferias_end_date,
+                        "duracao_dias": ferias_fim - ferias_inicio
+                    })
+            
+            # Process absence days
+            ausencias_set = collaborator.get("ausencias", set())
+            for ausencia_day in sorted(ausencias_set):
+                ausencia_date = (ref_date + datetime.timedelta(days=ausencia_day)).strftime("%d/%m/%Y")
+                ausencias_info.append({
+                    "dia": ausencia_day,
+                    "data": ausencia_date
+                })
+            
             schedule.append({
                 "projeto": task["projeto"],
                 "nome_tarefa": task["nome"],
@@ -137,8 +205,11 @@ class TaskScheduler:
                 "data_inicio": start_date,
                 "fim_dias": end_day - 1,
                 "data_fim": end_date,
-                "colaborador": collaborator["nome"],
-                "duracao_dias": task["duracao_dias"]
+                "colaborador": colaborador["nome"],
+                "colaborador_id": colaborador["id"],
+                "duracao_dias": task["duracao_dias"],
+                "ferias": ferias_info,
+                "ausencias": ausencias_info
             })
             
         return schedule
