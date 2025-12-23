@@ -358,58 +358,64 @@ class ConstraintProgramming:
         # 8. Soft constraints with enhanced penalties
         penalty_vars = []
         
-        # Skill mismatch penalties (reduced weight to allow flexibility)
-        variables['soft_violations']['skill_penalty'] = model.NewIntVar(0, 50000, 'skill_penalty')
-        skill_penalties = []
+        # 8. HARD CONSTRAINTS: Skills and Position Requirements
+        # These are now mandatory constraints - tasks can only be assigned to collaborators
+        # with the required skills and positions
+        
+        print("CP Model: Adding HARD constraints for skills and positions...")
         
         for task in tasks:
             task_id = task["task_id"]
             required_skills = task["habilidades_necessarias"]
+            required_position = task["cargo_necessario"]
             
+            # Find collaborators who meet BOTH skill and position requirements
+            suitable_collabs = []
             for collab_id in collab_ids:
                 collab = collab_map[collab_id]
                 collab_skills = set(collab["habilidades"])
+                collab_position = collab["cargo"]
                 
-                is_assigned = model.NewBoolVar(f'skill_check_{task_id}_{collab_id}')
-                model.Add(variables['task_assignments'][task_id] == collab_id).OnlyEnforceIf(is_assigned)
-                model.Add(variables['task_assignments'][task_id] != collab_id).OnlyEnforceIf(is_assigned.Not())
+                # Check if collaborator has required skills AND position
+                has_skills = required_skills.issubset(collab_skills)
+                has_position = collab_position == required_position
                 
-                if not required_skills.issubset(collab_skills):
-                    penalty_var = model.NewIntVar(0, 5000, f'skill_penalty_{task_id}_{collab_id}')
-                    model.Add(penalty_var == 5000).OnlyEnforceIf(is_assigned)
-                    model.Add(penalty_var == 0).OnlyEnforceIf(is_assigned.Not())
-                    skill_penalties.append(penalty_var)
-        
-        if skill_penalties:
-            model.Add(variables['soft_violations']['skill_penalty'] == sum(skill_penalties))
-        else:
-            model.Add(variables['soft_violations']['skill_penalty'] == 0)
-        
-        # Position mismatch penalties (reduced weight)
-        variables['soft_violations']['position_penalty'] = model.NewIntVar(0, 50000, 'position_penalty')
-        position_penalties = []
-        
-        for task in tasks:
-            task_id = task["task_id"]
-            required_position = task["cargo_necessario"]
+                if has_skills and has_position:
+                    suitable_collabs.append(collab_id)
             
-            for collab_id in collab_ids:
-                collab = collab_map[collab_id]
+            if not suitable_collabs:
+                # No suitable collaborator found - this will make the problem infeasible
+                print(f"WARNING: Task {task_id} ({task['nome']}) requires skills {required_skills} and position {required_position}")
+                print(f"         No collaborator meets these requirements!")
+                print("         Available collaborators:")
+                for collab_id in collab_ids:
+                    collab = collab_map[collab_id]
+                    print(f"         - {collab['nome']}: {collab['cargo']}, skills: {collab['habilidades']}")
                 
-                is_assigned = model.NewBoolVar(f'pos_check_{task_id}_{collab_id}')
-                model.Add(variables['task_assignments'][task_id] == collab_id).OnlyEnforceIf(is_assigned)
-                model.Add(variables['task_assignments'][task_id] != collab_id).OnlyEnforceIf(is_assigned.Not())
+                # Still add the constraint - it will make the problem infeasible as expected
+                # This forces the user to either adjust requirements or add suitable collaborators
+                model.Add(False)  # This makes the problem infeasible
+            else:
+                # HARD CONSTRAINT: Task can only be assigned to suitable collaborators
+                print(f"Task {task_id} ({task['nome']}) can be assigned to: {[collab_map[c]['nome'] for c in suitable_collabs]}")
                 
-                if collab["cargo"] != required_position:
-                    penalty_var = model.NewIntVar(0, 3000, f'pos_penalty_{task_id}_{collab_id}')
-                    model.Add(penalty_var == 3000).OnlyEnforceIf(is_assigned)
-                    model.Add(penalty_var == 0).OnlyEnforceIf(is_assigned.Not())
-                    position_penalties.append(penalty_var)
+                # Create constraint that task assignment must be one of the suitable collaborators
+                suitable_assignments = []
+                for collab_id in suitable_collabs:
+                    is_suitable = model.NewBoolVar(f'suitable_{task_id}_{collab_id}')
+                    model.Add(variables['task_assignments'][task_id] == collab_id).OnlyEnforceIf(is_suitable)
+                    model.Add(variables['task_assignments'][task_id] != collab_id).OnlyEnforceIf(is_suitable.Not())
+                    suitable_assignments.append(is_suitable)
+                
+                # Exactly one of the suitable assignments must be true
+                model.Add(sum(suitable_assignments) == 1)
         
-        if position_penalties:
-            model.Add(variables['soft_violations']['position_penalty'] == sum(position_penalties))
-        else:
-            model.Add(variables['soft_violations']['position_penalty'] == 0)
+        # Remove soft skill and position penalties since they are now hard constraints
+        variables['soft_violations']['skill_penalty'] = model.NewIntVar(0, 0, 'skill_penalty')
+        model.Add(variables['soft_violations']['skill_penalty'] == 0)
+        
+        variables['soft_violations']['position_penalty'] = model.NewIntVar(0, 0, 'position_penalty')
+        model.Add(variables['soft_violations']['position_penalty'] == 0)
         
         # Load balancing penalty - encourage even distribution
         variables['soft_violations']['load_imbalance'] = model.NewIntVar(0, 100000, 'load_imbalance')
@@ -513,34 +519,24 @@ class ConstraintProgramming:
                             # At least one must be true
                             model.AddBoolOr([ends_before, starts_after]).OnlyEnforceIf(is_assigned)
                 
-                # Vacation constraints (soft - add penalty for overlaps)
+                # Vacation constraints (hard - cannot work during vacation periods)
                 ferias_list = collab.get("ferias", [])
                 for ferias_inicio, ferias_fim in ferias_list:
                     if 0 <= ferias_inicio < max_horizon and 0 <= ferias_fim < max_horizon:
-                        # Check for overlap
-                        overlaps = model.NewBoolVar(f'vac_overlap_{task_id}_{collab_id}_{ferias_inicio}')
+                        # Task cannot overlap with vacation period
+                        # Either task ends before vacation starts, or task starts after vacation ends
                         
-                        # Overlap if: task_start < ferias_fim AND task_end > ferias_inicio
-                        starts_before_end = model.NewBoolVar(f'starts_before_vac_end_{task_id}_{collab_id}_{ferias_inicio}')
-                        model.Add(variables['task_starts'][task_id] < ferias_fim).OnlyEnforceIf(starts_before_end)
-                        model.Add(variables['task_starts'][task_id] >= ferias_fim).OnlyEnforceIf(starts_before_end.Not())
+                        # Task ends before or at vacation start OR task starts after or at vacation end
+                        ends_before_vac = model.NewBoolVar(f'ends_before_vac_{task_id}_{collab_id}_{ferias_inicio}')
+                        model.Add(variables['task_ends'][task_id] <= ferias_inicio).OnlyEnforceIf(ends_before_vac)
+                        model.Add(variables['task_ends'][task_id] > ferias_inicio).OnlyEnforceIf(ends_before_vac.Not())
                         
-                        ends_after_start = model.NewBoolVar(f'ends_after_vac_start_{task_id}_{collab_id}_{ferias_inicio}')
-                        model.Add(variables['task_ends'][task_id] > ferias_inicio).OnlyEnforceIf(ends_after_start)
-                        model.Add(variables['task_ends'][task_id] <= ferias_inicio).OnlyEnforceIf(ends_after_start.Not())
+                        starts_after_vac = model.NewBoolVar(f'starts_after_vac_{task_id}_{collab_id}_{ferias_inicio}')
+                        model.Add(variables['task_starts'][task_id] >= ferias_fim).OnlyEnforceIf(starts_after_vac)
+                        model.Add(variables['task_starts'][task_id] < ferias_fim).OnlyEnforceIf(starts_after_vac.Not())
                         
-                        # Both conditions must be true for overlap
-                        model.AddBoolAnd([starts_before_end, ends_after_start]).OnlyEnforceIf(overlaps)
-                        model.AddBoolOr([starts_before_end.Not(), ends_after_start.Not()]).OnlyEnforceIf(overlaps.Not())
-                        
-                        # Add penalty if assigned and overlaps
-                        vac_penalty = model.NewBoolVar(f'vac_penalty_{task_id}_{collab_id}_{ferias_inicio}')
-                        model.AddBoolAnd([is_assigned, overlaps]).OnlyEnforceIf(vac_penalty)
-                        
-                        penalty_var = model.NewIntVar(0, 2000, f'vac_pen_val_{task_id}_{collab_id}_{ferias_inicio}')
-                        model.Add(penalty_var == 2000).OnlyEnforceIf(vac_penalty)
-                        model.Add(penalty_var == 0).OnlyEnforceIf(vac_penalty.Not())
-                        vacation_penalties.append(penalty_var)
+                        # At least one must be true when assigned to this collaborator
+                        model.AddBoolOr([ends_before_vac, starts_after_vac]).OnlyEnforceIf(is_assigned)
         
         # Add vacation penalty variable
         variables['soft_violations']['vacation_penalty'] = model.NewIntVar(0, 200000, 'vacation_penalty')
@@ -550,30 +546,82 @@ class ConstraintProgramming:
             model.Add(variables['soft_violations']['vacation_penalty'] == 0)
     
     def solve_cp_model(self, model: cp_model.CpModel, variables: Dict, 
-                      tasks: List[Dict]) -> Tuple[Optional[List[int]], float, Dict, Optional['cp_model.CpSolver']]:
+                      tasks: List[Dict], project_start_dates: Dict[str, int] = None,
+                      project_deadlines: Dict[str, int] = None) -> Tuple[Optional[List[int]], float, Dict, Optional['cp_model.CpSolver']]:
         """Solve the CP model with enhanced objective focusing on makespan and load balancing"""
         solver = cp_model.CpSolver()
         solver.parameters.max_time_in_seconds = self.time_limit_seconds
         solver.parameters.log_search_progress = True
         
-        # Enhanced multi-objective optimization
+        # Enhanced multi-objective optimization with project start date priority
         objective_terms = []
         
         # 1. Primary objective: Minimize makespan (highest priority)
         makespan_term = variables['makespan'] * self.makespan_weight
         objective_terms.append(makespan_term)
         
-        # 2. Load balancing: Minimize workload imbalance (high priority)
+        # 2. Project start date constraints (HARD) - NEW IMPLEMENTATION
+        # Transform project start dates from soft penalties to HARD constraints
+        print("CP Model: Adding HARD constraints for project start dates...")
+        
+        for task in tasks:
+            task_id = task["task_id"]
+            project_name = task["projeto"]
+            
+            if project_start_dates and project_name in project_start_dates:
+                min_start = project_start_dates[project_name]
+                
+                # HARD CONSTRAINT: Task cannot start before project's minimum start date
+                print(f"Task {task_id} ({project_name}): Adding HARD project start constraint >= day {min_start}")
+                model.Add(variables['task_starts'][task_id] >= min_start)
+        
+        # 3. Project deadline constraints (HARD) - NEW IMPLEMENTATION
+        # Transform project deadlines from soft penalties to HARD constraints
+        if project_deadlines:
+            print("CP Model: Adding HARD constraints for project deadlines...")
+            
+            # Group tasks by project to find project end times
+            projects = {}
+            for task in tasks:
+                proj_name = task["projeto"]
+                if proj_name not in projects:
+                    projects[proj_name] = []
+                projects[proj_name].append(task)
+            
+            # Add hard deadline constraints for each project
+            for proj_name, deadline_day in project_deadlines.items():
+                if proj_name in projects:
+                    project_tasks = projects[proj_name]
+                    
+                    print(f"Project '{proj_name}': Adding HARD deadline constraint <= day {deadline_day}")
+                    
+                    # HARD CONSTRAINT: All tasks in the project must end before or at the deadline
+                    for task in project_tasks:
+                        task_id = task["task_id"]
+                        if task_id in variables['task_ends']:
+                            model.Add(variables['task_ends'][task_id] <= deadline_day)
+                            print(f"  Task {task_id} ({task['nome']}): must end <= day {deadline_day}")
+        
+        # Remove project start penalty since it's now a hard constraint
+        project_start_penalty = model.NewIntVar(0, 0, 'project_start_penalty')
+        model.Add(project_start_penalty == 0)
+        objective_terms.append(project_start_penalty)
+        
+        # Remove project deadline penalty since it's now a hard constraint
+        project_deadline_penalty = model.NewIntVar(0, 0, 'project_deadline_penalty')
+        model.Add(project_deadline_penalty == 0)
+        objective_terms.append(project_deadline_penalty)
+        
+        # 4. Load balancing: Minimize workload imbalance (high priority)
         load_balance_term = variables['soft_violations']['load_imbalance'] * self.load_balancing_weight
         objective_terms.append(load_balance_term)
         
-        # 3. Skill and position penalties (lower priority - allow flexibility)
-        skill_term = variables['soft_violations']['skill_penalty']
-        position_term = variables['soft_violations']['position_penalty']
+        # 5. Vacation penalties (only soft constraint remaining for skills/positions)
+        # Note: Skills and positions are now HARD constraints, so no penalties needed
         vacation_term = variables['soft_violations']['vacation_penalty']
-        objective_terms.extend([skill_term, position_term, vacation_term])
+        objective_terms.append(vacation_term)
         
-        # 4. Parallelization bonus (encourage parallel execution)
+        # 6. Parallelization bonus (encourage parallel execution)
         for level, parallel_var in variables.get('parallelization_vars', {}).items():
             # Subtract bonus (negative term to encourage parallelization)
             objective_terms.append(-parallel_var)
@@ -735,7 +783,7 @@ class ConstraintProgramming:
             await asyncio.sleep(0.1)
             
             # Solve model
-            solution, fitness, solve_info, solver = self.solve_cp_model(model, variables, tasks)
+            solution, fitness, solve_info, solver = self.solve_cp_model(model, variables, tasks, project_start_dates, project_deadlines)
             
             if solution is not None:
                 # Evaluate with standard evaluator for consistency
@@ -806,7 +854,7 @@ class ConstraintProgramming:
         try:
             # Create and solve model
             model, variables = self.create_cp_model(tasks, collaborators, project_deadlines, project_start_dates)
-            solution, fitness, solve_info, solver = self.solve_cp_model(model, variables, tasks)
+            solution, fitness, solve_info, solver = self.solve_cp_model(model, variables, tasks, project_start_dates, project_deadlines)
             
             if solution is not None:
                 # Evaluate with standard evaluator for consistency

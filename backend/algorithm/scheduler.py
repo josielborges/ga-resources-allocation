@@ -23,12 +23,17 @@ class TaskScheduler:
         else:
             start_day = max(collaborator_end, predecessor_end)
         
-        # Helper function to check if day is blocked (absences and weekends only, not vacations)
+        # Helper function to check if day is blocked (absences, weekends, and vacations)
         def is_day_blocked(day):
             if day in collaborator["ausencias"]:
                 return True
             if TaskScheduler._is_weekend(day, ref_date):
                 return True
+            # Check if day falls within any vacation period
+            ferias_list = collaborator.get("ferias", [])
+            for ferias_inicio, ferias_fim in ferias_list:
+                if ferias_inicio <= day < ferias_fim:
+                    return True
             return False
         
         # Skip blocked days at start
