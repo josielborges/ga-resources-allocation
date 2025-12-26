@@ -304,6 +304,7 @@ class CPService:
             # Prepare project constraints
             project_deadlines = {}
             project_start_dates = {}
+            project_start_dates_calendar = {}  # Keep original calendar dates for display
             
             for projeto in projetos:
                 if "termino" in projeto and projeto["termino"] is not None:
@@ -316,10 +317,21 @@ class CPService:
                     inicio_days = projeto["inicio"]
                     if isinstance(inicio_days, datetime.date):
                         inicio_days = (inicio_days - ref_date).days
-                    project_start_dates[projeto["nome"]] = inicio_days
+                    
+                    # Store original calendar date
+                    project_start_dates_calendar[projeto["nome"]] = inicio_days
+                    
+                    # Convert calendar days to work days for CP-SAT
+                    # The CP solver works with abstract work days, so we need to convert
+                    inicio_calendar_date = ref_date + datetime.timedelta(days=inicio_days)
+                    from algorithm.scheduler import TaskScheduler
+                    inicio_work_day = TaskScheduler.calendar_date_to_work_day(inicio_calendar_date, ref_date)
+                    project_start_dates[projeto["nome"]] = inicio_work_day
+                    
+                    print(f"[CP DEBUG] Project '{projeto['nome']}' start date: calendar day {inicio_days} -> work day {inicio_work_day}")
             
             # Debug: Print project constraints
-            print(f"[CP DEBUG] Project start dates: {project_start_dates}")
+            print(f"[CP DEBUG] Project start dates (work days): {project_start_dates}")
             print(f"[CP DEBUG] Project deadlines: {project_deadlines}")
             
             # Configure CP algorithm with enhanced parameters (streaming)
@@ -410,6 +422,7 @@ class CPService:
             # Prepare project constraints
             project_deadlines = {}
             project_start_dates = {}
+            project_start_dates_calendar = {}  # Keep original calendar dates for display
             
             for projeto in projetos:
                 if "termino" in projeto and projeto["termino"] is not None:
@@ -422,10 +435,21 @@ class CPService:
                     inicio_days = projeto["inicio"]
                     if isinstance(inicio_days, datetime.date):
                         inicio_days = (inicio_days - ref_date).days
-                    project_start_dates[projeto["nome"]] = inicio_days
+                    
+                    # Store original calendar date
+                    project_start_dates_calendar[projeto["nome"]] = inicio_days
+                    
+                    # Convert calendar days to work days for CP-SAT
+                    # The CP solver works with abstract work days, so we need to convert
+                    inicio_calendar_date = ref_date + datetime.timedelta(days=inicio_days)
+                    from algorithm.scheduler import TaskScheduler
+                    inicio_work_day = TaskScheduler.calendar_date_to_work_day(inicio_calendar_date, ref_date)
+                    project_start_dates[projeto["nome"]] = inicio_work_day
+                    
+                    print(f"[CP DEBUG] Project '{projeto['nome']}' start date: calendar day {inicio_days} -> work day {inicio_work_day}")
             
             # Debug: Print project constraints
-            print(f"[CP DEBUG] Project start dates: {project_start_dates}")
+            print(f"[CP DEBUG] Project start dates (work days): {project_start_dates}")
             print(f"[CP DEBUG] Project deadlines: {project_deadlines}")
             
             # Configure CP algorithm with enhanced parameters (synchronous)

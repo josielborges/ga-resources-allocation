@@ -20,7 +20,8 @@ def sanitize_for_json(value):
 
 class ConstraintProgramming:
     def __init__(self, makespan_weight: int = 200, time_limit_seconds: int = 600, 
-                 load_balancing_weight: int = 50, parallelization_bonus: int = 100):
+                 load_balancing_weight: int = 50, parallelization_bonus: int = 100,
+                 enable_idle_time_penalty: bool = False, idle_time_weight: int = 80):
         if not ORTOOLS_AVAILABLE:
             raise ImportError("Google OR-Tools não está instalado. Execute: pip install ortools")
         
@@ -30,6 +31,8 @@ class ConstraintProgramming:
         self.makespan_weight = makespan_weight
         self.load_balancing_weight = load_balancing_weight
         self.parallelization_bonus = parallelization_bonus
+        self.enable_idle_time_penalty = enable_idle_time_penalty
+        self.idle_time_weight = idle_time_weight
         
         # Internal state for solver and variables (not serialized)
         self._last_solver = None
@@ -260,6 +263,17 @@ class ConstraintProgramming:
                 task_id = task["task_id"]
                 model.Add(proj_makespan >= variables['task_ends'][task_id])
         
+        # Per-project start time tracking (for early start incentive)
+        variables['project_starts'] = {}
+        for proj_name, proj_tasks in projects.items():
+            proj_start = model.NewIntVar(0, max_horizon * 2, f'start_{proj_name}')
+            variables['project_starts'][proj_name] = proj_start
+            
+            # Project starts when its first task starts
+            for task in proj_tasks:
+                task_id = task["task_id"]
+                model.Add(proj_start <= variables['task_starts'][task_id])
+        
         # 4. Collaborator workload variables for load balancing
         for collab_id in collab_ids:
             variables['collaborator_loads'][collab_id] = model.NewIntVar(
@@ -332,7 +346,33 @@ class ConstraintProgramming:
             # No overlap constraint
             model.AddNoOverlap(intervals)
         
-        # 7. Parallelization encouragement variables
+        # 7. PROJECT DEADLINE CONSTRAINTS (HARD) - MUST BE ADDED DURING MODEL CREATION
+        # Add hard deadline constraints for each project BEFORE solving
+        if project_deadlines:
+            print("CP Model: Adding HARD constraints for project deadlines...")
+            print(f"CP Model: Received deadlines: {project_deadlines}")
+            print(f"CP Model: Projects in tasks: {list(projects.keys())}")
+            
+            # Add hard deadline constraints for each project
+            for proj_name, deadline_day in project_deadlines.items():
+                if proj_name in projects:
+                    project_tasks = projects[proj_name]
+                    
+                    print(f"Project '{proj_name}': Adding HARD deadline constraint <= day {deadline_day}")
+                    
+                    # HARD CONSTRAINT: All tasks in the project must end before or at the deadline
+                    for task in project_tasks:
+                        task_id = task["task_id"]
+                        if task_id in variables['task_ends']:
+                            model.Add(variables['task_ends'][task_id] <= deadline_day)
+                            print(f"  Task {task_id} ({task['nome']}): must end <= day {deadline_day}")
+                        else:
+                            print(f"  WARNING: Task {task_id} not found in variables['task_ends']")
+                else:
+                    print(f"  WARNING: Project '{proj_name}' has deadline but no tasks found in task list!")
+                    print(f"  Available projects: {list(projects.keys())}")
+        
+        # 8. Parallelization encouragement variables
         # Encourage tasks to run in parallel when possible
         for level in range(max(task_levels.values()) + 1):
             level_tasks = [t for t in tasks if task_levels.get(t["task_id"], 0) == level]
@@ -355,10 +395,43 @@ class ConstraintProgramming:
                         model.Add(variables['task_assignments'][task1_id] == 
                                 variables['task_assignments'][task2_id]).OnlyEnforceIf(different_collabs.Not())
         
-        # 8. Soft constraints with enhanced penalties
+        # 8. Idle time penalties - OPTIONAL (can slow down solver significantly)
+        # Only enable if explicitly requested for better makespan optimization
+        if self.enable_idle_time_penalty:
+            print("CP Model: Adding idle time minimization constraints...")
+            
+            variables['idle_time_penalties'] = {}
+            
+            for collab_id in collab_ids:
+                # Track last end for this collaborator
+                collab_last_end = model.NewIntVar(0, max_horizon * 2, f'last_end_{collab_id}')
+                
+                for task in tasks:
+                    task_id = task["task_id"]
+                    is_assigned = model.NewBoolVar(f'idle_check_{task_id}_{collab_id}')
+                    model.Add(variables['task_assignments'][task_id] == collab_id).OnlyEnforceIf(is_assigned)
+                    model.Add(variables['task_assignments'][task_id] != collab_id).OnlyEnforceIf(is_assigned.Not())
+                    
+                    model.Add(collab_last_end >= variables['task_ends'][task_id]).OnlyEnforceIf(is_assigned)
+                
+                # Idle time = last_end - total_work_days
+                idle_penalty = model.NewIntVar(0, max_horizon * 2, f'idle_penalty_{collab_id}')
+                model.Add(idle_penalty == collab_last_end - variables['collaborator_loads'][collab_id])
+                
+                variables['idle_time_penalties'][collab_id] = idle_penalty
+            
+            # Sum all idle time penalties
+            variables['total_idle_penalty'] = model.NewIntVar(0, max_horizon * 2 * len(collab_ids), 'total_idle_penalty')
+            model.Add(variables['total_idle_penalty'] == sum(variables['idle_time_penalties'].values()))
+        else:
+            # Disabled - set to zero
+            variables['total_idle_penalty'] = model.NewIntVar(0, 0, 'total_idle_penalty')
+            model.Add(variables['total_idle_penalty'] == 0)
+        
+        # 9. Soft constraints with enhanced penalties
         penalty_vars = []
         
-        # 8. HARD CONSTRAINTS: Skills and Position Requirements
+        # 9. HARD CONSTRAINTS: Skills and Position Requirements
         # These are now mandatory constraints - tasks can only be assigned to collaborators
         # with the required skills and positions
         
@@ -560,54 +633,14 @@ class ConstraintProgramming:
         makespan_term = variables['makespan'] * self.makespan_weight
         objective_terms.append(makespan_term)
         
-        # 2. Project start date constraints (HARD) - NEW IMPLEMENTATION
-        # Transform project start dates from soft penalties to HARD constraints
-        print("CP Model: Adding HARD constraints for project start dates...")
-        
-        for task in tasks:
-            task_id = task["task_id"]
-            project_name = task["projeto"]
-            
-            if project_start_dates and project_name in project_start_dates:
-                min_start = project_start_dates[project_name]
-                
-                # HARD CONSTRAINT: Task cannot start before project's minimum start date
-                print(f"Task {task_id} ({project_name}): Adding HARD project start constraint >= day {min_start}")
-                model.Add(variables['task_starts'][task_id] >= min_start)
-        
-        # 3. Project deadline constraints (HARD) - NEW IMPLEMENTATION
-        # Transform project deadlines from soft penalties to HARD constraints
-        if project_deadlines:
-            print("CP Model: Adding HARD constraints for project deadlines...")
-            
-            # Group tasks by project to find project end times
-            projects = {}
-            for task in tasks:
-                proj_name = task["projeto"]
-                if proj_name not in projects:
-                    projects[proj_name] = []
-                projects[proj_name].append(task)
-            
-            # Add hard deadline constraints for each project
-            for proj_name, deadline_day in project_deadlines.items():
-                if proj_name in projects:
-                    project_tasks = projects[proj_name]
-                    
-                    print(f"Project '{proj_name}': Adding HARD deadline constraint <= day {deadline_day}")
-                    
-                    # HARD CONSTRAINT: All tasks in the project must end before or at the deadline
-                    for task in project_tasks:
-                        task_id = task["task_id"]
-                        if task_id in variables['task_ends']:
-                            model.Add(variables['task_ends'][task_id] <= deadline_day)
-                            print(f"  Task {task_id} ({task['nome']}): must end <= day {deadline_day}")
-        
-        # Remove project start penalty since it's now a hard constraint
+        # 2. Project start date constraints (HARD) - Already added in create_cp_model
+        # Just create zero penalty variable for compatibility
         project_start_penalty = model.NewIntVar(0, 0, 'project_start_penalty')
         model.Add(project_start_penalty == 0)
         objective_terms.append(project_start_penalty)
         
-        # Remove project deadline penalty since it's now a hard constraint
+        # 3. Project deadline constraints (HARD) - Already added in create_cp_model
+        # Just create zero penalty variable for compatibility
         project_deadline_penalty = model.NewIntVar(0, 0, 'project_deadline_penalty')
         model.Add(project_deadline_penalty == 0)
         objective_terms.append(project_deadline_penalty)
@@ -616,12 +649,24 @@ class ConstraintProgramming:
         load_balance_term = variables['soft_violations']['load_imbalance'] * self.load_balancing_weight
         objective_terms.append(load_balance_term)
         
-        # 5. Vacation penalties (only soft constraint remaining for skills/positions)
+        # 5. Minimize idle time: Penalize gaps in collaborator schedules (OPTIONAL)
+        # This encourages continuous work and early project starts
+        # Note: This adds significant complexity and can slow down the solver
+        
+        if self.enable_idle_time_penalty and 'total_idle_penalty' in variables:
+            print(f"[CP] Adding idle time minimization to objective (weight={self.idle_time_weight})")
+            idle_time_term = variables['total_idle_penalty'] * self.idle_time_weight
+            objective_terms.append(idle_time_term)
+        else:
+            print(f"[CP] Idle time penalty DISABLED for faster solving")
+        
+        # 6. Vacation penalties (only soft constraint remaining for skills/positions)
         # Note: Skills and positions are now HARD constraints, so no penalties needed
         vacation_term = variables['soft_violations']['vacation_penalty']
         objective_terms.append(vacation_term)
         
-        # 6. Parallelization bonus (encourage parallel execution)
+        # 7. Parallelization bonus (encourage parallel execution)
+        # 7. Parallelization bonus (encourage parallel execution)
         for level, parallel_var in variables.get('parallelization_vars', {}).items():
             # Subtract bonus (negative term to encourage parallelization)
             objective_terms.append(-parallel_var)
@@ -731,27 +776,16 @@ class ConstraintProgramming:
     def _add_search_hints(self, model: cp_model.CpModel, variables: Dict, tasks: List[Dict]):
         """Add search hints to guide the solver towards better solutions"""
         
-        # Hint 1: Assign tasks to collaborators with matching skills first
-        for task in tasks:
-            task_id = task["task_id"]
-            required_skills = task["habilidades_necessarias"]
-            required_position = task["cargo_necessario"]
-            
-            # Find best matching collaborator
-            best_collab = None
-            best_score = -1
-            
-            for collab_id in variables['collaborator_loads'].keys():
-                # This would need collaborator data - simplified for now
-                pass
-        
-        # Hint 2: Start tasks as early as possible (greedy approach)
+        # Hint: Start tasks as early as possible (greedy approach)
+        # This helps reduce makespan by starting work immediately
         for task in tasks:
             task_id = task["task_id"]
             if task_id in variables['task_starts']:
                 # Hint to start early if no dependencies
-                if not task.get("predecessoras"):
+                if not task.get("predecessoras") or len(task.get("predecessoras", [])) == 0:
+                    # Tasks without predecessors should start as early as possible
                     model.AddHint(variables['task_starts'][task_id], 0)
+                    print(f"[CP HINT] Task {task_id} ({task['nome']}): hint to start at day 0")
     
     async def run_with_progress(self, tasks: List[Dict], collaborators: List[Dict], 
                                project_deadlines: Dict[str, int] = None,

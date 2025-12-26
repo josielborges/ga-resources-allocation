@@ -106,22 +106,133 @@ class TaskScheduler:
         
         return current_date
     
+    @staticmethod
+    def calendar_date_to_work_day(calendar_date: datetime.date, ref_date: datetime.date) -> int:
+        """
+        Convert calendar date to work day number, counting only business days
+        Returns the work day number (0-based) for the given calendar date
+        
+        Example: If ref_date is 2025-01-01 (Wed) and calendar_date is 2025-01-06 (Mon),
+        and there's a weekend in between, this returns the work day number.
+        """
+        if calendar_date < ref_date:
+            raise ValueError(f"Calendar date {calendar_date} is before ref_date {ref_date}")
+        
+        current_date = ref_date
+        work_day = 0
+        
+        # Skip to first business day from ref_date
+        if not is_business_day(current_date):
+            while not is_business_day(current_date):
+                current_date += datetime.timedelta(days=1)
+        
+        # Count business days until we reach calendar_date
+        while current_date < calendar_date:
+            current_date += datetime.timedelta(days=1)
+            if is_business_day(current_date):
+                work_day += 1
+        
+        # If calendar_date itself is not a business day, find the next business day
+        if not is_business_day(calendar_date):
+            while not is_business_day(current_date):
+                current_date += datetime.timedelta(days=1)
+                if is_business_day(current_date):
+                    work_day += 1
+        
+        return work_day
+    
     def build_schedule_from_cp_solution(self, solution: List[int], tasks: List[Dict], 
                                        collaborators: List[Dict], ref_date: datetime.date,
                                        solver: 'cp_model.CpSolver', variables: Dict,
                                        project_start_dates: Dict[str, int] = None) -> List[Dict]:
         """
-        Build schedule from CP solution.
+        Build schedule from CP solution using solver values converted to business days.
         
-        IMPORTANT: CP works with abstract "work days" but we need to convert to calendar dates
-        considering holidays, weekends, vacations, and absences. We use the CP solution for
-        task ordering and assignments, but recalculate actual dates using business day logic.
+        CRITICAL: The CP solver works with abstract "work days" (0, 1, 2, 3...) without
+        considering weekends and holidays. We must:
+        1. Use the exact start/end values from the solver (to respect constraints)
+        2. Convert these abstract days to calendar dates (skipping weekends/holidays)
+        
+        IMPORTANT: Vacation and absence dates are already in calendar days (days since ref_date),
+        NOT work days, so they should NOT be converted.
         """
         
-        # Always use the standard scheduler which properly handles holidays and weekends
-        # The CP solution provides optimal task assignments and ordering, but dates
-        # must be recalculated to respect business days
-        return TaskScheduler.build_schedule(solution, tasks, collaborators, ref_date, project_start_dates)
+        schedule = []
+        
+        for i, task in enumerate(tasks):
+            task_id = task["task_id"]
+            collaborator_id = solution[i]
+            collaborator = next(c for c in collaborators if c["id"] == collaborator_id)
+            
+            # USE EXACT VALUES FROM SOLVER - DO NOT RECALCULATE
+            if task_id in variables['task_starts'] and task_id in variables['task_ends']:
+                start_work_day = solver.Value(variables['task_starts'][task_id])
+                end_work_day = solver.Value(variables['task_ends'][task_id])
+            else:
+                # Fallback to standard calculation if solver values not available
+                print(f"WARNING: Task {task_id} not found in solver variables, using fallback")
+                return TaskScheduler.build_schedule(solution, tasks, collaborators, ref_date, project_start_dates)
+            
+            # Convert abstract work days to calendar dates (skipping weekends and holidays)
+            # start_work_day = 0 means first business day from ref_date
+            start_calendar_date = TaskScheduler.work_day_to_calendar_date(start_work_day, ref_date)
+            
+            # end_work_day is exclusive in CP model, so we need end_work_day - 1 for last working day
+            # Then convert to calendar date
+            end_calendar_date = TaskScheduler.work_day_to_calendar_date(end_work_day - 1, ref_date)
+            
+            # Format dates
+            start_date = start_calendar_date.strftime("%d/%m/%Y")
+            end_date = end_calendar_date.strftime("%d/%m/%Y")
+            
+            # Prepare vacation and absence information for this collaborator
+            # IMPORTANT: These are already in calendar days, NOT work days!
+            ferias_info = []
+            ausencias_info = []
+            
+            # Process vacation periods - DO NOT CONVERT, already in calendar days
+            ferias_list = collaborator.get("ferias", [])
+            for ferias_item in ferias_list:
+                if isinstance(ferias_item, (tuple, list)) and len(ferias_item) == 2:
+                    ferias_inicio_calendar_day, ferias_fim_calendar_day = ferias_item
+                    # These are calendar days since ref_date, not work days
+                    ferias_start_date = ref_date + datetime.timedelta(days=ferias_inicio_calendar_day)
+                    # ferias_fim is exclusive, so subtract 1 for last day
+                    ferias_end_date = ref_date + datetime.timedelta(days=ferias_fim_calendar_day - 1)
+                    
+                    ferias_info.append({
+                        "inicio_dias": ferias_inicio_calendar_day,
+                        "fim_dias": ferias_fim_calendar_day - 1,
+                        "data_inicio": ferias_start_date.strftime("%d/%m/%Y"),
+                        "data_fim": ferias_end_date.strftime("%d/%m/%Y"),
+                        "duracao_dias": ferias_fim_calendar_day - ferias_inicio_calendar_day
+                    })
+            
+            # Process absence days - DO NOT CONVERT, already in calendar days
+            ausencias_set = collaborator.get("ausencias", set())
+            for ausencia_calendar_day in sorted(ausencias_set):
+                # This is a calendar day since ref_date, not a work day
+                ausencia_calendar_date = ref_date + datetime.timedelta(days=ausencia_calendar_day)
+                ausencias_info.append({
+                    "dia": ausencia_calendar_day,
+                    "data": ausencia_calendar_date.strftime("%d/%m/%Y")
+                })
+            
+            schedule.append({
+                "projeto": task["projeto"],
+                "nome_tarefa": task["nome"],
+                "inicio_dias": start_work_day,
+                "data_inicio": start_date,
+                "fim_dias": end_work_day - 1,  # Solver uses exclusive end, we use inclusive
+                "data_fim": end_date,
+                "colaborador": collaborator["nome"],
+                "colaborador_id": collaborator["id"],
+                "duracao_dias": task["duracao_dias"],
+                "ferias": ferias_info,
+                "ausencias": ausencias_info
+            })
+            
+        return schedule
 
     @staticmethod
     def build_schedule(solution: List[int], tasks: List[Dict], 
